@@ -1,25 +1,24 @@
-name: Publish Docker image
+name: Release
+
 on:
-  workflow_run:
-    workflows: ["Testing pipeline"]
-    branches: [main]
-    types: 
-      - completed
+  push:
+    branches:
+      - master
+
 jobs:
-  Push_to_registry:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    name: Push Docker image to Docker Hub
+  dockerhub-release:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
-      - name: Log in to Docker Hub
+      - uses: actions/checkout@v2
+
+      - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }} 
-      - name: Push to Docker Hub
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: discordbotsyksy/discordbot:latest
+          tags: toska/cs-discord-bot:latest
