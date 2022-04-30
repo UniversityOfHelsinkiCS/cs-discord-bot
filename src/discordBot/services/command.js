@@ -68,47 +68,6 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
   });
 };
 
-const setCommandPermissions = async (client) => {
-  const loadedCommands = await client.guilds.cache.get(guildId)?.commands.fetch();
-  const createCommandsWithPermission = loadedCommands.filter((command) => !command.defaultPermission && client.slashCommands.has(command.name));
-  const fullPermissions = createCommandsWithPermission.map((command) => {
-    const commandObj = client.slashCommands.get(command.name);
-    const perms = [];
-    commandObj.roles
-      .forEach((commandRole) => {
-        client.guild.roles.cache
-          .filter((role) => role.name.includes(commandRole))
-          .map((r) => perms.push({ id: r.id, type: "ROLE", permission: true }));
-      });
-    return {
-      id: command.id,
-      permissions: perms,
-    };
-  });
-
-  for (let fIndex = 0, fullLength = fullPermissions.length; fIndex < fullLength; fIndex++) {
-
-    if (fullPermissions[fIndex].permissions.length > 10) {
-
-      for (let pIndex = 0, permissionLength = fullPermissions[fIndex].permissions.length; pIndex <= permissionLength; pIndex += 10) {
-        const slicedList = fullPermissions[fIndex].permissions.slice(pIndex, pIndex + 10);
-        fullPermissions.push(
-          {
-            id: fullPermissions[fIndex].id,
-            permissions: slicedList,
-          },
-        );
-      }
-      fullPermissions.splice(fIndex, 1);
-      fIndex--;
-      fullLength--;
-    }
-  }
-
-  await client.guilds.cache.get(guildId)?.commands.permissions.set({ fullPermissions });
-  console.log("Successfully loaded all command permissions.");
-};
-
 const deployCommands = async (commands) => {
   const rest = new REST({ version: "9" }).setToken(token);
 
@@ -156,7 +115,6 @@ const loadCommands = (client) => {
 const setUpCommands = async (client, Course) => {
   const commands = loadCommands(client);
   if (process.env.NODE_ENV === "production") await deployCommands(commands);
-  await setCommandPermissions(client);
   await updateDynamicChoices(client, ["join", "leave", "hide_course", "unhide_course", "lock_chat", "unlock_chat"], Course);
 };
 
