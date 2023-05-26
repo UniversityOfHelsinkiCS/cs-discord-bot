@@ -6,19 +6,26 @@ on:
       - main
 
 jobs:
-  dockerhub-release:
+  build-and-push:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
+      - name: Build image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          image: cs-discord-bot
+          tags: production ${{ github.sha }}
+          containerfiles: |
+            ./Dockerfile
 
-      - name: Build and push
-        uses: docker/build-push-action@v2
+      - name: Push to quay.io
+        uses: redhat-actions/push-to-registry@v2
         with:
-          push: true
-          tags: toska/cs-discord-bot:latest
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/toska
+          username: toska+github
+          password: ${{ secrets.QUAY_IO_TOKEN }}
