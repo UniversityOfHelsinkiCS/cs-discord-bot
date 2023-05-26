@@ -1,6 +1,6 @@
-FROM node:16.8-alpine
+FROM registry.access.redhat.com/ubi8/nodejs-16-minimal
 
-WORKDIR /usr/src/app
+WORKDIR /opt/app-root/src
 
 COPY package* ./
 
