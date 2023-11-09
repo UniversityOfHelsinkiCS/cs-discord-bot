@@ -12,8 +12,8 @@ const { bridgedMessagesCounter } = require("../../promMetrics/promCounters");
 
 // github copilot generated function to prevent telegram & discord links
 const isMessageSafeToSend = (message) => {
-  const telegramLinkPattern = /https?:\/\/(www\.)?t(elegram)?\.me\/[a-zA-Z0-9\-_]*/g;
-  const discordLinkPattern = /https?:\/\/(www\.)?discord\.gg\/[a-zA-Z0-9\-_]*/g;
+  const telegramLinkPattern = /(https?:\/\/)?(www\.)?t(elegram)?\.me\/[a-zA-Z0-9\-_]*/g;
+  const discordLinkPattern = /(https?:\/\/)?(www\.)?discord\.gg\/[a-zA-Z0-9\-_]*/g;
 
   if (telegramLinkPattern.test(message) || discordLinkPattern.test(message)) {
     return false;
