@@ -9,6 +9,19 @@ const cyrillicPattern = /^\p{Script=Cyrillic}+$/u;
 const { findCourseFromDb } = require("../../db/services/courseService");
 const { bridgedMessagesCounter } = require("../../promMetrics/promCounters");
 
+
+// github copilot generated function to prevent telegram & discord links
+const isMessageSafeToSend = (message) => {
+  const telegramLinkPattern = /(https?:\/\/)?(www\.)?t(elegram)?\.me\/[a-zA-Z0-9\-_]*/g;
+  const discordLinkPattern = /(https?:\/\/)?(www\.)?discord\.gg\/[a-zA-Z0-9\-_]*/g;
+
+  if (telegramLinkPattern.test(message) || discordLinkPattern.test(message)) {
+    return false;
+  }
+
+  return true;
+};
+
 const validDiscordChannel = async (courseName) => {
   const guild = await discordClient.guilds.fetch(process.env.GUILD_ID);
   courseName = courseName.replace(/ /g, "-").toLowerCase();
@@ -48,6 +61,11 @@ const sendMessageToDiscord = async (ctx, message, channel) => {
     if (message.content.text && message.content.text[0] === "/") {
       return;
     }
+    if(!isMessageSafeToSend(message.content.text)) {
+      console.log("Message contains a telegram or discord link");
+      return;
+    }
+
     const webhooks = await channel.fetchWebhooks();
     const webhook = webhooks.first();
     if (message.content.text) {
@@ -246,9 +264,10 @@ const validateContent = (content) => {
 };
 
 const sendMessageToTelegram = async (telegramId, content, sender, channel) => {
-  if (content === "") {
+  if (content === "" || !isMessageSafeToSend(content)) {
     return;
   }
+
   sender ? sender = escapeChars(sender) : sender = null;
   content = validateContent(content);
   try {
