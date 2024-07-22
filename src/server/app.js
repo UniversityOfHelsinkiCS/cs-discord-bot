@@ -39,9 +39,11 @@ module.exports = (sequelize) => {
   app.use(flash());
   app.use("/discordAuth", discordAuthRoute);
   app.use("/join", discordJoinRoute);
-  app.use("/webhooks", webhookProxyRoute);
   app.use("/authenticate_faculty", facultyAuthRoute);
   app.use("/metrics", metricsRoute);
+
+  app.use(express.json());
+  app.use("/webhooks", webhookProxyRoute);
 
   app.use("*", defaultRouteErrorHandler);
 
