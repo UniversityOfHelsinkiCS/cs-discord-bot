@@ -6,7 +6,10 @@ router.post("/:webhookId", async (req, res) => {
   const webhookUrl = `${process.env.DISCORD_WEBHOOK_URL}/${req.params.webhookId}/${process.env.DISCORD_WEBHOOK_TOKEN}`
   const webhookData = req.body
   try {
-    await axios.post(webhookUrl, webhookData, { params: req.query })
+    await axios.post(webhookUrl, webhookData, {
+      params: req.query,
+      headers: req.headers,
+    })
     res.status(200).send("Webhook sent successfully")
     return
   } catch (error) {
