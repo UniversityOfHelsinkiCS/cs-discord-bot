@@ -22,7 +22,7 @@ const setupLogger = () => {
       format.splat(),
       format.colorize(),
       errorStackTracerFormat(),
-      format.simple()
+      format.simple(),
     ),
     transports: [],
   });
@@ -30,7 +30,7 @@ const setupLogger = () => {
   logger.add(
     new transports.Console({
       format: format.simple(),
-    })
+    }),
   );
 
   if (!process.env.PAPERTRAIL_URL) return;
@@ -48,7 +48,7 @@ const setupLogger = () => {
 
   logger.exceptions.handle(paperTrailTransport);
 
-  winstonPapertrail.on("connect", function () {
+  winstonPapertrail.on("connect", function() {
     logger.info("Logger connected to Papertrail");
   });
 };
@@ -76,7 +76,7 @@ const logNoInteractionError = async (
   member,
   channel,
   client,
-  error
+  error,
 ) => {
   const msg = `ERROR DETECTED!\nMember: ${member}\nChannel: ${channel}`;
   logger.error(msg);

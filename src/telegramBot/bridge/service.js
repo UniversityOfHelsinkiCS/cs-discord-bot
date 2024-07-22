@@ -61,7 +61,7 @@ const sendMessageToDiscord = async (ctx, message, channel) => {
     if (message.content.text && message.content.text[0] === "/") {
       return;
     }
-    if(!isMessageSafeToSend(message.content.text)) {
+    if (!isMessageSafeToSend(message.content.text)) {
       console.log("Message contains a telegram or discord link");
       return;
     }
