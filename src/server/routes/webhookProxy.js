@@ -8,7 +8,9 @@ router.post("/:webhookId", async (req, res) => {
   try {
     await axios.post(webhookUrl, webhookData, {
       params: req.query,
-      headers: req.headers,
+      headers: {
+        "Content-Type": req.headers["Content-Type"],
+      },
     });
     res.status(200).send("Webhook sent successfully");
     return;
