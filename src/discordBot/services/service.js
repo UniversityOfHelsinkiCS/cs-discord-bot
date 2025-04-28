@@ -274,24 +274,32 @@ const updateGuide = async (guild, models) => {
   const channel = guild.channels.cache.find(
     (c) => c.name === GUIDE_CHANNEL_NAME,
   );
-  const messages = await channel.messages.fetchPinned(true);
-  const message = messages.first();
-  await updateGuideMessage(message, models);
+
+  const messages = await channel.messages.fetch({ limit: 100 });
+  const sortedMessages = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+  const infoMessage = sortedMessages.first();
+
+  if (!infoMessage) {
+    console.error("No info message found! Delete the guide channel and launch the bot again to init the message.");
+    return;
+  }
+
+  await updateGuideMessage(infoMessage, sortedMessages, channel, models);
 };
 
-const updateGuideMessage = async (message, models) => {
+const updateGuideMessage = async (message, sortedMessages, channel, models) => {
   const courseData = await findCoursesFromDb("code", models.Course, false);
-  const rows = await Promise.all(courseData
-    .map(async (course) => {
-      const regExp = /[^0-9]*/;
-      const fullname = course.fullName;
-      const matches = regExp.exec(course.code)?.[0];
-      const code = matches ? matches + course.code.slice(matches.length) : course.code;
-      const count = await findCourseMemberCount(course.id, models.CourseMember);
-      return `  - ${code} - ${fullname} 👤${count}`;
-    }));
 
-  const newContent = `
+  const rows = await Promise.all(courseData.map(async (course) => {
+    const regExp = /[^0-9]*/;
+    const fullname = course.fullName;
+    const matches = regExp.exec(course.code)?.[0];
+    const code = matches ? matches + course.code.slice(matches.length) : course.code;
+    const count = await findCourseMemberCount(course.id, models.CourseMember);
+    return `${code} - ${fullname} 👤${count}`;
+  }));
+
+  const infoContent = `
 Käytössäsi on seuraavia komentoja:
   - \`/join\` jolla voit liittyä kurssille
   - \`/leave\` jolla voit poistua kurssilta
@@ -302,9 +310,6 @@ You have the following commands available:
   - \`/leave\` which you can use to leave a course
 The bot gives a list of the courses if you type \`/join\` or \`/leave\`.
 
-Kurssit / Courses:
-${rows.join("\n")}
-
 In course specific channels you can also list instructors with the command \`/instructors\`
 
 See more with \`/help\` command.
@@ -312,7 +317,34 @@ See more with \`/help\` command.
 Invitation link for the server ${invite_url}
 `;
 
-  await message.edit(newContent);
+  const messagesArray = Array.from(sortedMessages.values());
+
+  const infoMessage = messagesArray.find(m => m.id === message.id);
+  const courseMessages = messagesArray.filter(m => m.id !== message.id && m.type !== 'CHANNEL_PINNED_MESSAGE');
+
+  if (infoMessage) {
+    await infoMessage.edit(infoContent.trim());
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const rowContent = rows[i];
+    const courseMessage = courseMessages[i];
+
+    if (courseMessage) {
+      await courseMessage.edit(rowContent);
+    } else {
+      await channel.send(rowContent).then(async (msg) => {
+        await msg.react("👤");
+      });
+    }
+  }
+
+  if (courseMessages.length > rows.length) {
+    for (let i = rows.length; i < courseMessages.length; i++) {
+      const extraMessage = courseMessages[i];
+      await extraMessage.delete();
+    }
+  }
 };
 
 const isCourseCategory = async (channel, Course) => {
