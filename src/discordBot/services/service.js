@@ -293,10 +293,11 @@ const updateGuideMessage = async (message, sortedMessages, channel, models) => {
   const rows = await Promise.all(courseData.map(async (course) => {
     const regExp = /[^0-9]*/;
     const fullname = course.fullName;
+    const name = course.name
     const matches = regExp.exec(course.code)?.[0];
     const code = matches ? matches + course.code.slice(matches.length) : course.code;
     const count = await findCourseMemberCount(course.id, models.CourseMember);
-    return `${code} - ${fullname} 👤${count}`;
+    return `${name} - ${code} - ${fullname} 👥${count}`;
   }));
 
   const infoContent = `
