@@ -68,15 +68,15 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
         ),
     };
     if (obj.data.name === "join" || obj.data.name === "hide_course") {
-      await addOptions(c, obj, await findPublicCoursesFromDb("code", Course));
+      await addOptions(c, obj, (await findPublicCoursesFromDb("code", Course)).slice(0,24));
     } else if (obj.data.name === "leave") {
-      await addOptions(c, obj, await findCoursesFromDb("code", Course));
+      await addOptions(c, obj, (await findCoursesFromDb("code", Course)).slice(0,24));
     } else if (obj.data.name === "unhide_course") {
-      await addOptions(c, obj, await findPrivateCoursesFromDb("code", Course));
+      await addOptions(c, obj, (await findPrivateCoursesFromDb("code", Course)).slice(0,24));
     } else if (obj.data.name === "lock_chat") {
-      await addOptions(c, obj, await findUnlockedCoursesFromDb("code", Course));
+      await addOptions(c, obj, (await findUnlockedCoursesFromDb("code", Course)).slice(0,24));
     } else if (obj.data.name === "unlock_chat") {
-      await addOptions(c, obj, await findLockedCoursesFromDb("code", Course));
+      await addOptions(c, obj, (await findLockedCoursesFromDb("code", Course)).slice(0,24));
     }
   });
 };
