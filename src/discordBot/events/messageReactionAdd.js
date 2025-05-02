@@ -7,7 +7,6 @@ const emoji = "👤";
 const GUIDE_CHANNEL_NAME = "guide";
 
 const execute = async (reaction, user, client, models) => {
-    console.log("täällä")
     if (user.bot) return;
 
     const { message } = reaction;
@@ -16,7 +15,7 @@ const execute = async (reaction, user, client, models) => {
     //Make sure it is in the guide channel and the right reaction
     if (channel.name !== GUIDE_CHANNEL_NAME) return;
     if (reaction.emoji.name !== emoji) {
-        await reaction.users.remove(user.id); // Still remove the reaction to clean up
+        await reaction.users.remove(user.id); // Still remove the reaction if it's not the correct one
         return
     };
 
