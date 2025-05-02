@@ -18,7 +18,7 @@ const initCourseMemberHooks = (guild, models) => {
     logInfo("Member: " + member);
     const courseRole = guild.roles.cache.find(r => r.name === course.name);
     await member.roles.add(courseRole);
-    await updateGuide(guild, models);
+    //await updateGuide(guild, models);
     joinedUsersCounter.inc({ course: course.name });
   });
 
@@ -36,7 +36,7 @@ const initCourseMemberHooks = (guild, models) => {
     await member.fetch(true);
     const announcementChannel = guild.channels.cache.find(c => c.name === `${course.name}_announcement`);
     await updateAnnouncementChannelMessage(guild, announcementChannel);
-    await updateGuide(guild, models);
+    //await updateGuide(guild, models);
   });
 
   models.CourseMember.addHook("afterUpdate", async (courseMember) => {
