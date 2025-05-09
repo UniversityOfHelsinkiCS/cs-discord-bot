@@ -23,7 +23,7 @@ const execute = async (reaction, user, client, models) => {
     const member = await guild.members.fetch(user.id);
 
     // Extract the course code from the message
-    const courseNameMatch = message.content.match(/([A-Za-z0-9]+) -/);
+    const courseNameMatch = message.content.match(/([A-Za-z0-9äöåÄÖÅ]+) -/);
     if (!courseNameMatch) {
         console.error("Couldn't parse course code from message:", message.content);
         return;
