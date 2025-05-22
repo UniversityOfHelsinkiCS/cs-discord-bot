@@ -79,6 +79,12 @@ const teacher = {
     fetch: jest.fn(),
     remove: jest.fn((role) => teacher.roles.cache = teacher.roles.cache.filter(r => r.name !== role.name)),
   },
+  permissions: {
+    list: [],
+    has(perm) {
+      return this.list.includes(perm);
+    },
+  },
   _roles: [1, 3, 4],
   fetch: jest.fn(),
   displayName: "teacher",
@@ -97,6 +103,12 @@ const student = {
     fetch: jest.fn(),
     remove: jest.fn((role) => student.roles.cache = student.roles.cache.filter(r => r.name !== role.name)),
   },
+  permissions: {
+    list: [],
+    has(perm) {
+      return this.list.includes(perm);
+    },
+  },
   _roles: [3],
   fetch: jest.fn(),
   displayName: "student",
@@ -114,6 +126,12 @@ const admin = {
     highest: { name: "admin" },
     fetch: jest.fn(),
     remove: jest.fn((role) => admin.roles.cache = admin.roles.cache.filter(r => r.name !== role.name)),
+  },
+  permissions: {
+    list: ["ADMINISTRATOR"],
+    has(perm) {
+      return this.list.includes(perm);
+    },
   },
   _roles: [2, 3],
   fetch: jest.fn(),
@@ -198,6 +216,15 @@ const defaultTeacherInteraction = {
   member: {
     user: teacher,
     _roles: [1, 3, 4],
+    roles: {
+      cache: teacher.roles.cache,
+    },
+    permissions: {
+      list: [],
+      has(perm) {
+        return this.list.includes(perm);
+      },
+    },
   },
   options: undefined,
   reply: jest.fn(),
@@ -209,6 +236,15 @@ const defaultStudentInteraction = {
   member: {
     user: student,
     _roles: [1],
+    roles: {
+      cache: student.roles.cache,
+    },
+    permissions: {
+      list: [],
+      has(perm) {
+        return this.list.includes(perm);
+      },
+    },
   },
   options: undefined,
   reply: jest.fn(),
@@ -221,6 +257,12 @@ const studentInteractionWithoutOptions = {
     user: {
       id: 2,
     },
+    permissions: {
+      list: [],
+      has(perm) {
+        return this.list.includes(perm);
+      },
+    },
   },
   options: undefined,
 };
@@ -231,7 +273,15 @@ const defaultAdminInteraction = {
   member: {
     user: admin,
     _roles: [2, 3],
-    roles: [2, 3],
+    roles: {
+      cache: admin.roles.cache,
+    },
+    permissions: {
+      list: ["ADMINISTRATOR"],
+      has(perm) {
+        return this.list.includes(perm);
+      },
+    },
   },
   options: undefined,
   commandName: "test",
