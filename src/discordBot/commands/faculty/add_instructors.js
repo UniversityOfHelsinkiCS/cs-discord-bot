@@ -7,6 +7,11 @@ const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../serv
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
+  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) { // Olisiko parempi tarkistaa tietokannasta eikä discordista?
+    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    return
+  }
+
   await sendEphemeral(interaction, "Adding instructors...");
 
   const courseModel = models.Course;

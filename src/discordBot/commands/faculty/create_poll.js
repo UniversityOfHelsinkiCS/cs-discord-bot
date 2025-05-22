@@ -7,6 +7,10 @@ const { facultyRole } = require("../../../../config.json");
 const numbers = [ "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟" ];
 
 const execute = async (interaction, client) => {
+  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    return
+  }
 
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);

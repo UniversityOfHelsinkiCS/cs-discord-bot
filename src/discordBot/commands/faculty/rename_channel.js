@@ -7,6 +7,11 @@ const { facultyRole } = require("../../../../config.json");
 const { confirmChoice } = require("../../services/confirm");
 
 const execute = async (interaction, client, models) => {
+  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    return
+  }
+
   await sendEphemeral(interaction, "Renaming text channel...");
 
   const courseModel = models.Course;

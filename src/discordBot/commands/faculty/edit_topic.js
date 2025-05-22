@@ -11,6 +11,11 @@ const { facultyRole } = require("../../../../config.json");
 const { saveChannelTopicToDb } = require("../../../db/services/channelService");
 
 const execute = async (interaction, client, models) => {
+  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    return
+  }
+
   await sendEphemeral(interaction, "Editing topic...");
   const newTopic = interaction.options.getString("topic").trim();
 
