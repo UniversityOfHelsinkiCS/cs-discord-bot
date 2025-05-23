@@ -4,7 +4,7 @@ const {
   createCourseToDatabase,
   findCourseFromDb,
   findCourseFromDbWithFullName } = require("../../../db/services/courseService");
-const { sendErrorEphemeral, sendEphemeral, sendErrorEphemeral, editEphemeral } = require("../../services/message");
+const { sendErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
