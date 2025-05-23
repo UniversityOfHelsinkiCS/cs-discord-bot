@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { getCourseNameFromCategory, isCourseCategory } = require("../../services/service");
 const { findChannelFromDbByName } = require("../../../db/services/channelService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
-const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../services/message");
+const { sendEphemeral, sendErrorEphemeral, editErrorEphemeral, editEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 

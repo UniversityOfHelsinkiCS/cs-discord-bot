@@ -4,7 +4,7 @@ const {
   handleCooldown,
   checkCourseCooldown } = require("../../services/service");
 const { setCourseToPublic, findCourseFromDb } = require("../../../db/services/courseService");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
+const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 

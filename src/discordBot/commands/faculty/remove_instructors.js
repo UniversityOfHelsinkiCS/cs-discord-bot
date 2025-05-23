@@ -3,7 +3,7 @@ const { getCourseNameFromCategory, updateAnnouncementChannelMessage, getUserWith
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { findCourseMember } = require("../../../db/services/courseMemberService");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
+const { editEphemeral, sendErrorEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {

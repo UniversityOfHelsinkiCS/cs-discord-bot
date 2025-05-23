@@ -8,7 +8,7 @@ const {
 } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { findChannelsByCourse } = require("../../../db/services/channelService");
-const { editErrorEphemeral, sendEphemeral, editEphemeralForStatus } = require("../../services/message");
+const { editErrorEphemeral, sendErrorEphemeral, sendEphemeral, sendErrorEphemeral, editEphemeralForStatus } = require("../../services/message");
 const { facultyRole, courseAdminRole } = require("../../../../config.json");
 const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
 
