@@ -78,7 +78,7 @@ describe("slash unhide command", () => {
   test("a student cannot use faculty command", async () => {
     const client = defaultStudentInteraction.client;
     const response = "You do not have permission to use this command.";
-    await execute(defaultStudentInteraction, client, models);
+    await execute(defaultStudentInteraction, client, Course);
     expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
