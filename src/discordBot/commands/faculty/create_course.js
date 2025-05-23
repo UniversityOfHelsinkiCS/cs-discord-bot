@@ -8,8 +8,8 @@ const { sendErrorEphemeral, sendEphemeral, editEphemeral } = require("../../serv
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendEphemeral(interaction, "You do not have permission to use this command.");
+  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return
   }
 
