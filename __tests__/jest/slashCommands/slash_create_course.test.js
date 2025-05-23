@@ -22,26 +22,26 @@ createCourseToDatabase.mockImplementation(() => {return { name: "nickname", id: 
 const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 
 beforeEach(() => {
-defaultTeacherInteraction.options = {
-  getString: jest.fn((name) => {
-    const names = {
-      coursecode: "TKT-100",
-      full_name: "Long course name",
-      nick_name: "nickname",
-    };
-    return names[name];
-  }),
-};
+  defaultTeacherInteraction.options = {
+    getString: jest.fn((name) => {
+      const names = {
+        coursecode: "TKT-100",
+        full_name: "Long course name",
+        nick_name: "nickname",
+      };
+      return names[name];
+    }),
+  };
 
-defaultStudentInteraction.options = {
-  getString: jest.fn((name) => {
-    const names = {
-      coursecode: "TKT-100",
-      full_name: "Long course name",
-    };
-    return names[name];
-  }),
-};
+  defaultStudentInteraction.options = {
+    getString: jest.fn((name) => {
+      const names = {
+        coursecode: "TKT-100",
+        full_name: "Long course name",
+      };
+      return names[name];
+    }),
+  };
 });
 afterEach(() => {
   jest.clearAllMocks();
@@ -67,7 +67,7 @@ describe("slash create command", () => {
   });
 
   test("course code must be unique when nickname not given", async () => {
-defaultTeacherInteraction.options = {
+    defaultTeacherInteraction.options = {
       getString: jest.fn((name) => {
         const names = {
           coursecode: "TKT-100",
@@ -86,7 +86,7 @@ defaultTeacherInteraction.options = {
   });
 
   test("create course name without nick", async () => {
-defaultTeacherInteraction.options = {
+    defaultTeacherInteraction.options = {
       getString: jest.fn((name) => {
         const names = {
           coursecode: "TKT-100",
@@ -160,4 +160,11 @@ defaultTeacherInteraction.options = {
     expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, "Emojis are not allowed!");
   });
 
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+  });
 });

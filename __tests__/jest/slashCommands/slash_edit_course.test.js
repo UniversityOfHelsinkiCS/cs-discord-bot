@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/edit_course");
-const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const {
   findCategoryWithCourseName,
@@ -140,4 +140,11 @@ describe("slash edit command", () => {
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+  });
 });

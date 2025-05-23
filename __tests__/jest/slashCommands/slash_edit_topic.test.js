@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/edit_topic");
-const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { findChannelFromDbByName, saveChannelTopicToDb } = require("../../../src/db/services/channelService");
 const {
@@ -25,9 +25,11 @@ confirmChoice.mockImplementation(() => true);
 const mockSaveMethod = jest.fn();
 findChannelFromDbByName.mockImplementation(() => { return { topic: "topic", save: mockSaveMethod }; });
 
-const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
+const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 const newTopic = "New topic!";
 defaultTeacherInteraction.options = { getString: jest.fn(() => newTopic) };
+defaultStudentInteraction.options = { getString: jest.fn(() => newTopic) };
+
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -78,5 +80,13 @@ describe("slash edit_topic command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

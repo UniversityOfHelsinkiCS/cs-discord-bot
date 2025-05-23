@@ -1,11 +1,11 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/remove_instructors");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
+const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { getCourseNameFromCategory, getUserWithUserId } = require("../../../src/discordBot/services/service");
 const { findUserByDiscordId } = require("../../../src/db/services/userService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { findCourseMember } = require("../../../src/db/services/courseMemberService");
 const { courseAdminRole } = require("../../../config.json");
-const { defaultTeacherInteraction, defaultAdminInteraction } = require("../../mocks/mockInteraction");
+const { defaultStudentInteraction, defaultTeacherInteraction, defaultAdminInteraction } = require("../../mocks/mockInteraction");
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
@@ -25,6 +25,7 @@ getUserWithUserId.mockImplementation(() => defaultAdminInteraction.member.user);
 
 defaultAdminInteraction.options = { getString: jest.fn(() => { return "<@!3>"; }) };
 defaultTeacherInteraction.options = { getUser: jest.fn(() => { return { id: 2 }; }) };
+defaultStudentInteraction.options = { getUser: jest.fn(() => { return { id: 2 }; }) };
 
 const initialResponse = "Removing instructors...";
 
@@ -90,5 +91,13 @@ describe("slash remove instructor command", () => {
     expect(findCourseMember).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, response);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

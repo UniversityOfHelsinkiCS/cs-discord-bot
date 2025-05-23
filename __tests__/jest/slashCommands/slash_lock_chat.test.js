@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/lock_chat");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
+const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const {
   msToMinutesAndSeconds,
@@ -15,9 +15,10 @@ jest.mock("../../../src/db/services/courseService");
 const time = "4:59";
 const initialResponse = "Locking course...";
 
-const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
+const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 const courseName = "test";
 defaultTeacherInteraction.options = { getString: jest.fn(() => courseName) };
+defaultStudentInteraction.options = { getString: jest.fn(() => courseName) };
 confirmChoice.mockImplementation(() => true);
 afterEach(() => {
   jest.clearAllMocks();
@@ -71,5 +72,13 @@ describe("slash lock_chat command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(client.emit).toHaveBeenCalledTimes(0);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

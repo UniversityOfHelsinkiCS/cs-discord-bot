@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/delete_channel");
-const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editEphemeral, editErrorEphemeral, sendErrorEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { removeChannelFromDb, findChannelFromDbByName } = require("../../../src/db/services/channelService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
@@ -11,8 +11,9 @@ jest.mock("../../../src/db/services/channelService");
 jest.mock("../../../src/db/services/courseService");
 
 const models = require("../../mocks/mockModels");
-const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
+const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 defaultTeacherInteraction.options = { getString: jest.fn((name) => name) };
+defaultStudentInteraction.options = { getString: jest.fn((name) => name) };
 
 const initialResponse = "Deleting text channel...";
 
@@ -124,5 +125,13 @@ describe("slash delete_channel", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });
