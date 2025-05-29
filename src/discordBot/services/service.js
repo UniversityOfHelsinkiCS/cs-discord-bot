@@ -292,18 +292,22 @@ const updateGuide = async (guild, models) => {
   await updateGuideMessage(infoMessage, sortedMessages, channel, models);
 };
 
-const updateGuideMessage = async (message, sortedMessages, channel, models) => {
+const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) => {
   const courseData = await findCoursesFromDb("code", models.Course, false);
 
-  const rows = await Promise.all(courseData.map(async (course) => {
+  const courseMemberCounts = await Promise.all(courseData.map(course =>
+    findCourseMemberCount(course.id, models.CourseMember)
+  ));
+
+  const rows = courseData.map((course, index) => {
     const regExp = /[^0-9]*/;
     const fullname = course.fullName;
-    const name = course.name
+    const name = course.name;
     const matches = regExp.exec(course.code)?.[0];
     const code = matches ? matches + course.code.slice(matches.length) : course.code;
-    const count = await findCourseMemberCount(course.id, models.CourseMember);
+    const count = courseMemberCounts[index];
     return `${name} - ${code} - ${fullname} 👥${count}`;
-  }));
+  });
 
   const infoContent = `
 Käytössäsi on seuraavia komentoja:
@@ -325,31 +329,30 @@ Invitation link for the server ${invite_url}
 
   const messagesArray = Array.from(sortedMessages.values());
 
-  const infoMessage = messagesArray.find(m => m.id === message.id);
-  const courseMessages = messagesArray.filter(m => m.id !== message.id && m.type !== 'CHANNEL_PINNED_MESSAGE');
+  const courseMessages = messagesArray.filter(m => m.id !== infoMessage.id && m.type !== 'CHANNEL_PINNED_MESSAGE');
 
-  if (infoMessage) {
-    await infoMessage.edit(infoContent.trim());
-  }
 
+  await infoMessage.edit(infoContent);
+
+  const editOrSendPromises = [];
   for (let i = 0; i < rows.length; i++) {
     const rowContent = rows[i];
     const courseMessage = courseMessages[i];
 
     if (courseMessage) {
-      await courseMessage.edit(rowContent);
+      editOrSendPromises.push(courseMessage.edit(rowContent));
     } else {
-      await channel.send(rowContent).then(async (msg) => {
-        await msg.react("👤");
-      });
+      editOrSendPromises.push(
+        channel.send(rowContent).then(msg => msg.react("👤"))
+      );
     }
   }
 
+  await Promise.all(editOrSendPromises);
+
   if (courseMessages.length > rows.length) {
-    for (let i = rows.length; i < courseMessages.length; i++) {
-      const extraMessage = courseMessages[i];
-      await extraMessage.delete();
-    }
+    const deletePromises = courseMessages.slice(rows.length).map(msg => msg.delete());
+    await Promise.all(deletePromises);
   }
 };
 
