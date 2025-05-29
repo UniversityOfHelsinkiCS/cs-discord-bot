@@ -275,6 +275,11 @@ const updateGuide = async (guild, models) => {
     (c) => c.name === GUIDE_CHANNEL_NAME,
   );
 
+  if (!channel) {
+    console.error("Guide channel not found!");
+    return;
+  }
+
   const messages = await channel.messages.fetch({ limit: 100 });
   const sortedMessages = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
   const infoMessage = sortedMessages.first();
