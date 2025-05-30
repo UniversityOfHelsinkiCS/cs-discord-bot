@@ -7,8 +7,8 @@ const {
   getCategoryObject,
   getCategoryChannelPermissionOverwrites,
   createInvitation,
-  setCoursePositionABC,
-  updateGuide } = require("../../discordBot/services/service");
+  setCoursePositionABC } = require("../../discordBot/services/service");
+const { updateGuide } = require("../../discordBot/services/guide");
 const { findCourseFromDbById } = require("../services/courseService");
 const { courseAdminRole } = require("../../../config.json");
 const { Op } = require("sequelize");

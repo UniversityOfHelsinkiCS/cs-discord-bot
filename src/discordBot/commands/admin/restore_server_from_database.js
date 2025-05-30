@@ -10,8 +10,8 @@ const {
   getCategoryChannelPermissionOverwrites,
   createInvitation,
   updateAnnouncementChannelMessage,
-  updateGuide,
   setCoursePositionABC } = require("../../services/service");
+const { updateGuide } = require("../../services/guide");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (message, args, models) => {

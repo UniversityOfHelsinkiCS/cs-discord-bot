@@ -1,4 +1,4 @@
-const { updateGuide } = require("../../discordBot/services/service");
+const { updateGuide } = require("../../discordBot/services/guide");
 const { removeUserFromDb } = require("../../db/services/userService");
 
 const execute = async (member, client, models) => {
