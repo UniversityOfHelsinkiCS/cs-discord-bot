@@ -58,7 +58,16 @@ const execute = async (interaction, client, models) => {
   const instructorRole = await interaction.guild.roles.cache.find(r => r.name === `${courseName} ${courseAdminRole}`);
   await interaction.member.roles.add(instructorRole);
 
-  await editEphemeral(interaction, `Created course ${courseName}.`);
+  //Generating final ephemeral message with #channel link in the message 
+  const channels = await interaction.guild.channels.fetch();
+  const courseChannel = channels.find(
+  c => c.name === `${courseName}_general` && c.type === "GUILD_TEXT"
+  );
+  let channelLink = "";
+  if (courseChannel) {
+    channelLink = `<#${courseChannel.id}>`;
+  }
+  await editEphemeral(interaction, `Created course ${courseName}. You have been added as an instructor of the course. You can find the course by clicking: ${channelLink || "Channel not found."} or among the listed courses on the sidebar.`);
 };
 
 module.exports = {
