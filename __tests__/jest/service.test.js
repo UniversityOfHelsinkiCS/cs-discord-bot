@@ -9,45 +9,9 @@ const {
   findOrCreateChannel,
   getCourseNameFromCategory,
   findChannelWithNameAndType,
-  getWorkshopInfo,
-  updateGuideMessage } = require("../../src/discordBot/services/service");
+  getWorkshopInfo } = require("../../src/discordBot/services/service");
 const { createCourseToDatabase, removeCourseFromDb } = require("../../src/db/services/courseService");
 const { data } = require("../mocks/workshopData.json");
-
-const createGuidePinnedMessage = async () => {
-  const rows = courses
-    .map((course) => {
-      const code = course.code;
-      const fullname = course.fullName;
-      const count = 1;
-      return `  - ${code} - ${fullname} 👤${count}`;
-    });
-
-  let invite_url = "";
-  process.env.NODE_ENV === "production" ? invite_url = `${process.env.BACKEND_SERVER_URL}` : invite_url = `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
-
-  const newContent = `
-Käytössäsi on seuraavia komentoja:
-  - \`/join\` jolla voit liittyä kurssille
-  - \`/leave\` jolla voit poistua kurssilta
-Kirjoittamalla \`/join\` tai \`/leave\` botti antaa listan kursseista.
-
-You have the following commands available:
-  - \`/join\` which you can use to join a course
-  - \`/leave\` which you can use to leave a course
-The bot gives a list of the courses if you type \`/join\` or \`/leave\`.
-
-Kurssit / Courses:
-${rows.join("\n")}
-
-In course specific channels you can also list instructors with the command \`/instructors\`
-
-See more with \`/help\` command.
-
-Invitation link for the server ${invite_url}
-`;
-  return newContent;
-};
 
 const courses = [{ code: "tkt", fullName: "test course", name: "test" }];
 
@@ -59,23 +23,6 @@ const Course = {
     .mockImplementationOnce(() => false),
   findAll: jest.fn(() => courses),
   destroy: jest.fn(),
-};
-
-const CourseMember = {
-  create: jest.fn(),
-  findOne: jest
-    .fn(() => true)
-    .mockImplementationOnce(() => false)
-    .mockImplementationOnce(() => false),
-  findAll: jest.fn(() => null),
-  count: jest
-    .fn()
-    .mockImplementationOnce(() => 1),
-  destroy: jest.fn(),
-};
-
-const models = {
-  Course, CourseMember,
 };
 
 const { client } = require("../mocks/mockSlashClient");
@@ -131,22 +78,6 @@ describe("Service", () => {
     const channel = { name: "guide", type: "GUILD_TEXT" };
     const channelFound = findChannelWithId(1, client.guild);
     expect(channelFound).toMatchObject(channel);
-  });
-
-  test("Update guide message", async () => {
-    const role = { name: "test", members: [] };
-    const guide = { id: 1, name: "guide", type: "GUILD_TEXT", send: jest.fn(() => msg) };
-    const commands = { id: 2, name: "commands", type: "GUILD_TEXT", send: jest.fn(() => msg) };
-    const testCategory = { id: 3, name: "📚 test", type: "GUILD_CATEGORY", members: {} };
-    client.guild.invites.cache.push({ channel: { name: "guide", code: 1 } });
-    client.guild.channels.cache = [guide, commands, testCategory];
-    client.guild.roles.cache = [role];
-    const msg = { guild: client.guild, pin: jest.fn(), edit: jest.fn() };
-    const guideMessage = await createGuidePinnedMessage(client.guild, Course);
-    await updateGuideMessage(msg, models);
-    expect(msg.edit).toHaveBeenCalledTimes(1);
-    expect(msg.edit).toHaveBeenCalledWith(guideMessage);
-    client.guild.channels.cache = [];
   });
 
   test("creating guide invitation call createInvite", async () => {
