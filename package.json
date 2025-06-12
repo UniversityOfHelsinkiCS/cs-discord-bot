@@ -39,7 +39,7 @@
   "homepage": "https://github.com/Ohtuproju2021syksy/Discord-Bot-better#readme",
   "dependencies": {
     "@discordjs/builders": "^0.6.0",
-    "@discordjs/rest": "^0.1.1-canary.0",
+    "@discordjs/rest": "^2.0.0",
     "axios": "^0.28.0",
     "connect-flash": "^0.1.1",
     "connect-session-sequelize": "^7.1.1",
