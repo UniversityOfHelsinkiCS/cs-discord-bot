@@ -83,7 +83,7 @@ Invitation link for the server ${invite_url}
 
     if (courseMessage) {
       console.log("editing guide messages:", (courseMessage.content == rowContent ? "current message is already correct":"current message is wrong: changing"), rowContent)
-      if (!courseMessage.content == rowContent) {
+      if (courseMessage.content !== rowContent) {
         editOrSendPromises.push(courseMessage.edit(rowContent));
       }
     } else {
