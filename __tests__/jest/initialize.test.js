@@ -5,6 +5,7 @@ const { client } = require("../mocks/mockClient");
 
 jest.mock("../../src/db/services/courseService");
 jest.mock("../../src/discordBot/services/service");
+jest.mock("../../src/discordBot/services/guide");
 jest.mock("../../src/db/hookInit");
 
 initHooks.mockImplementation(() => true);

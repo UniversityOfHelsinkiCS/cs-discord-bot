@@ -11,8 +11,8 @@ const {
   setEmojisUnlock,
   setEmojisHide,
   setEmojisUnhide,
-  setCoursePositionABC,
-  updateGuide } = require("../../discordBot/services/service");
+  setCoursePositionABC } = require("../../discordBot/services/service");
+const { updateGuide } = require("../../discordBot/services/guide");
 const { lockTelegramCourse, unlockTelegramCourse } = require("../../telegramBot/bridge/service");
 const { courseAdminRole } = require("../../../config.json");
 const { Op } = require("sequelize");

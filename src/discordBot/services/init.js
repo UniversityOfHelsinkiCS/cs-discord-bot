@@ -1,6 +1,6 @@
 const { findOrCreateRoleWithName } = require("./service");
 const { facultyRole, githubRepo } = require("../../../config.json");
-const { updateGuide } = require("../../discordBot/services/service");
+const { updateGuide } = require("../../discordBot/services/guide");
 const { initHooks } = require("../../db/hookInit");
 const { sendPullDateMessage } = require("./message");
 
@@ -54,6 +54,7 @@ const initRoles = async (guild) => {
 };
 
 const setInitialGuideMessage = async (guild, channelName, models) => {
+  console.log("Started initializing guide message")
   const guideChannel = guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === channelName);
   if (!guideChannel.lastPinTimestamp) {
     const msg = await guideChannel.send("initial");
@@ -63,13 +64,14 @@ const setInitialGuideMessage = async (guild, channelName, models) => {
   const guideinvite = invs.find(invite => invite.channel.name === "guide");
   if (!guideinvite) await guideChannel.createInvite({ maxAge: 0 });
   await updateGuide(guild, models);
+  console.log("Guide message initialized and updated")
 };
 
 const initializeApplicationContext = async (client, models) => {
   initHooks(client.guild, models);
   await initRoles(client.guild);
   await initChannels(client.guild, client);
-  await setInitialGuideMessage(client.guild, "guide", models);
+  setInitialGuideMessage(client.guild, "guide", models);
 
   if (process.env.NODE_ENV === "production") {
     await sendPullDateMessage(client);

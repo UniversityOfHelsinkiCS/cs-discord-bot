@@ -1,7 +1,7 @@
 const {
   updateAnnouncementChannelMessage,
-  updateGuide,
   updateInviteLinks } = require("../../discordBot/services/service");
+const { updateGuide } = require("../../discordBot/services/guide");
 const { findCourseFromDbById } = require("../services/courseService");
 const { findUserByDbId } = require("../services/userService");
 const { courseAdminRole } = require("../../../config.json");
@@ -18,7 +18,7 @@ const initCourseMemberHooks = (guild, models) => {
     logInfo("Member: " + member);
     const courseRole = guild.roles.cache.find(r => r.name === course.name);
     await member.roles.add(courseRole);
-    await updateGuide(guild, models);
+    //await updateGuide(guild, models);
     joinedUsersCounter.inc({ course: course.name });
   });
 
@@ -35,11 +35,11 @@ const initCourseMemberHooks = (guild, models) => {
       .map(async role => await member.roles.remove(role)));
     await member.fetch(true);
     const announcementChannel = guild.channels.cache.find(c => c.name === `${course.name}_announcement`);
-    await updateAnnouncementChannelMessage(guild, announcementChannel);
-    await updateGuide(guild, models);
+    await updateAnnouncementChannelMessage(guild, announcementChannel); //This should be only done if the user is an instructor
+    //await updateGuide(guild, models);
   });
 
-  models.CourseMember.addHook("afterUpdate", async (courseMember) => {
+  models.CourseMember.addHook("afterUpdate", async (courseMember) => { // This makes no f****** sense. When a course gets new instructor update all courses announcement info ????
     if (courseMember._changed.has("instructor")) {
       await updateInviteLinks(guild);
     }

@@ -5,7 +5,9 @@ const {
   findCourseFromDb,
   findCourseFromDbWithFullName } = require("../../../db/services/courseService");
 const { sendErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
-const { facultyRole } = require("../../../../config.json");
+const { courseAdminRole, facultyRole } = require("../../../../config.json");
+const { createCourseMemberToDatabase, findCourseMember } = require("../../../db/services/courseMemberService");
+const { findUserByDiscordId } = require("../../../db/services/userService");
 
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
@@ -41,7 +43,31 @@ const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Creating course...");
 
   await createCourseToDatabase(courseCode, courseFullName, courseName, models.Course);
-  await editEphemeral(interaction, `Created course ${courseName}.`);
+  await editEphemeral(interaction, `Created course ${courseName}. Adding you as an instructor to the course.`);
+
+  //Adding user as a member of the course
+  console.log("Adding user as a member of course")
+  const course = await findCourseFromDb(courseName, models.Course);
+  const user = await findUserByDiscordId(interaction.member.user.id, models.User);
+  await createCourseMemberToDatabase(user.id, course.id, models.CourseMember);
+
+  //Modifying user to be an instructor of the course
+  courseMember = await findCourseMember(user.id, course.id, models.CourseMember);
+  courseMember.instructor = true;
+  await courseMember.save();
+  const instructorRole = await interaction.guild.roles.cache.find(r => r.name === `${courseName} ${courseAdminRole}`);
+  await interaction.member.roles.add(instructorRole);
+
+  //Generating final ephemeral message with #channel link in the message 
+  const channels = await interaction.guild.channels.fetch();
+  const courseChannel = channels.find(
+  c => c.name === `${courseName}_general` && c.type === "GUILD_TEXT"
+  );
+  let channelLink = "";
+  if (courseChannel) {
+    channelLink = `<#${courseChannel.id}>`;
+  }
+  await editEphemeral(interaction, `Created course ${courseName}. You have been added as an instructor of the course. You can find the course by clicking: ${channelLink || "Channel not found."} or among the listed courses on the sidebar.`);
 };
 
 module.exports = {
