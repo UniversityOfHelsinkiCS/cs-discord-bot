@@ -3,12 +3,12 @@ const { getCourseNameFromCategory, updateAnnouncementChannelMessage, getUserWith
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { findCourseMember } = require("../../../db/services/courseMemberService");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
+const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) { // Olisiko parempi tarkistaa tietokannasta eikä discordista?
-    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return
   }
 

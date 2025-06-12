@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/status");
-const { sendEphemeral, editErrorEphemeral, editEphemeralForStatus } = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeralForStatus } = require("../../../src/discordBot/services/message");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
@@ -32,7 +32,7 @@ createCourseInvitationLink.mockImplementation(() => url);
 const courseMembersInstanceMock = { length: undefined };
 findAllCourseMembers.mockImplementation(() => courseMembersInstanceMock);
 
-const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
+const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 
 const createResponse = () => {
   return `
@@ -76,5 +76,13 @@ describe("slash status command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeralForStatus).toHaveBeenCalledTimes(1);
     expect(editEphemeralForStatus).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

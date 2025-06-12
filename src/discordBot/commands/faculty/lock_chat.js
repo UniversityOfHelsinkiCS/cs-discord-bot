@@ -5,13 +5,13 @@ const {
   checkCourseCooldown } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { setCourseToLocked } = require("../../../db/services/courseService");
-const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+const { sendEphemeral, sendErrorEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return
   }
 

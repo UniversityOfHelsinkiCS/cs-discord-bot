@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/create_channel");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
+const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { getCourseNameFromCategory } = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { createChannelToDatabase, countChannelsByCourse, findChannelFromDbByName } = require("../../../src/db/services/channelService");
@@ -12,12 +12,13 @@ jest.mock("../../../src/db/services/channelService");
 
 getCourseNameFromCategory.mockImplementation((name) => name.replace("📚", "").trim());
 
-const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
+const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 findCourseFromDb.mockImplementation((courseName) => ({ name: courseName, courseName: courseName, id: 1 }));
 const courseName = "test";
 const channelName = "rules";
 const initialResponse = "Creating text channel...";
 defaultTeacherInteraction.options = { getString: jest.fn(() => channelName) };
+defaultStudentInteraction.options = { getString: jest.fn(() => channelName) };
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -82,5 +83,13 @@ describe("slash create channel command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

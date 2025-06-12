@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const { sendEphemeral, editEphemeral } = require("../../services/message");
+const { sendEphemeral, sendErrorEphemeral, editEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 const { findCourseFromDb } = require("../../../db/services/courseService");
@@ -8,7 +8,7 @@ const { sendMessageToTelegram } = require("../../../telegramBot/bridge/service")
 
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return
   }
 

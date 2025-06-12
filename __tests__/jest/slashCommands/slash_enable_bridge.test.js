@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/enable_bridge");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
+const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { isCourseCategory } = require("../../../src/discordBot/services/service");
@@ -13,7 +13,7 @@ jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/channelService");
 
-const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
+const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 const initalResponse = "Enabling the bridge to Telegram...";
 const defaultChannelModelInstanceMock = { save: jest.fn(), bridged: false, defaultChannel: true };
 const nonDefaultBridgedChannelModelInstanceMock = { save: jest.fn(), bridged: true, defaultChannel: false };
@@ -80,5 +80,13 @@ describe("slash enable_bridge command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initalResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+  });
+
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

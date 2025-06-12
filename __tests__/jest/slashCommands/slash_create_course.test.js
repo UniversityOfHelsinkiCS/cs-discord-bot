@@ -20,27 +20,29 @@ findCourseFromDb
 createCourseToDatabase.mockImplementation(() => {return { name: "nickname", id:  Math.floor(Math.random() * 10) + 5 }; });
 
 const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
-defaultTeacherInteraction.options = {
-  getString: jest.fn((name) => {
-    const names = {
-      coursecode: "TKT-100",
-      full_name: "Long course name",
-      nick_name: "nickname",
-    };
-    return names[name];
-  }),
-};
 
-defaultStudentInteraction.options = {
-  getString: jest.fn((name) => {
-    const names = {
-      coursecode: "TKT-100",
-      full_name: "Long course name",
-    };
-    return names[name];
-  }),
-};
+beforeEach(() => {
+  defaultTeacherInteraction.options = {
+    getString: jest.fn((name) => {
+      const names = {
+        coursecode: "TKT-100",
+        full_name: "Long course name",
+        nick_name: "nickname",
+      };
+      return names[name];
+    }),
+  };
 
+  defaultStudentInteraction.options = {
+    getString: jest.fn((name) => {
+      const names = {
+        coursecode: "TKT-100",
+        full_name: "Long course name",
+      };
+      return names[name];
+    }),
+  };
+});
 afterEach(() => {
   jest.clearAllMocks();
 });
@@ -65,19 +67,39 @@ describe("slash create command", () => {
   });
 
   test("course code must be unique when nickname not given", async () => {
-    const client = defaultStudentInteraction.client;
+    defaultTeacherInteraction.options = {
+      getString: jest.fn((name) => {
+        const names = {
+          coursecode: "TKT-100",
+          full_name: "Long course name",
+          nick_name: undefined,
+        };
+        return names[name];
+      }),
+    };
+    const client = defaultTeacherInteraction.client;
     const response = "Course code must be unique.";
-    await execute(defaultStudentInteraction, client, models);
+    await execute(defaultTeacherInteraction, client, models);
     expect(findCourseFromDbWithFullName).toHaveBeenCalledTimes(1);
     expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
   test("create course name without nick", async () => {
+    defaultTeacherInteraction.options = {
+      getString: jest.fn((name) => {
+        const names = {
+          coursecode: "TKT-100",
+          full_name: "Long course name",
+          nick_name: undefined,
+        };
+        return names[name];
+      }),
+    };
     const courseCode = "TKT-100";
     const fullName = "Long course name";
-    const client = defaultStudentInteraction.client;
-    await execute(defaultStudentInteraction, client, models);
+    const client = defaultTeacherInteraction.client;
+    await execute(defaultTeacherInteraction, client, models);
     expect(createCourseToDatabase).toHaveBeenCalledTimes(1);
     expect(createCourseToDatabase).toHaveBeenCalledWith(courseCode, fullName, courseCode.toLowerCase(), models.Course);
   });
@@ -138,4 +160,11 @@ describe("slash create command", () => {
     expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, "Emojis are not allowed!");
   });
 
+  test("a student cannot use faculty command", async () => {
+    const client = defaultStudentInteraction.client;
+    const response = "You do not have permission to use this command.";
+    await execute(defaultStudentInteraction, client, models);
+    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+  });
 });

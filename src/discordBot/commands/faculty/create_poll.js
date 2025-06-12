@@ -1,14 +1,14 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
 
-const { sendEphemeral, editEphemeral, editEphemeralWithComponents, editEphemeralClearComponents } = require("../../services/message");
+const { sendEphemeral, editEphemeral, sendErrorEphemeral, editEphemeralWithComponents, editEphemeralClearComponents } = require("../../services/message");
 
 const { facultyRole } = require("../../../../config.json");
 const numbers = [ "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟" ];
 
 const execute = async (interaction, client) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendEphemeral(interaction, "You do not have permission to use this command.");
+    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return
   }
 
