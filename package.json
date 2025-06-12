@@ -63,7 +63,7 @@
     "cross-env": "^7.0.3",
     "eslint": "^7.26.0",
     "eslint-plugin-jest": "^24.3.6",
-    "jest": "^27.0.1",
+    "jest": "^30.0.0",
     "nodemon": "^2.0.4",
     "sequelize-cli": "^6.2.0",
     "sequelize-mock": "^0.10.2",
