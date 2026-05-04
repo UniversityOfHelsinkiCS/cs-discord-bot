@@ -5,6 +5,20 @@ const { createCourseMemberToDatabase, removeCourseMemberFromDb, findAllCourseMem
 const emoji = "👤";
 const GUIDE_CHANNEL_NAME = "guide";
 
+// This is here because sometimes the bot/discord misses reactions and so they remain.
+// This ensures that every time the bot reacts to a reaction, it leaves only the bot's reaction there
+const removeNonBotReactions = async (message) => {
+  const reactions = message.reactions.cache;
+  await Promise.all(
+    [...reactions.values()].map(async (r) => {
+      const users = await r.users.fetch();
+      await Promise.all(
+        [...users.values()].filter(u => !u.bot).map(u => r.users.remove(u.id)),
+      );
+    }),
+  );
+};
+
 const execute = async (reaction, user, client, models) => {
   if (user.bot) return;
 
@@ -15,7 +29,7 @@ const execute = async (reaction, user, client, models) => {
   if (channel.name !== GUIDE_CHANNEL_NAME) return;
   if (reaction.emoji.name !== emoji) {
     // Still remove the reaction if it's not the correct one
-    await reaction.users.remove(user.id);
+    await reaction.remove();
     return;
   }
 
@@ -53,7 +67,7 @@ const execute = async (reaction, user, client, models) => {
 
   // Always remove their reaction
   console.log("try removing reaction");
-  await reaction.users.remove(user.id);
+  await removeNonBotReactions(message);
   console.log("attempt done");
 
   if (isAlreadyInCourse) {
