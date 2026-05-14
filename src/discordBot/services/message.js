@@ -89,6 +89,11 @@ const sendReplyMessage = async (message, channel, replyText) => {
   }, 86400000);
 };
 
+const sendReportToCommandsChannel = async (client, content, files = []) => {
+  const commandsChannel = client.guild.channels.cache.find((c) => validateChannel(c));
+  await commandsChannel.send({ content, files });
+};
+
 const sendFollowUpEphemeral = async (interaction, msg) => {
   await interaction.followUp({ content: `${msg}`, ephemeral: true });
 };
@@ -96,6 +101,7 @@ const sendFollowUpEphemeral = async (interaction, msg) => {
 module.exports = {
   sendPullDateMessage,
   sendErrorReport,
+  sendReportToCommandsChannel,
   sendErrorEphemeral,
   sendErrorReportNoInteraction,
   sendEphemeral,

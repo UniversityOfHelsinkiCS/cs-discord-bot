@@ -1,8 +1,12 @@
 const { sendReplyMessage } = require("../services/message");
 const { logError } = require("./../services/logger");
+const { firewall } = require("../services/firewall");
 const prefix = process.env.PREFIX;
 
 const execute = async (message, client, models) => {
+  if (message.author.bot || !message.member) return;
+  await firewall(message, client);
+  if (!message.content) return;
 
   let args = message.content.slice(prefix.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
