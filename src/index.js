@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./sentry");
 const { sequelize, connectToDatabase } = require("./db/index");
 const startServer = require("./server/server");
 const { client, startDiscordBot } = require("./discordBot/index");
@@ -17,4 +18,10 @@ const start = async () => {
   }
 };
 
-start();
+start().catch(async (err) => {
+  const Sentry = require("@sentry/node");
+  Sentry.captureException(err);
+  await Sentry.flush(2000);
+  console.error("Fatal startup error:", err);
+  process.exit(1);
+});

@@ -16,9 +16,9 @@ process.once("SIGTERM", () => telegramClient.stop("SIGTERM"));
 const eventFiles = fs.readdirSync("./src/telegramBot/events").filter(file => file.endsWith(".js"));
 for (const file of eventFiles) {
   const event = require(`./events/${file}`);
-  telegramClient.on(event.name, (...args) => {
+  telegramClient.on(event.name, async (...args) => {
     try {
-      event.execute(...args, telegramClient, Course);
+      await event.execute(...args, telegramClient, Course);
     }
     catch (error) {
       logError(error);

@@ -1,3 +1,4 @@
+const Sentry = require("@sentry/node");
 const { createLogger, format, transports } = require("winston");
 const {
   PapertrailConnection,
@@ -57,6 +58,7 @@ setupLogger();
 
 const logError = (error) => {
   logger.error(error);
+  Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
 };
 
 const logInfo = (message) => {
@@ -69,6 +71,11 @@ const logInteractionError = (error, client, interaction) => {
   const msg = `ERROR DETECTED!\nMember: ${member.displayName}\nCommand: ${interaction.commandName}\nChannel: ${channel.name}}`;
   logger.error(msg);
   logger.error(error);
+  Sentry.withScope((scope) => {
+    scope.setTag("command", interaction.commandName);
+    scope.setUser({ id: interaction.member.user.id, username: member.displayName });
+    Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
+  });
 };
 
 const logNoInteractionError = async (
@@ -81,6 +88,7 @@ const logNoInteractionError = async (
   const msg = `ERROR DETECTED!\nMember: ${member}\nChannel: ${channel}`;
   logger.error(msg);
   logger.error(error);
+  Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
 };
 
 module.exports = {

@@ -46,6 +46,8 @@ const connectToDatabase = async (attempt = 0) => {
     logError(err);
     if (attempt === DB_CONNECTION_RETRY_LIMIT) {
       console.log(`Connection to database failed after ${attempt} attempts`);
+      const Sentry = require("@sentry/node");
+      await Sentry.flush(2000);
       return process.exit(1);
     }
     console.log(

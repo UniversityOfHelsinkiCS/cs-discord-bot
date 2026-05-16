@@ -1,4 +1,5 @@
 require("dotenv").config();
+const Sentry = require("@sentry/node");
 const express = require("express");
 const session = require("express-session");
 const passport = require("passport");
@@ -44,6 +45,8 @@ module.exports = (sequelize) => {
 
   app.use(express.json());
   app.use("/webhooks", webhookProxyRoute);
+
+  app.use(Sentry.expressErrorHandler());
 
   app.use("*", defaultRouteErrorHandler);
 
