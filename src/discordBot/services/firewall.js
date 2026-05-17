@@ -5,8 +5,8 @@ const COOLDOWN_MS = 2 * 60 * 1000;
 
 const checkAttachments = async (message, client) => {
   const images = message.attachments.filter(att => att.contentType?.startsWith("image/"));
-  // Filter for messages with 5 images as all the scams contain 5 images
-  if (images.size !== 5) return;
+  // Filter for messages with 4 images as all the scams contain 4 images
+  if (images.size !== 4) return;
   const now = Date.now();
   const last = recentlyReported.get(message.author.id);
   if (last && now - last < COOLDOWN_MS) return;
