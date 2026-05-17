@@ -11,6 +11,10 @@
     "lint": "eslint ."
   },
   "jest": {
+    "moduleNameMapper": {
+      "^@sentry/node$": "<rootDir>/__tests__/mocks/@sentry/node.js",
+      "^winston-papertrail$": "<rootDir>/__tests__/mocks/winston-papertrail.js"
+    },
     "coveragePathIgnorePatterns": [
       "/src/bridge/",
       "/node_modules/",

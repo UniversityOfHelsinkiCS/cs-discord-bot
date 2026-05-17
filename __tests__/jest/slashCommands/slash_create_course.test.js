@@ -2,12 +2,16 @@ const { execute } = require("../../../src/discordBot/commands/faculty/create_cou
 const { sendEphemeral, sendErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
 const { containsEmojis } = require("../../../src/discordBot/services/service");
 const { findCourseFromDb, findCourseFromDbWithFullName, createCourseToDatabase } = require("../../../src/db/services/courseService");
+const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { createCourseMemberToDatabase, findCourseMember } = require("../../../src/db/services/courseMemberService");
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/channelService");
+jest.mock("../../../src/db/services/userService");
+jest.mock("../../../src/db/services/courseMemberService");
 
 findCourseFromDbWithFullName
   .mockImplementation(() => false)
@@ -18,10 +22,21 @@ findCourseFromDb
   .mockImplementationOnce(() => true);
 
 createCourseToDatabase.mockImplementation(() => {return { name: "nickname", id:  Math.floor(Math.random() * 10) + 5 }; });
+findUserByDiscordId.mockImplementation(() => ({ id: 1 }));
+const mockCourseMember = { instructor: false, save: jest.fn() };
+findCourseMember.mockImplementation(() => mockCourseMember);
+createCourseMemberToDatabase.mockImplementation(() => {});
 
 const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 
+const mockGuild = {
+  roles: { cache: { find: jest.fn(() => ({ name: "tkt-100 instructor" })) } },
+  channels: { fetch: jest.fn(() => ({ find: jest.fn(() => null) })) },
+};
+
 beforeEach(() => {
+  defaultTeacherInteraction.guild = mockGuild;
+  defaultTeacherInteraction.member.roles.add = jest.fn();
   defaultTeacherInteraction.options = {
     getString: jest.fn((name) => {
       const names = {
@@ -107,12 +122,11 @@ describe("slash create command", () => {
   test("respond with correct emphemeral", async () => {
     const courseName = "nickname";
     const client = defaultTeacherInteraction.client;
-    const result = `Created course ${courseName}.`;
     await execute(defaultTeacherInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, "Creating course...");
-    expect(editEphemeral).toHaveBeenCalledTimes(1);
-    expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, result);
+    expect(editEphemeral).toHaveBeenCalledTimes(2);
+    expect(editEphemeral).toHaveBeenNthCalledWith(1, defaultTeacherInteraction, `Created course ${courseName}. Adding you as an instructor to the course.`);
   });
 
   test("fails if parameters are too long", async () => {

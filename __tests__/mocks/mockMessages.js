@@ -54,6 +54,7 @@ const messageInGuideChannel = {
   member: teacher,
   react: jest.fn(),
   reply: jest.fn(),
+  attachments: { filter: jest.fn(() => ({ size: 0 })) },
 };
 
 const messageInCommandsChannel = {
@@ -93,6 +94,7 @@ const messageInCommandsChannel = {
   member: teacher,
   react: jest.fn(),
   reply: jest.fn(),
+  attachments: { filter: jest.fn(() => ({ size: 0 })) },
 };
 
 module.exports = {
