@@ -11,6 +11,30 @@ const SCAM_FINGERPRINT_SETS = [
     { width: 1920, height: 2560 },
     { width: 828, height: 1012 },
   ],
+  [
+    { width: 2227, height: 2560 },
+    { width: 2560, height: 2513 },
+    { width: 1839, height: 2560 },
+    { width: 2560, height: 2377 },
+  ],
+  [
+    { width: 651, height: 1002 },
+    { width: 634, height: 977 },
+    { width: 699, height: 1078 },
+    { width: 2047, height: 2560 },
+  ],
+  [
+    { width: 1304, height: 1174 },
+    { width: 1099, height: 636 },
+    { width: 1082, height: 859 },
+    { width: 960, height: 1200 },
+  ],
+  [
+    { width: 960, height: 1280 },
+    { width: 960, height: 1280 },
+    { width: 960, height: 1280 },
+    { width: 946, height: 1261 },
+  ],
 ];
 
 const sortDims = (arr) => [...arr].sort((a, b) => a.width - b.width || a.height - b.height);
