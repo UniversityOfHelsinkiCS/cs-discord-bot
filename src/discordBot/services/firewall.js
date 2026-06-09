@@ -76,7 +76,8 @@ const sendScamReport = async (message, images, isConfirmedScam, client) => {
   const header = isConfirmedScam
     ? "**SCAM MESSAGE DETECTED AND REMOVED**"
     : "<@&758046962829361262>\n**POSSIBLE SCAM IMAGES DETECTED!**";
-  const content = `${header}\nMember: ${message.member.displayName} (${message.author.tag})\nChannel: ${message.channel.name}\nCount: ${images.size}\n${imageDetails}`;
+  const messageLink = isConfirmedScam ? "" : `\nMessage: ${message.url}`;
+  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nCount: ${images.size}\n${imageDetails}${messageLink}`;
   await sendReportToCommandsChannel(client, content, files);
 };
 

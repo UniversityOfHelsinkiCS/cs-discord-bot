@@ -22,13 +22,17 @@ const makeAttachments = (allAttachments) => ({
 });
 
 let authorCounter = 0;
-const makeMessage = ({ isBot = false, hasMember = true, attachments = SCAM_IMAGES, authorId } = {}) => ({
-  author: { bot: isBot, id: authorId ?? `user-${++authorCounter}`, tag: "user#0001", send: jest.fn().mockResolvedValue() },
-  member: hasMember ? { displayName: "Test User", kick: jest.fn().mockResolvedValue() } : null,
-  channel: { name: "general" },
-  attachments: makeAttachments(attachments),
-  delete: jest.fn(),
-});
+const makeMessage = ({ isBot = false, hasMember = true, attachments = SCAM_IMAGES, authorId } = {}) => {
+  const id = authorId ?? `user-${++authorCounter}`;
+  return {
+    author: { bot: isBot, id, tag: "user#0001", send: jest.fn().mockResolvedValue() },
+    member: hasMember ? { displayName: "Test User", kick: jest.fn().mockResolvedValue() } : null,
+    channel: { id: "channel-123", name: "general" },
+    url: "https://discord.com/channels/guild/channel-123/msg-456",
+    attachments: makeAttachments(attachments),
+    delete: jest.fn(),
+  };
+};
 
 const client = {};
 
@@ -105,13 +109,33 @@ describe("firewall", () => {
     expect(content).toContain("SCAM MESSAGE DETECTED AND REMOVED");
   });
 
-  test("report includes member name, channel name, and image count", async () => {
+  test("report includes member mention, channel link, and image count", async () => {
     const msg = makeMessage();
     await firewall(msg, client);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
-    expect(content).toContain("Test User");
-    expect(content).toContain("general");
+    expect(content).toContain(`<@${msg.author.id}>`);
+    expect(content).toContain("<#channel-123>");
     expect(content).toContain("Count: 4");
+  });
+
+  test("possible scam report includes message link", async () => {
+    const suspiciousImages = [
+      { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
+      { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
+      { contentType: "image/jpeg", name: "c.jpg", size: 100, width: 500, height: 600, url: "http://example.com/c" },
+      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" },
+    ];
+    const msg = makeMessage({ attachments: suspiciousImages });
+    await firewall(msg, client);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).toContain(msg.url);
+  });
+
+  test("confirmed scam report does not include message link", async () => {
+    const msg = makeMessage();
+    await firewall(msg, client);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).not.toContain(msg.url);
   });
 
   test("report passes image URLs as files", async () => {
