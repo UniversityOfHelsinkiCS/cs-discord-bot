@@ -2,6 +2,7 @@ const { firewall } = require("../../src/discordBot/services/firewall");
 const { sendReportToCommandsChannel } = require("../../src/discordBot/services/message");
 
 jest.mock("../../src/discordBot/services/message");
+jest.mock("../../src/discordBot/services/logger", () => ({ logError: jest.fn() }));
 
 const SCAM_IMAGES = [
   { contentType: "image/jpeg", name: "img1.jpg", size: 1000, width: 1920, height: 2560, url: "http://example.com/1" },
@@ -22,8 +23,8 @@ const makeAttachments = (allAttachments) => ({
 
 let authorCounter = 0;
 const makeMessage = ({ isBot = false, hasMember = true, attachments = SCAM_IMAGES, authorId } = {}) => ({
-  author: { bot: isBot, id: authorId ?? `user-${++authorCounter}`, tag: "user#0001" },
-  member: hasMember ? { displayName: "Test User" } : null,
+  author: { bot: isBot, id: authorId ?? `user-${++authorCounter}`, tag: "user#0001", send: jest.fn().mockResolvedValue() },
+  member: hasMember ? { displayName: "Test User", kick: jest.fn().mockResolvedValue() } : null,
   channel: { name: "general" },
   attachments: makeAttachments(attachments),
   delete: jest.fn(),
@@ -93,10 +94,12 @@ describe("firewall", () => {
     expect(content).toContain("POSSIBLE SCAM IMAGES DETECTED");
   });
 
-  test("deletes message and reports when scam fingerprint matches", async () => {
+  test("deletes message, DMs user, kicks member, and reports when scam fingerprint matches", async () => {
     const msg = makeMessage();
     await firewall(msg, client);
     expect(msg.delete).toHaveBeenCalledTimes(1);
+    expect(msg.author.send).toHaveBeenCalledTimes(1);
+    expect(msg.member.kick).toHaveBeenCalledTimes(1);
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).toContain("SCAM MESSAGE DETECTED AND REMOVED");
