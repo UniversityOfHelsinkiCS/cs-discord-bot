@@ -6,6 +6,8 @@ const { client } = require("../mocks/mockClient");
 jest.mock("../../src/db/services/courseService");
 jest.mock("../../src/discordBot/services/service");
 jest.mock("../../src/discordBot/services/guide");
+jest.mock("../../src/discordBot/services/honeypot");
+jest.mock("../../src/discordBot/services/firewall");
 jest.mock("../../src/db/hookInit");
 
 initHooks.mockImplementation(() => true);
@@ -20,10 +22,12 @@ describe("Initialize", () => {
     await initializeApplicationContext(client, models);
     const guide = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "guide");
     const commands = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "commands");
+    const honeypot = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "honeypot");
     expect(initHooks).toHaveBeenCalledTimes(1);
-    expect(client.guild.channels.create).toHaveBeenCalledTimes(2);
-    expect(client.guild.channels.cache.length).toBe(2);
+    expect(client.guild.channels.create).toHaveBeenCalledTimes(3);
+    expect(client.guild.channels.cache.length).toBe(3);
     expect(guide).toBeDefined();
     expect(commands).toBeDefined();
+    expect(honeypot).toBeDefined();
   });
 });

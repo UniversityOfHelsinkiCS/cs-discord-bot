@@ -1,6 +1,8 @@
 const { findOrCreateRoleWithName } = require("./service");
 const { facultyRole, githubRepo } = require("../../../config.json");
 const { updateGuide } = require("../../discordBot/services/guide");
+const { setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME } = require("../../discordBot/services/honeypot");
+const { startFirewallPruning } = require("../../discordBot/services/firewall");
 const { initHooks } = require("../../db/hookInit");
 const { sendPullDateMessage } = require("./message");
 
@@ -41,6 +43,13 @@ const initChannels = async (guild, client) => {
         permissionOverwrites: [{ id: guild.id, deny: ["SEND_MESSAGES"], allow: ["VIEW_CHANNEL"] }, { id: client.user.id, allow: ["SEND_MESSAGES", "VIEW_CHANNEL"] }],
       },
     },
+    {
+      name: HONEYPOT_CHANNEL_NAME,
+      options: {
+        type: "GUILD_TEXT",
+        permissionOverwrites: [{ id: guild.id, allow: ["SEND_MESSAGES", "VIEW_CHANNEL"] }],
+      },
+    },
   ];
   await channels.reduce(async (promise, channel) => {
     await promise;
@@ -54,7 +63,7 @@ const initRoles = async (guild) => {
 };
 
 const setInitialGuideMessage = async (guild, channelName, models) => {
-  console.log("Started initializing guide message")
+  console.log("Started initializing guide message");
   const guideChannel = guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === channelName);
   if (!guideChannel.lastPinTimestamp) {
     const msg = await guideChannel.send("initial");
@@ -64,7 +73,7 @@ const setInitialGuideMessage = async (guild, channelName, models) => {
   const guideinvite = invs.find(invite => invite.channel.name === "guide");
   if (!guideinvite) await guideChannel.createInvite({ maxAge: 0 });
   await updateGuide(guild, models);
-  console.log("Guide message initialized and updated")
+  console.log("Guide message initialized and updated");
 };
 
 const initializeApplicationContext = async (client, models) => {
@@ -72,6 +81,8 @@ const initializeApplicationContext = async (client, models) => {
   await initRoles(client.guild);
   await initChannels(client.guild, client);
   setInitialGuideMessage(client.guild, "guide", models);
+  setInitialHoneypotMessage(client.guild);
+  startFirewallPruning();
 
   if (process.env.NODE_ENV === "production") {
     await sendPullDateMessage(client);
