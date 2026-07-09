@@ -1,4 +1,4 @@
-const HONEYPOT_CHANNEL_NAME = "honeypot";
+const HONEYPOT_CHANNEL_NAME = "do_not_post";
 const HONEYPOT_MESSAGE = `
 # Tämä on ansa boteille. Älä laitaviestiä tänne tai sinut saatetaan poistaa serveriltä.
 

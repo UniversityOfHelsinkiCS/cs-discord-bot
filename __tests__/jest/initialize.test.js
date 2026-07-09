@@ -2,6 +2,7 @@ const { initializeApplicationContext } = require("../../src/discordBot/services/
 const { initHooks } = require("../../src/db/hookInit");
 const models = require("../mocks/mockModels");
 const { client } = require("../mocks/mockClient");
+const { HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 
 jest.mock("../../src/db/services/courseService");
 jest.mock("../../src/discordBot/services/service");
@@ -22,7 +23,7 @@ describe("Initialize", () => {
     await initializeApplicationContext(client, models);
     const guide = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "guide");
     const commands = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "commands");
-    const honeypot = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "honeypot");
+    const honeypot = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === HONEYPOT_CHANNEL_NAME);
     expect(initHooks).toHaveBeenCalledTimes(1);
     expect(client.guild.channels.create).toHaveBeenCalledTimes(3);
     expect(client.guild.channels.cache.length).toBe(3);
