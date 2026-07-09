@@ -47,10 +47,17 @@ const getAllUsers = async (User) => {
   });
 };
 
+const pruneUsersNotInGuild = async (guild, User) => {
+  const users = await getAllUsers(User);
+  const staleUsers = users.filter(u => !guild.members.cache.has(u.discordId));
+  await Promise.all(staleUsers.map(u => removeUserFromDb(u.discordId, User)));
+};
+
 module.exports = {
   findUserByDiscordId,
   createUserToDatabase,
   removeUserFromDb,
   saveFacultyRoleToDb,
   findUserByDbId,
-  getAllUsers };
+  getAllUsers,
+  pruneUsersNotInGuild };

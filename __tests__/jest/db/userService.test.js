@@ -3,7 +3,8 @@ const {
   createUserToDatabase,
   removeUserFromDb,
   saveFacultyRoleToDb,
-  findUserByDbId } = require("../../../src/db/services/userService");
+  findUserByDbId,
+  pruneUsersNotInGuild } = require("../../../src/db/services/userService");
 
 const userModelInstanceMock = {
   id: 1,
@@ -19,6 +20,7 @@ const userModelMock = {
   create: jest.fn().mockResolvedValue(userModelInstanceMock),
   destroy: jest.fn().mockResolvedValue(userModelInstanceMock),
   update: jest.fn().mockResolvedValue(userModelInstanceMock),
+  findAll: jest.fn(),
 };
 
 afterEach(() => {
@@ -119,6 +121,35 @@ describe("userService", () => {
         { discordId: 10 },
     });
     expect(userModelInstanceMock.update).toHaveBeenCalledTimes(0);
+  });
+
+  test("prune removes users no longer in the guild", async () => {
+    userModelMock.findAll.mockResolvedValueOnce([
+      { discordId: 10 },
+      { discordId: 20 },
+      { discordId: 30 },
+    ]);
+    userModelMock.findOne
+      .mockResolvedValueOnce({ id: 2, discordId: 20 })
+      .mockResolvedValueOnce({ id: 3, discordId: 30 });
+    const guild = { members: { cache: new Map([[10, {}]]) } };
+
+    await pruneUsersNotInGuild(guild, userModelMock);
+
+    expect(userModelMock.destroy).toHaveBeenCalledTimes(2);
+    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: 2 } });
+    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: 3 } });
+  });
+
+  test("prune removes nobody if everyone is still in the guild", async () => {
+    userModelMock.findAll.mockResolvedValueOnce([
+      { discordId: 10 },
+    ]);
+    const guild = { members: { cache: new Map([[10, {}]]) } };
+
+    await pruneUsersNotInGuild(guild, userModelMock);
+
+    expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
   });
 
 });
