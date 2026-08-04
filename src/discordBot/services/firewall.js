@@ -11,34 +11,6 @@ const honeypotMessages = new Map();
 const chatMessages = new Map();
 const honeypotPosters = new Set();
 
-const addToStore = (store, userId, content) => {
-  if (!store.has(userId)) store.set(userId, new Map());
-  store.get(userId).set(content, Date.now());
-};
-
-const hasInStore = (store, userId, content) => {
-  const userMap = store.get(userId);
-  if (!userMap) return false;
-  const ts = userMap.get(content);
-  if (ts === undefined) return false;
-  return Date.now() - ts < MESSAGE_TTL_MS;
-};
-
-const pruneStore = (store) => {
-  const now = Date.now();
-  for (const [userId, contentMap] of store) {
-    for (const [content, ts] of contentMap) {
-      if (now - ts >= MESSAGE_TTL_MS) contentMap.delete(content);
-    }
-    if (contentMap.size === 0) store.delete(userId);
-  }
-};
-
-const startFirewallPruning = () => setInterval(() => {
-  pruneStore(honeypotMessages);
-  pruneStore(chatMessages);
-}, PRUNE_INTERVAL_MS);
-
 const recentlyReported = new Map();
 const COOLDOWN_MS = 2 * 60 * 1000;
 
@@ -91,6 +63,35 @@ We are sorry to inform you that we detected **suspicious activity on your accoun
 
 You were kicked from the server. You are free to rejoin the server after resetting your password.
 `;
+
+const addToStore = (store, userId, content) => {
+  if (!store.has(userId)) store.set(userId, new Map());
+  store.get(userId).set(content, Date.now());
+};
+
+const hasInStore = (store, userId, content) => {
+  const userMap = store.get(userId);
+  if (!userMap) return false;
+  const ts = userMap.get(content);
+  if (ts === undefined) return false;
+  return Date.now() - ts < MESSAGE_TTL_MS;
+};
+
+const pruneStore = (store) => {
+  const now = Date.now();
+  for (const [userId, contentMap] of store) {
+    for (const [content, ts] of contentMap) {
+      if (now - ts >= MESSAGE_TTL_MS) contentMap.delete(content);
+    }
+    if (contentMap.size === 0) store.delete(userId);
+  }
+};
+
+const startFirewallPruning = () => setInterval(() => {
+  pruneStore(honeypotMessages);
+  pruneStore(chatMessages);
+}, PRUNE_INTERVAL_MS);
+
 
 const sortDims = (arr) => [...arr].sort((a, b) => a.width - b.width || a.height - b.height);
 
@@ -172,6 +173,11 @@ const cleanHoneypotChannel = async (channel) => {
   }
 };
 
+const formatAttachments = (attachments) => {
+  if (!attachments || attachments.size === 0) return null;
+  return [...attachments.values()].map(att => att.url).join("\n");
+};
+
 const checkHoneypot = async (message, client) => {
   const channelName = message.channel.name;
   const isHoneypot = channelName === HONEYPOT_CHANNEL_NAME;
@@ -182,13 +188,16 @@ const checkHoneypot = async (message, client) => {
   if (isHoneypot) {
     await cleanHoneypotChannel(message.channel);
     const userId = message.author.id;
-    const initialReport = `**HONEYPOT MESSAGE**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
+    const messageContent = message.content?.trim() || "*(no text content)*";
+    const attachments = formatAttachments(message.attachments);
+    const attachmentLine = attachments ? `\nAttachments: ${attachments}` : "";
+    const initialReport = `**HONEYPOT MESSAGE**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nMessage: ${messageContent}${attachmentLine}`;
     await sendReportToCommandsChannel(client, initialReport);
     if (honeypotPosters.has(userId)) {
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
       const banned = await message.guild.members.ban(userId, { days: 1, reason: "Sent multiple messages in honeypot channel" }).catch(logError);
       if (banned) await message.guild.members.unban(userId).catch(logError);
-      const report = `**HONEYPOT TRIGGERED**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
+      const report = `**HONEYPOT REPEAT MESSAGE KICK**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
       await sendReportToCommandsChannel(client, report);
       return;
     }
