@@ -85,7 +85,7 @@ const findCoursesFromDb = async (order, Course, state) => {
 
 const getAllCourses = async (Course) => {
   return await Course.findAll({
-    attributes: ["id", "code", "fullName", "name", "private", "locked", "categoryId"],
+    attributes: ["id", "code", "fullName", "name", "private", "locked", "categoryId", "telegramId"],
     raw: true,
   });
 };
