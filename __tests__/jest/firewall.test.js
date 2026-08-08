@@ -341,7 +341,46 @@ describe("honeypot detection", () => {
     const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "other", attachments: [] });
     await firewall(msg1, client);
     await firewall(msg2, client);
-    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining("HONEYPOT TRIGGERED"));
+    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining("HONEYPOT REPEAT MESSAGE KICK"));
+  });
+
+  test("honeypot message report includes the message content", async () => {
+    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
+    await firewall(msg, client);
+    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining(TEXT));
+  });
+
+  test("honeypot message report shows placeholder when there is no text content", async () => {
+    const att = [{ name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }];
+    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
+    await firewall(msg, client);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).toContain("Message: *(no text content)*");
+  });
+
+  test("honeypot message report includes attachment URLs", async () => {
+    const att = [{ name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }];
+    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
+    await firewall(msg, client);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).toContain("http://example.com/s");
+  });
+
+  test("honeypot message report omits attachments line when there are none", async () => {
+    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
+    await firewall(msg, client);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).not.toContain("Attachments:");
+  });
+
+  test("repeat honeypot trigger report does not include the message content", async () => {
+    const authorId = "repeat-poster-4";
+    const msg1 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
+    const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "other content", attachments: [] });
+    await firewall(msg1, client);
+    await firewall(msg2, client);
+    const triggeredCall = sendReportToCommandsChannel.mock.calls.find(([, content]) => content.includes("HONEYPOT REPEAT MESSAGE KICK"));
+    expect(triggeredCall[1]).not.toContain("Message:");
   });
 
   test("different users posting in honeypot do not trigger each other's ban", async () => {
