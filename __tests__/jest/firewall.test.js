@@ -416,3 +416,56 @@ describe("honeypot detection", () => {
     expect(msg.channel.bulkDelete).not.toHaveBeenCalled();
   });
 });
+
+describe("honeypot poster expiry", () => {
+  const TTL_MS = 60 * 60 * 1000;
+  const postHoneypot = (authorId, content) =>
+    firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("second honeypot post just under an hour later still triggers a ban+unban", async () => {
+    const authorId = "expiry-within";
+    await postHoneypot(authorId, "first");
+
+    jest.setSystemTime(Date.now() + TTL_MS - 1000);
+    const second = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "second", attachments: [] });
+    await firewall(second, client);
+
+    expect(second.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(second.guild.members.unban).toHaveBeenCalledTimes(1);
+  });
+
+  test("second honeypot post more than an hour later is treated as a first post (no ban)", async () => {
+    const authorId = "expiry-after";
+    await postHoneypot(authorId, "first");
+
+    jest.setSystemTime(Date.now() + TTL_MS + 1000);
+    const second = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "second", attachments: [] });
+    await firewall(second, client);
+
+    expect(second.guild.members.ban).not.toHaveBeenCalled();
+  });
+
+  test("once the entry has expired, a fresh pair of posts within an hour bans again", async () => {
+    const authorId = "expiry-rearm";
+    await postHoneypot(authorId, "first");
+
+    jest.setSystemTime(Date.now() + TTL_MS + 1000);
+    const rearm = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "rearm", attachments: [] });
+    await firewall(rearm, client);
+    expect(rearm.guild.members.ban).not.toHaveBeenCalled();
+
+    jest.setSystemTime(Date.now() + 60 * 1000);
+    const third = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "third", attachments: [] });
+    await firewall(third, client);
+    expect(third.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+});
