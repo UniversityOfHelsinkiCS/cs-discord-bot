@@ -23,18 +23,20 @@ const initCourseMemberHooks = (guild, models) => {
   models.CourseMember.addHook("afterBulkDestroy", async (courseMember) => {
     const user = await findUserByDbId(courseMember.where.userId, models.User);
     const course = await findCourseFromDbById(courseMember.where.courseId, models.Course);
-    const member = guild.members.cache.get(user.discordId);
-    const courseRoles = guild.roles.cache
-      .filter(role => (role.name === `${course.name} ${courseAdminRole}` || role.name === course.name))
-      .map(role => role.name);
+    const member = guild.members.cache.get(user.discordId)
+      || await guild.members.fetch(user.discordId).catch(() => null);
 
-    await Promise.all(member.roles.cache
-      .filter(role => courseRoles.includes(role.name))
-      .map(async role => await member.roles.remove(role)));
-    await member.fetch(true);
+    if (member) {
+      const courseRoles = guild.roles.cache
+        .filter(role => (role.name === `${course.name} ${courseAdminRole}` || role.name === course.name))
+        .map(role => role.name);
+
+      await Promise.all(member.roles.cache
+        .filter(role => courseRoles.includes(role.name))
+        .map(async role => await member.roles.remove(role)));
+    }
     const announcementChannel = guild.channels.cache.find(c => c.name === `${course.name}_announcement`);
-    await updateAnnouncementChannelMessage(guild, announcementChannel); //This should be only done if the user is an instructor
-    //await updateGuide(guild, models);
+    updateAnnouncementChannelMessage(guild, announcementChannel).catch(logError);
   });
 
   models.CourseMember.addHook("afterUpdate", async (courseMember) => {
