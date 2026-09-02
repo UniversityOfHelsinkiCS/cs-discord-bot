@@ -41,6 +41,18 @@ const connectToDatabase = async (attempt = 0) => {
       logError(err);
       console.log("Failed to run migrations: \n " + err);
     }
+    const [hashColumn] = await sequelize.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'joined_users' AND column_name = 'discordIdHash'`,
+      { type: sequelize.QueryTypes.SELECT },
+    );
+    if (!hashColumn) {
+      logError(new Error("joined_users.discordIdHash missing - encryption migration did not apply"));
+      const Sentry = require("@sentry/node");
+      await Sentry.flush(2000);
+      return process.exit(1);
+    }
   }
   catch (err) {
     logError(err);

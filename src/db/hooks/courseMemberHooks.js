@@ -9,14 +9,14 @@ const initCourseMemberHooks = (guild, models) => {
   models.CourseMember.addHook("afterCreate", async (courseMember) => {
     logInfo("courseMember : " + JSON.stringify(courseMember));
     const user = await findUserByDbId(courseMember.dataValues.userId, models.User);
-    logInfo("User: " + JSON.stringify(user));
+    logInfo("User: id=" + user.id);
     const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
-    const member = guild.members.cache.get(user.dataValues.discordId)
-      || await guild.members.fetch(user.dataValues.discordId).catch(() => null);
+    const member = guild.members.cache.get(user.discordId)
+      || await guild.members.fetch(user.discordId).catch(() => null);
     logInfo("Member: " + member);
     const courseRole = guild.roles.cache.find(r => r.name === course.name);
     if (!member || !courseRole) {
-      return logError(new Error(`afterCreate hook: cannot add course role (course ${course.name}, discordId ${user.dataValues.discordId}, member found: ${Boolean(member)}, role found: ${Boolean(courseRole)})`));
+      return logError(new Error(`afterCreate hook: cannot add course role (course ${course.name}, discordId ${user.discordId}, member found: ${Boolean(member)}, role found: ${Boolean(courseRole)})`));
     }
     await member.roles.add(courseRole);
     joinedUsersCounter.inc({ course: course.name });

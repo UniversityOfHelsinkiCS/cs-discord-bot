@@ -1,7 +1,9 @@
+const { blindIndex, decrypt } = require("../crypto");
+
 const findUserByDiscordId = async (id, User) => {
   return await User.findOne({
     where:{
-      discordId: id,
+      discordIdHash: blindIndex(id),
     },
   });
 };
@@ -41,10 +43,12 @@ const saveFacultyRoleToDb = async (discordId, User) => {
 };
 
 const getAllUsers = async (User) => {
-  return await User.findAll({
+  // raw: true bypasses the model getters, so decrypt the identity fields here.
+  const rows = await User.findAll({
     attributes: ["name", "admin", "faculty", "discordId"],
     raw: true,
   });
+  return rows.map((r) => ({ ...r, name: decrypt(r.name), discordId: decrypt(r.discordId) }));
 };
 
 const pruneUsersNotInGuild = async (guild, User) => {

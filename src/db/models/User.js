@@ -1,9 +1,17 @@
+const { encrypt, decrypt, blindIndex } = require("../crypto");
+
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define("user", {
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       unique: false,
+      set(value) {
+        this.setDataValue("name", encrypt(value));
+      },
+      get() {
+        return decrypt(this.getDataValue("name"));
+      },
     },
     admin: {
       type: DataTypes.BOOLEAN,
@@ -16,7 +24,21 @@ module.exports = (sequelize, DataTypes) => {
       unique: false,
     },
     discordId: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+      allowNull: false,
+      unique: false,
+      set(value) {
+        // Uniqueness and equality lookups live on the discordIdHash blind index;
+        // the ciphertext itself is randomized and never queried by value.
+        this.setDataValue("discordId", encrypt(value));
+        this.setDataValue("discordIdHash", blindIndex(value));
+      },
+      get() {
+        return decrypt(this.getDataValue("discordId"));
+      },
+    },
+    discordIdHash: {
+      type: DataTypes.CHAR(64),
       allowNull: false,
       unique: true,
     },

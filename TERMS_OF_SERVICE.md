@@ -1,6 +1,6 @@
 # Terms of Service — CS Discord Bot
 
-*Last updated: 30 August 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/TERMS_OF_SERVICE.md*
+*Last updated: 2 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/TERMS_OF_SERVICE.md*
 
 These Terms of Service ("Terms") govern your use of the CS Discord Bot ("the Bot"), a private bot operated for a specific Discord community ("the Server"). The Bot is developed and run by the University of Helsinki's software development team (Toska) together with a contracted Discord administrator/developer, on behalf of the Department of Computer Science ("the Operator"). By using the Bot's commands or its companion website, you agree to these Terms.
 
@@ -60,7 +60,7 @@ The Bot collects and processes certain data about Server members as described in
 
 The data stored in the Bot's database about you — your Discord user ID, your Discord account username, and flags for whether you hold the Server's admin or faculty role — is derived from information already visible to any member of the Server (e.g., by clicking a user's Discord profile). The database also records which course roles you hold, as a link between your user record and each course. Separately, it stores course and channel structure records (course codes and names, Discord category and channel IDs, and flags such as hidden or locked); these do not describe individual users. No private or sensitive personal information such as email addresses, passwords, or payment details is collected or stored.
 
-Because the stored data is limited to this publicly accessible profile information, the data is very low risk and it is not encrypted at rest. Data in transit between the Bot and Discord's API is protected by TLS/HTTPS as standard.
+Although each individual field mirrors information shown on a member's Discord profile, the database as a whole is a persistent, queryable compilation of who is on the Server, under what username, in which courses, and with what privileges. Because that compilation carries more risk than the same facts glanced at in the client, your Discord user ID and username - and the website session store - are encrypted at rest at the application level with AES-256-GCM; see the [Privacy Policy](./PRIVACY_POLICY.md) for what this does and does not protect. Data in transit between the Bot and Discord's API is protected by TLS/HTTPS as standard.
 
 ### 5.2 Your rights
 

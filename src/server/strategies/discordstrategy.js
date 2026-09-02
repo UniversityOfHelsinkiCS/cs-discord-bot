@@ -2,7 +2,14 @@ const DiscordStrategy = require("passport-discord").Strategy;
 const passport = require("passport");
 
 passport.serializeUser((user, done) => {
-  done(null, user);
+  // Keep the OAuth token out of the persisted session store. The token is still
+  // available as req.user.accessToken during the login callback request itself
+  // (passport sets req.user before calling serializeUser).
+  const safe = { ...user };
+  delete safe.accessToken;
+  delete safe.refreshToken;
+  delete safe.fetchedAt;
+  done(null, safe);
 });
 
 passport.deserializeUser((user, done) => {

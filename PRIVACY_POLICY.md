@@ -1,6 +1,6 @@
 # Privacy Policy — CS Discord Bot
 
-*Last updated: 30 August 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
+*Last updated: 2 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
 
 This Privacy Policy describes what data the CS Discord Bot ("the Bot") collects, why, and how it is handled. The Bot is a private bot developed and operated for one specific Discord server, that of the Department of Computer Science, University of Helsinki ("the Server"). It is not offered to, or run in, any other server. Source code: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot
 
@@ -38,7 +38,7 @@ Records that relate to you as an individual:
 
 - **User records** (`joined_users` table): your Discord user ID (`discordId`) and your Discord account username (`name`) - the account username, not your nickname on the Server - plus two booleans, `admin` and `faculty`, recording whether you hold the Server's admin or faculty role. Each row also has an internal ID and a creation timestamp.
 - **Course membership records** (`coursemember` table): a row linking your user record to a course record, with an `instructor` boolean and a creation timestamp. Together these record which course roles you hold.
-- **Website login sessions** (see section 2.3): stored server-side in this same database via the session store. A session record contains a session identifier and the Discord data returned during login - your Discord ID, username, avatar, and the OAuth access/refresh tokens issued for your login. Sessions are removed when they expire or when you log out.
+- **Website login sessions** (see section 2.3): stored server-side in this same database via the session store. A session record contains a session identifier and the Discord identity data returned during login - your Discord ID, username, and avatar, and this identity blob is encrypted (AES-256-GCM) at the application level before it is written. The OAuth access token issued for your login is used only transiently during the login request and is **not** written to the session store; no refresh token is stored. Sessions are removed when they expire or when you log out.
 
 Records that describe the Server's course and channel structure, not individual people:
 
@@ -53,7 +53,7 @@ The Bot has a companion website, currently used to verify University faculty sta
 
 Faculty verification additionally relies on the University's single sign-on, which passes an employee-number attribute to the website. That attribute is used only to confirm that you are University staff at the moment of login; it is not stored or written to our logs.
 
-Logging in sets a session cookie, and your session is stored server-side in our database (section 2.2). That session includes the OAuth access and refresh tokens Discord issues; the access token is used for the identity read and server-join described above, and it remains in the session store until the session expires or you log out. You can withdraw this consent at any time by logging out, and you can additionally revoke the application's access from the "Authorized Apps" section of your Discord account settings.
+Logging in sets a session cookie, and your session is stored server-side in our database (section 2.2), encrypted at the application level. The OAuth access token Discord issues is used during that same login request for the identity read and server-join described above and is then discarded. It is **not** persisted to the session store and no refresh token is stored. You can withdraw this consent at any time by logging out, and you can additionally revoke the application's access from the "Authorized Apps" section of your Discord account settings.
 
 ### 2.4 Operational/diagnostic data
 
@@ -89,8 +89,8 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 ## 5. Data storage and security
 
 - Our database is hosted on our infrastructure and accessed only by the Bot service and designated administrators.
-- Our infrastructure is not encrypted at rest; data in transit to Discord and our database uses TLS/HTTPS.
-- The stored data is very low risk: it is a subset of the Discord profile information that any member of the Server can already see about any other member.
+- **Encryption of identity data.** In the `joined_users` table your Discord user ID and username are encrypted with AES-256-GCM at the application level before they are written, and a keyed HMAC-SHA256 index of the user ID is stored alongside so the Bot can still look you up by exact ID and enforce uniqueness without holding the ID in the clear. Website login sessions are encrypted the same way. The encryption key is held only in the running service's environment, separately from the database and any backups. Data in transit to Discord and to our database uses TLS/HTTPS.
+- **What this protects, and what it does not.** We hold this data as a persistent, queryable compilation; who is on the Server, under what username, in which courses, since when, and with what privileges. We treat that compilation as carrying more risk than the same facts glanced at in the Discord client, which is why the identity fields are encrypted. Application-level encryption does not hide everything: the number of rows still approximates the Server's member count and row timestamps still show roughly when each person joined and in what order. The shape of the course-membership graph is still visible to someone with database access, and copies of data in transaction logs, temporary files, and database statistics aren't protected. The `admin` and `faculty` flags, internal row IDs, join timestamps, and the course-membership links themselves are stored without application-level encryption.
 - Access to the database, hosting platform, and third-party dashboards (Sentry, log management) is restricted to Bot and infrastructure maintainers.
 
 ## 6. Data retention

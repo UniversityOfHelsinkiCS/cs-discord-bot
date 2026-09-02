@@ -21,6 +21,7 @@ module.exports = (sequelize) => {
   const store = new SequelizeStore({
     db: sequelize,
   });
+  require("./encryptSessionStore")(store);
 
   app.use(
     session({
