@@ -221,7 +221,7 @@ const listCourseInstructors = async (guild, roleString) => {
 
   const facultyRoleObject = await guild.roles.cache.find(r => r.name === facultyRole);
   const instructorRole = await guild.roles.cache.find(r => r.name === `${roleString} ${courseAdminRole}`);
-  const members = await guild.members.fetch();
+  const members = guild.members.cache;
   let adminsString = "";
 
   members.forEach(m => {
