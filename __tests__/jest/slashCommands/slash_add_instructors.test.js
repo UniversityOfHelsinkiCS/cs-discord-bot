@@ -3,7 +3,7 @@ const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } =
 const { getCourseNameFromCategory, getUserWithUserId } = require("../../../src/discordBot/services/service");
 const { findUserByDiscordId } = require("../../../src/db/services/userService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
-const { findCourseMember } = require("../../../src/db/services/courseMemberService");
+const { createCourseMemberToDatabase } = require("../../../src/db/services/courseMemberService");
 const { courseAdminRole } = require("../../../config.json");
 const { defaultStudentInteraction, defaultTeacherInteraction, defaultAdminInteraction } = require("../../mocks/mockInteraction");
 const models = require("../../mocks/mockModels");
@@ -18,8 +18,7 @@ getCourseNameFromCategory.mockImplementation(() => "test");
 findUserByDiscordId.mockImplementation(() => { return { id: 1 }; });
 findCourseFromDb.mockImplementation(() => { return { id: 1, name: "test" }; });
 findCourseFromDb.mockImplementationOnce(() => null);
-findCourseMember.mockImplementation(() => { return { id: 1, instructor: false, save: () => null }; });
-findCourseMember.mockImplementationOnce(() => null);
+createCourseMemberToDatabase.mockImplementation(() => { return { id: 1, instructor: false, save: () => null }; });
 getUserWithUserId.mockImplementation(() => defaultAdminInteraction.member.user);
 
 
@@ -42,7 +41,7 @@ describe("slash add instructor command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(findCourseFromDb).toHaveBeenCalledTimes(0);
     expect(getUserWithUserId).toHaveBeenCalledTimes(0);
-    expect(findCourseMember).toHaveBeenCalledTimes(0);
+    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(0);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
@@ -56,24 +55,23 @@ describe("slash add instructor command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(findCourseFromDb).toHaveBeenCalledTimes(1);
     expect(getUserWithUserId).toHaveBeenCalledTimes(0);
-    expect(findCourseMember).toHaveBeenCalledTimes(0);
+    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(0);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
-  test("Cannot use command if given user is not a course member", async () => {
+  test("a listed user who is not a course member is added to the course and promoted", async () => {
     const roleString = "test";
     const client = defaultTeacherInteraction.client;
-    const response = "All listed users must be members of this course!";
+    const response = `Gave role '${roleString} ${courseAdminRole}' to all users listed.`;
     client.guild.roles.create({ name: `${roleString} ${courseAdminRole}`, members: [] });
     await execute(defaultAdminInteraction, client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, initialResponse);
-    expect(findCourseFromDb).toHaveBeenCalledTimes(1);
-    expect(getUserWithUserId).toHaveBeenCalledTimes(1);
-    expect(findCourseMember).toHaveBeenCalledTimes(1);
-    expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(editErrorEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, response);
+    const admin = client.guild.members.cache.get(3);
+    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(1);
+    expect(admin.roles.add).toHaveBeenCalledTimes(1);
+    expect(editErrorEphemeral).toHaveBeenCalledTimes(0);
+    expect(editEphemeral).toHaveBeenCalledTimes(1);
+    expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, response);
   });
 
   test("instructor role can be given", async () => {
@@ -88,7 +86,7 @@ describe("slash add instructor command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, initialResponse);
     expect(findCourseFromDb).toHaveBeenCalledTimes(1);
     expect(getUserWithUserId).toHaveBeenCalledTimes(1);
-    expect(findCourseMember).toHaveBeenCalledTimes(1);
+    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, response);
   });

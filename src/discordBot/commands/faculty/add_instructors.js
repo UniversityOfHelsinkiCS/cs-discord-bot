@@ -2,14 +2,14 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { getCourseNameFromCategory, updateAnnouncementChannelMessage, getUserWithUserId } = require("../../services/service");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
-const { findCourseMember } = require("../../../db/services/courseMemberService");
+const { createCourseMemberToDatabase } = require("../../../db/services/courseMemberService");
 const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) { // Olisiko parempi tarkistaa tietokannasta eikä discordista?
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return
+    return;
   }
 
   await sendEphemeral(interaction, "Adding instructors...");
@@ -54,11 +54,7 @@ const execute = async (interaction, client, models) => {
     }
     const userInstance = await findUserByDiscordId(memberToPromote.user.id, userModel);
 
-    const courseMemberInstance = await findCourseMember(userInstance.id, parentCourse.id, courseMemberModel);
-
-    if (!courseMemberInstance) {
-      return await editErrorEphemeral(interaction, "All listed users must be members of this course!");
-    }
+    const courseMemberInstance = await createCourseMemberToDatabase(userInstance.id, parentCourse.id, courseMemberModel);
 
     courseMemberInstance.instructor = true;
     await courseMemberInstance.save();
