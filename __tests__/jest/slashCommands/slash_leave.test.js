@@ -65,4 +65,14 @@ describe("slash leave command", () => {
     expect(removeCourseMemberFromDb).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
+
+  test("instructor cannot leave and is told to contact faculty", async () => {
+    const client = defaultTeacherInteraction.client;
+    findAllCourseMembersByUser.mockImplementationOnce(() => [{ courseId: 1, userId: 1, instructor: true }]);
+    const response = `You are an instructor on ${roleString}. Ask a faculty member to remove your instructor role with /remove_instructors before you can leave.`;
+    await execute(defaultTeacherInteraction, client, models);
+    expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
+    expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+    expect(removeCourseMemberFromDb).toHaveBeenCalledTimes(0);
+  });
 });

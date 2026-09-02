@@ -15,10 +15,14 @@ const execute = async (interaction, client, models) => {
 
   const user = await findUserByDiscordId(interaction.member.user.id, models.User);
   const courseMembers = await findAllCourseMembersByUser(user.id, models.CourseMember);
-  const coursesJoinedByUser = courseMembers.map(cm => cm.courseId);
+  const courseMember = courseMembers.find(cm => cm.courseId === course.id);
 
-  if (!coursesJoinedByUser.includes(course.id)) {
+  if (!courseMember) {
     return await editErrorEphemeral(interaction, `You are not on the ${roleString} course.`);
+  }
+
+  if (courseMember.instructor) {
+    return await editErrorEphemeral(interaction, `You are an instructor on ${roleString}. Ask a faculty member to remove your instructor role with /remove_instructors before you can leave.`);
   }
 
   await removeCourseMemberFromDb(user.id, course.id, models.CourseMember);
