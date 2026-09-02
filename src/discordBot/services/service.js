@@ -251,8 +251,10 @@ const listCourseInstructors = async (guild, roleString) => {
 };
 
 const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
+  if (!channelAnnouncement) return;
   const pinnedMessages = await channelAnnouncement.messages.fetchPinned();
   const invMessage = pinnedMessages.find(msg => msg.author.bot && msg.content.includes("Invitation link for"));
+  if (!invMessage) return;
   const courseName = getCourseNameFromCategory(channelAnnouncement.parent);
   let updatedMsg = createCourseInvitationLink(courseName);
   const instructors = await listCourseInstructors(guild, courseName);

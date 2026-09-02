@@ -1,5 +1,4 @@
 const { updateAnnouncementChannelMessage } = require("../../discordBot/services/service");
-const { updateGuide } = require("../../discordBot/services/guide");
 const { findCourseFromDbById } = require("../services/courseService");
 const { findUserByDbId } = require("../services/userService");
 const { courseAdminRole } = require("../../../config.json");
@@ -12,11 +11,14 @@ const initCourseMemberHooks = (guild, models) => {
     const user = await findUserByDbId(courseMember.dataValues.userId, models.User);
     logInfo("User: " + JSON.stringify(user));
     const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
-    const member = guild.members.cache.get(user.dataValues.discordId);
+    const member = guild.members.cache.get(user.dataValues.discordId)
+      || await guild.members.fetch(user.dataValues.discordId).catch(() => null);
     logInfo("Member: " + member);
     const courseRole = guild.roles.cache.find(r => r.name === course.name);
+    if (!member || !courseRole) {
+      return logError(new Error(`afterCreate hook: cannot add course role (course ${course.name}, discordId ${user.dataValues.discordId}, member found: ${Boolean(member)}, role found: ${Boolean(courseRole)})`));
+    }
     await member.roles.add(courseRole);
-    //await updateGuide(guild, models);
     joinedUsersCounter.inc({ course: course.name });
   });
 
