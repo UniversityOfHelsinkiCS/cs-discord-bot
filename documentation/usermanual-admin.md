@@ -81,6 +81,16 @@ To see if Discord servers categories, channels and roles reflect what database h
 - Missing admin/faculty roles
 - Unnecessary channels in Discord Server
 
+### Fix course role mismatches ###
+
+To reconcile course memberships between Discord and the database, use `!fix_course_roles` inside the _#commands_ text channel. For every member and every course, the command:
+- adds the `<course>` role to anyone who has the `<course> instructor` role but not the `<course>` role
+- creates a database course membership row for anyone who has the `<course>` role but is missing from the database
+- sets the `instructor` flag on the database row to match whether the member has the `<course> instructor` role (also clearing it when the instructor role has been removed)
+- removes the database course membership row from anyone who has neither the `<course>` nor the `<course> instructor` role (members who have left the server are left for user pruning)
+
+It replies with a list of the fixes it made.
+
 ### Restoring the Discord server from database ###
 
 If someone has manually modified the Discord server in a way that can't be easily undone, you can use `!restore_server_from_discord` inside the _#commands_ text channel. This command will go through everything in the database and restore Discord server by using the database ase a base form. This command will:
@@ -100,6 +110,7 @@ Command | Explanation | Arguments
 [!add_admin_rights](./command/admin/add_admin_rights.md) | Add admin rights to a user. | :heavy_check_mark:
 [!delete_command](./command/admin/delete_command.md) | Delete the given slash command. | :heavy_check_mark:
 [!delete_course](./command/admin/delete_course.md) | Delete the given course channel. | :heavy_check_mark:
+[!fix_course_roles](./command/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:
 [!list_courses](./command/admin/list_courses.md) | List all courses and channels in them | :x:
 [!reload_commands](./command/admin/reload_commands.md) | Reload all slash commands, returning deleted commands, registering new commands, and updating command permissions. | :x:
 [!remove_admin_rights](./command/admin/remove_admin_rights.md) | Remove admin rights from a user. | :heavy_check_mark:
