@@ -1,12 +1,10 @@
-const {
-  updateAnnouncementChannelMessage,
-  updateInviteLinks } = require("../../discordBot/services/service");
+const { updateAnnouncementChannelMessage } = require("../../discordBot/services/service");
 const { updateGuide } = require("../../discordBot/services/guide");
 const { findCourseFromDbById } = require("../services/courseService");
 const { findUserByDbId } = require("../services/userService");
 const { courseAdminRole } = require("../../../config.json");
 const { joinedUsersCounter } = require("../../promMetrics/promCounters");
-const { logInfo } = require("../../discordBot/services/logger");
+const { logInfo, logError } = require("../../discordBot/services/logger");
 
 const initCourseMemberHooks = (guild, models) => {
   models.CourseMember.addHook("afterCreate", async (courseMember) => {
@@ -39,10 +37,11 @@ const initCourseMemberHooks = (guild, models) => {
     //await updateGuide(guild, models);
   });
 
-  models.CourseMember.addHook("afterUpdate", async (courseMember) => { // This makes no f****** sense. When a course gets new instructor update all courses announcement info ????
-    if (courseMember._changed.has("instructor")) {
-      await updateInviteLinks(guild);
-    }
+  models.CourseMember.addHook("afterUpdate", async (courseMember) => {
+    if (!courseMember._changed.has("instructor")) return;
+    const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
+    const announcementChannel = guild.channels.cache.find(c => c.name === `${course.name}_announcement`);
+    updateAnnouncementChannelMessage(guild, announcementChannel).catch(logError);
   });
 };
 
