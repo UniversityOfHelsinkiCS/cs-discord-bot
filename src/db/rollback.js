@@ -9,11 +9,15 @@
 // FIELD_ENCRYPTION_KEY must still be present - the down step decrypts every row.
 
 const { sequelize } = require("./dbInit");
+const { assertEncryptionKey } = require("./crypto");
 const Umzug = require("umzug");
 
 const MIGRATION = "encryptUserIdentity-migration.js";
 
 const run = async () => {
+  // This path runs the migration without going through connectToDatabase, so it needs
+  // the same check: the down step decrypts every row and must not start without a key.
+  assertEncryptionKey();
   await sequelize.authenticate();
 
   const migrator = new Umzug({

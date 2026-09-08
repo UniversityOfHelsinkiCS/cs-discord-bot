@@ -67,6 +67,10 @@ application layer with AES-256-GCM, keyed by `FIELD_ENCRYPTION_KEY` (32 bytes, b
 lookups and uniqueness. Every ciphertext carries a `v1:` prefix so a future key rotation can add
 `v2:` and re-encrypt in place.
 
+Generate a key with `openssl rand -base64 32` (or `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+if openssl isn't available) - don't hand-type one, since the decoded length is the only thing
+validated and a weak key still passes that check.
+
 The key lives only in the service environment; store it separately from any database backup. The
 encrypting migration runs automatically on startup. **Losing `FIELD_ENCRYPTION_KEY` makes
 `name` / `discordId` unrecoverable** - the only recovery is to truncate `joined_users` and rebuild

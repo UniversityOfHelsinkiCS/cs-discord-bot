@@ -1,7 +1,7 @@
 const { encrypt, decrypt, blindIndex, isEncrypted, VERSION } = require("../../../src/db/crypto");
 
-// Runs on the fixed NODE_ENV=test dummy key baked into src/db/crypto.js, so
-// there is no setup / env requirement.
+// crypto.js has no fallback key in any NODE_ENV. The fixed key these tests run on
+// comes from __tests__/setup/env.js, wired in as a jest setupFiles entry.
 
 describe("crypto", () => {
 
