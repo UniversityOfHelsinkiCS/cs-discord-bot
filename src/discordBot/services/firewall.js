@@ -9,7 +9,7 @@ const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 const honeypotMessages = new Map();
 const chatMessages = new Map();
-const honeypotPosters = new Set();
+const honeypotPosters = new Map();
 
 const recentlyReported = new Map();
 const COOLDOWN_MS = 2 * 60 * 1000;
@@ -87,9 +87,23 @@ const pruneStore = (store) => {
   }
 };
 
+const pruneTimestampStore = (store) => {
+  const now = Date.now();
+  for (const [key, ts] of store) {
+    if (now - ts >= MESSAGE_TTL_MS) store.delete(key);
+  }
+};
+
+const postedInHoneypotWithinTtl = (userId) => {
+  const ts = honeypotPosters.get(userId);
+  return ts !== undefined && Date.now() - ts < MESSAGE_TTL_MS;
+};
+
 const startFirewallPruning = () => setInterval(() => {
   pruneStore(honeypotMessages);
   pruneStore(chatMessages);
+  pruneTimestampStore(honeypotPosters);
+  pruneTimestampStore(recentlyReported);
 }, PRUNE_INTERVAL_MS);
 
 
@@ -193,7 +207,7 @@ const checkHoneypot = async (message, client) => {
     const attachmentLine = attachments ? `\nAttachments: ${attachments}` : "";
     const initialReport = `**HONEYPOT MESSAGE**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nMessage: ${messageContent}${attachmentLine}`;
     await sendReportToCommandsChannel(client, initialReport);
-    if (honeypotPosters.has(userId)) {
+    if (postedInHoneypotWithinTtl(userId)) {
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
       const banned = await message.guild.members.ban(userId, { days: 1, reason: "Sent multiple messages in honeypot channel" }).catch(logError);
       if (banned) await message.guild.members.unban(userId).catch(logError);
@@ -201,7 +215,7 @@ const checkHoneypot = async (message, client) => {
       await sendReportToCommandsChannel(client, report);
       return;
     }
-    honeypotPosters.add(userId);
+    honeypotPosters.set(userId, Date.now());
   }
 
   const keys = buildMessageKeys(message);
@@ -244,6 +258,7 @@ const resetHoneypotState = () => {
   honeypotMessages.clear();
   chatMessages.clear();
   honeypotPosters.clear();
+  recentlyReported.clear();
 };
 
 module.exports = { firewall, resetHoneypotState, startFirewallPruning };

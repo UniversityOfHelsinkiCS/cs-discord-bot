@@ -5,6 +5,12 @@ const {
   saveFacultyRoleToDb,
   findUserByDbId,
   pruneUsersNotInGuild } = require("../../../src/db/services/userService");
+const { blindIndex } = require("../../../src/db/crypto");
+
+// The User model getters/setters (field encryption + discordIdHash) have no
+// test-DB harness here; they are covered directly by db/crypto.test.js. These
+// tests use plain object mocks, so create() is still asserted with the raw
+// { name, discordId } the service passes in.
 
 const userModelInstanceMock = {
   id: 1,
@@ -34,7 +40,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 10 },
+        { discordIdHash: blindIndex(10) },
     });
   });
 
@@ -53,7 +59,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 12 },
+        { discordIdHash: blindIndex(12) },
     });
     expect(userModelMock.create).toHaveBeenCalledTimes(1);
     expect(userModelMock.create).toHaveBeenCalledWith({
@@ -68,7 +74,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 10 },
+        { discordIdHash: blindIndex(10) },
     });
     expect(userModelMock.create).toHaveBeenCalledTimes(0);
 
@@ -79,7 +85,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 10 },
+        { discordIdHash: blindIndex(10) },
     });
     expect(userModelMock.destroy).toHaveBeenCalledTimes(1);
     expect(userModelMock.destroy).toHaveBeenCalledWith({
@@ -94,7 +100,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 10 },
+        { discordIdHash: blindIndex(10) },
     });
     expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
   });
@@ -104,7 +110,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 10 },
+        { discordIdHash: blindIndex(10) },
     });
     expect(userModelInstanceMock.update).toHaveBeenCalledTimes(1);
     expect(userModelInstanceMock.update).toHaveBeenCalledWith({
@@ -118,7 +124,7 @@ describe("userService", () => {
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
       where:
-        { discordId: 10 },
+        { discordIdHash: blindIndex(10) },
     });
     expect(userModelInstanceMock.update).toHaveBeenCalledTimes(0);
   });

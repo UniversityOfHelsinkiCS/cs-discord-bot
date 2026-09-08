@@ -221,7 +221,7 @@ const listCourseInstructors = async (guild, roleString) => {
 
   const facultyRoleObject = await guild.roles.cache.find(r => r.name === facultyRole);
   const instructorRole = await guild.roles.cache.find(r => r.name === `${roleString} ${courseAdminRole}`);
-  const members = await guild.members.fetch();
+  const members = guild.members.cache;
   let adminsString = "";
 
   members.forEach(m => {
@@ -251,8 +251,10 @@ const listCourseInstructors = async (guild, roleString) => {
 };
 
 const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
+  if (!channelAnnouncement) return;
   const pinnedMessages = await channelAnnouncement.messages.fetchPinned();
   const invMessage = pinnedMessages.find(msg => msg.author.bot && msg.content.includes("Invitation link for"));
+  if (!invMessage) return;
   const courseName = getCourseNameFromCategory(channelAnnouncement.parent);
   let updatedMsg = createCourseInvitationLink(courseName);
   const instructors = await listCourseInstructors(guild, courseName);

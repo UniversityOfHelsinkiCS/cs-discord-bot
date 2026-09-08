@@ -56,13 +56,18 @@ const setupLogger = () => {
 
 setupLogger();
 
+// setupLogger() returns early under NODE_ENV=test, so `logger` can be undefined.
+// logError is the path fatal startup failures report through, so it must never become
+// the failure itself - a missing FIELD_ENCRYPTION_KEY reported as "cannot read
+// properties of undefined" tells nobody anything.
 const logError = (error) => {
-  logger.error(error);
+  if (logger) logger.error(error);
+  else console.error(error);
   Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
 };
 
 const logInfo = (message) => {
-  logger.info(message);
+  if (logger) logger.info(message);
 };
 
 const logInteractionError = (error, client, interaction) => {

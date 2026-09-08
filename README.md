@@ -39,6 +39,7 @@ DISCORD_WEBHOOK_URL=discord-webhook-used-in-fullstack-open-course
 DISCORD_WEBHOOK_TOKEN=token-for-the-discord-webhook
 PORT=your-custom-backend-port
 SESSION_SECRET=server-session-secret
+FIELD_ENCRYPTION_KEY=32-random-bytes-base64
 BACKEND_SERVER_URL=backend-server-url-without-port
 DATABASE_URL=postgres-connection-string (eg. postgres://postgres:postgres@localhost:5432/postgres)
 GRAFANA_TOKEN=your-grafana-authorization-token
@@ -57,6 +58,24 @@ Setup config.json file:
 courseAdminRole: course-admin-role-name
 facultyRole: teacher-role-name
 ```
+
+### Field encryption
+
+`joined_users.name` / `discordId` and the website session store are encrypted at rest at the
+application layer with AES-256-GCM, keyed by `FIELD_ENCRYPTION_KEY` (32 bytes, base64). A
+`discordIdHash` column (HMAC-SHA256 of the Discord ID) is the blind index used for exact-match
+lookups and uniqueness. Every ciphertext carries a `v1:` prefix so a future key rotation can add
+`v2:` and re-encrypt in place.
+
+Generate a key with `openssl rand -base64 32` (or `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+if openssl isn't available) - don't hand-type one, since the decoded length is the only thing
+validated and a weak key still passes that check.
+
+The key lives only in the service environment; store it separately from any database backup. The
+encrypting migration runs automatically on startup. **Losing `FIELD_ENCRYPTION_KEY` makes
+`name` / `discordId` unrecoverable** - the only recovery is to truncate `joined_users` and rebuild
+from Discord with `!update_database` + `!restore_server_from_database` (course-membership history
+is lost). To roll the migration back (key still present): `NODE_ENV=production node src/db/rollback.js`.
 
 Make your own Discord Server. You can find instructions [here](./documentation/discordserver.md).
 

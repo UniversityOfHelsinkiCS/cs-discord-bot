@@ -60,16 +60,15 @@ const execute = async (reaction, user, client, models) => {
 
     // Find what courses the user is already in
     const courseMembers = await findAllCourseMembersByUser(dbUser.id, models.CourseMember);
-    const coursesJoinedByUser = courseMembers.map(cm => cm.courseId);
-
-    const isAlreadyInCourse = coursesJoinedByUser.includes(course.id);
+    const existingCourseMember = courseMembers.find(cm => cm.courseId === course.id);
 
     // Always remove their reaction
     console.log("try removing reaction");
     await removeNonBotReactions(message);
     console.log("attempt done");
 
-    if (isAlreadyInCourse) {
+    if (existingCourseMember) {
+      if (existingCourseMember.instructor) return;
       // User is already in the course -> REMOVE them
       console.log(`Removing user ${user.username} from course ${courseCode} via reaction.`);
       await removeCourseMemberFromDb(dbUser.id, course.id, models.CourseMember);

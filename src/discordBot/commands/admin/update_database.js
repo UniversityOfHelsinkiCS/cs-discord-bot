@@ -9,11 +9,12 @@ const { facultyRole } = require("../../../../config.json");
 const execute = async (message, args, models) => {
   if (message.member.permissions.has("ADMINISTRATOR")) {
     const guild = message.client.guild;
+    const members = await guild.members.fetch();
     await saveChannelsToDb(models, guild);
     await saveChannelIdToDb(models, guild);
     await saveCategoryIdtoDb(models, guild);
-    await saveUsersToDb(models, guild);
-    await saveCourseMembersToDb(models, guild);
+    await saveUsersToDb(models, guild, members);
+    await saveCourseMembersToDb(models, guild, members);
   }
 };
 
@@ -96,8 +97,7 @@ const saveCategoryIdtoDb = async (models, guild) => {
   }
 };
 
-const saveUsersToDb = async (models, guild) => {
-  const members = await guild.members.fetch();
+const saveUsersToDb = async (models, guild, members) => {
   const roles = await guild.roles.fetch();
   const notBots = members.filter(u => !u.user.bot);
 
@@ -117,8 +117,7 @@ const saveUsersToDb = async (models, guild) => {
     }));
 };
 
-const saveCourseMembersToDb = async (models, guild) => {
-  const members = await guild.members.fetch();
+const saveCourseMembersToDb = async (models, guild, members) => {
   const notBots = members.filter(u => !u.user.bot);
   const channels = await guild.channels.fetch();
   const roles = await guild.roles.fetch();

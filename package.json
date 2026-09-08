@@ -11,6 +11,9 @@
     "lint": "eslint ."
   },
   "jest": {
+    "setupFiles": [
+      "<rootDir>/__tests__/setup/env.js"
+    ],
     "moduleNameMapper": {
       "^@sentry/node$": "<rootDir>/__tests__/mocks/@sentry/node.js",
       "^winston-papertrail$": "<rootDir>/__tests__/mocks/winston-papertrail.js"

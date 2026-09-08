@@ -9,6 +9,7 @@ Command | Description | Example
 `!add_admin_rights` | Add admin rights to given user (requires Discord ID of user). | `!add_admin_rights 123456789012345678`
 `!delete_command` | Delete the given slash command. | `!delete help`
 `!delete_course` | Delete the given course channel. | `!delete_course ohpe`
+`!fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `!fix_course_roles`
 `!reload_commands` | Reload all slash commands, returning deleted commands, registering new commands, and updating command permissions. | `!reload_commands`
 `!remove_admin_rights` | Remove admin rights from given user (requires Discord ID of user). | `!remove_admin_rights 123456789012345678`
 `!remove_faculty_rights` | Remove faculty rights from given user (requires Discord ID of user). | `!remove_faculty_rights 123456789012345678`
