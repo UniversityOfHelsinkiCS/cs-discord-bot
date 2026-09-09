@@ -68,7 +68,7 @@
     "winston-papertrail": "github:kenperkins/winston-papertrail#v2"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.0.0",
     "eslint": "^7.26.0",
     "eslint-plugin-jest": "^24.3.6",
     "jest": "^27.0.1",
