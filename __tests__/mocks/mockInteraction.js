@@ -1,7 +1,6 @@
 const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const { client } = require("./mockSlashClient");
 const { courseAdminRole, facultyRole, githubRepo } = require("../../config.json");
-const prefix = "/";
 
 // A real role cache is a Collection keyed by role id. These plain arrays only need the has() lookup the code uses.
 const withRoleIds = (cache, roleIds) =>
@@ -17,7 +16,7 @@ const faculty = client.slashCommands
   .filter((command) => command.roles)
   .filter((command) => !isAdminOnly(command))
   .filter((command) => !command.roles.includes(courseAdminRole));
-const studentD = client.slashCommands.filter((command) => !command.roles && command.name !== "auth");
+const studentD = client.slashCommands.filter((command) => !command.roles && command.data.name !== "auth");
 
 const teacherData = [];
 const teacherData2 = [];
@@ -32,7 +31,7 @@ teacherData2.push(faculty.map((command) => `**${command.usage}** - ${command.des
 teacherData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation//usermanual-faculty.md>)`);
 teacherData2.push("\n");
 teacherData2.push("*Commands can be used only in course channels");
-teacherData2.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
+teacherData2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
 
 const studentData = [];
 studentData.push("Hi **student**!\n");
@@ -42,7 +41,7 @@ studentData.push(studentD.map((command) => `**${command.usage}** - ${command.des
 studentData.push(`[User manual for students](<${githubRepo}/blob/main/documentation/usermanual-student.md>)`);
 studentData.push("\n");
 studentData.push("*Commands can be used only in course channels");
-studentData.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
+studentData.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
 
 const adminData = [];
 const adminData2 = [];
@@ -60,7 +59,7 @@ adminData2.push(faculty.map((command) => `**${command.usage}** - ${command.descr
 adminData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation//usermanual-faculty.md>)`);
 adminData2.push("\n");
 adminData2.push("*Commands can be used only in course channels");
-adminData2.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
+adminData2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
 
 const studentJoinData = [];
 client.slashCommands
@@ -71,15 +70,6 @@ client.slashCommands
     studentJoinData.push(`**Name:** ${command.data.name}`);
     studentJoinData.push(`**Description:** ${command.description}`);
     studentJoinData.push(`**Usage:** ${command.usage}`);
-  });
-
-const studentInsData = [];
-client.slashCommands
-  .filter((command) => command.name === "instructors")
-  .map((command) => {
-    studentInsData.push(`**Name:** ${command.name}`);
-    if (command.description) studentInsData.push(`**Description:** ${command.description}`);
-    if (command.usage) studentInsData.push(`**Usage:** ${prefix}${command.name} ${command.usage}`);
   });
 
 const teacher = {
@@ -321,7 +311,6 @@ module.exports = {
   teacherData2,
   studentData,
   studentJoinData,
-  studentInsData,
   studentInteractionWithoutOptions,
   defaultTeacherInteraction,
   defaultStudentInteraction,

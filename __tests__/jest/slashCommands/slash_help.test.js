@@ -80,6 +80,16 @@ describe("slash help command", () => {
     expect(editEphemeral).toHaveBeenCalledWith(studentInteractionWithoutOptions, studentData.join("\n"));
   });
 
+  test("the default list does not include /auth or any staff command", async () => {
+    const client = studentInteractionWithoutOptions.client;
+    await execute(studentInteractionWithoutOptions, client);
+    const listing = editEphemeral.mock.calls[0][1];
+    expect(listing).toContain("**/join**");
+    expect(listing).not.toContain("**/auth**");
+    expect(listing).not.toContain("**/create_course**");
+    expect(listing).not.toContain("**/add_admin_rights**");
+  });
+
   test("slash help with valid arg should give correct command info", async () => {
     const client = defaultStudentInteraction.client;
     await execute(defaultStudentInteraction, client);
