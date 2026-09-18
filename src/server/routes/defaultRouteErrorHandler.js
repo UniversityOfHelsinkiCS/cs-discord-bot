@@ -1,6 +1,6 @@
 const router = require("express").Router();
 
-router.all("*", (req, res) => {
+router.all("/{*splat}", (req, res) => {
   res.redirect("/");
 });
 

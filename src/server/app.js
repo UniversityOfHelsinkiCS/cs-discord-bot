@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
 
   app.use(Sentry.expressErrorHandler());
 
-  app.use("*", defaultRouteErrorHandler);
+  app.use(defaultRouteErrorHandler);
 
   return app;
 };
