@@ -7,4 +7,5 @@ README.md
 __tests__
 .github
 coverage
-.eslintrc.json
+.oxlintrc.json
+.oxfmtrc.json
