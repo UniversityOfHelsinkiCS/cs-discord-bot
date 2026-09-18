@@ -2,7 +2,12 @@
 
 ### Admin commands
 
-Admin commands are registered with `.setDefaultPermission(false)`, but Discord's Integrations page does not reliably reflect that as a "hidden by default" state (this repo is on the old, deprecated command-permissions v1 field; Discord's current permissions v2 system may not honor it). After adding or redeploying an admin command, a server admin must go to **Server Settings → Integrations → [bot name]** and, for that command, explicitly add `@everyone` and set it to **disabled**, then add the `admin` and `cs-admin` roles and set them to **enabled**. Don't rely on the command being hidden without the explicit `@everyone` deny — otherwise the command won't be reliably restricted. This is a one-time step per command; running `/reload_commands` does not re-apply it automatically. Execution is additionally gated in code by the invoking user's `admin` flag in the database.
+Admin and faculty commands are restricted by default: Discord shows them only to members with the Administrator permission. **A server admin must allow the right roles once per command**, otherwise nobody else sees them. Open **Server Settings → Integrations → [bot name] → Commands**, select the command and add the roles below. The bot cannot do this itself.
+
+- **Admin commands:** allow the `admin` and `cs-admin` roles.
+- **Faculty commands:** allow the `faculty`, `admin` and `cs-admin` roles.
+
+This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag.
 
 Command | Description | Example
 --- |--- | ---
@@ -23,6 +28,8 @@ Command | Description | Example
 `/update_invitelinks` | Update course invitation links. | `/update_invitelinks`
 
 ### Faculty commands
+
+Faculty commands are hidden until a server admin has allowed the `faculty`, `admin` and `cs-admin` roles for them in Discord's Integrations settings (see the note under Admin commands above). Running a command also requires the `faculty` or `admin` flag in the bot's database, which `/auth` sets.
 
 Command | Description | Example
 --- |--- | ---

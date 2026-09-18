@@ -5,6 +5,6 @@
 - :heavy_check_mark: Response includes the interaction status.
 - :heavy_check_mark: Needs argument: course_name.
 - :heavy_check_mark: This command has cooldown (course specific).
-- :x: All members can use this command.
+- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.
 
 Note: The user can join the public course with the /join command and an invitation.

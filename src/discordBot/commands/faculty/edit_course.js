@@ -1,4 +1,5 @@
 const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 const {
   findChannelWithNameAndType,
   msToMinutesAndSeconds,
@@ -9,7 +10,7 @@ const {
   isCourseCategory
 } = require("../../services/service");
 const { findCourseFromDb, findCourseFromDbWithFullName } = require("../../../db/services/courseService");
-const { sendEphemeral, sendErrorEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
@@ -71,13 +72,7 @@ const changeCourseNick = async (interaction, client, models, courseName, newValu
 };
 
 const execute = async (interaction, client, models) => {
-  if (
-    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
-    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
-  ) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Editing...");
   const guild = client.guild;

@@ -32,7 +32,10 @@ Invite: https://discord.gg/V5R9dZFCkD
 - Course-page links on the companion website route through `/join/:course` and
   drop the user straight into that course.
 
-### Faculty tools (slash commands, gated by a faculty role)
+### Faculty tools (slash commands, gated by the faculty flag in the database)
+
+Like admin commands, faculty commands are hidden from the command picker until the faculty, `admin` and `cs-admin`
+roles are allowed for them in Discord's Integrations settings.
 
 - Course lifecycle: `/create_course`, `/edit_course`, `/hide_course` /
   `/unhide_course`, `/lock_chat` / `/unlock_chat`, `/create_channel`,

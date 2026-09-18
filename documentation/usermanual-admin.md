@@ -54,7 +54,7 @@ To delete a course, use `/delete_course course_name:<course name>`. You can eith
 
 ### Reloading commands ###
 
-If you need to reload a deleted slash command or register a new command, use `/reload_commands`. Note that this does not grant newly added admin commands visibility to the `admin`/`cs-admin` roles — see [Adding a new admin command](#adding-a-new-admin-command) below.
+If you need to reload a deleted slash command or register a new command, use `/reload_commands`. Note that this does not grant newly added admin commands visibility to the `admin`/`cs-admin` roles — see [Making new commands visible](#making-new-commands-visible) below.
 
 ### Sort courses ###
 
@@ -101,13 +101,15 @@ If someone has manually modified the Discord server in a way that can't be easil
 - Restore course member and instructor roles
 - Delete all extra channels that do not exist in database (only the channels that are placed in valid Course categories, so does not delete default chat/commands/voice/etc.)
 
-### Adding a new admin command ###
+### Making new commands visible ###
 
-New admin commands are registered with `.setDefaultPermission(false)`, but Discord's current Integrations UI doesn't reliably show or enforce that as "hidden by default" (this repo uses the old, deprecated command-permissions v1 field, and Discord's current permissions v2 system may not honor it). So after deploying a new or updated admin command (e.g. via `/reload_commands` or a bot restart), a server admin must manually go to Discord's **Server Settings → Integrations → [bot name]** page and, for that command:
-- Add `@everyone` and set it to **disabled**.
-- Add `admin` and `cs-admin` and set both to **enabled**.
+Admin and faculty commands are registered as restricted: by default Discord shows them only to members with the Administrator permission. Whenever a new admin or faculty command is added (it appears after a bot restart or `/reload_commands`), a server admin has to allow the right roles for it once. Open Discord's **Server Settings → Integrations → [bot name] → Commands**, select the command and add these roles:
+- **Admin commands:** `admin` and `cs-admin`.
+- **Faculty commands:** `faculty`, `admin` and `cs-admin`.
 
-This is a one-time, per-command action that only Discord itself can perform; it cannot be automated by the bot. Until it's done, the command may be visible/usable by everyone rather than just admins, regardless of what the code declares.
+Only Discord itself can do this, the bot cannot. Until it is done, the command stays invisible to everyone except Administrators, so a new command that "doesn't show up" almost always means this step was missed.
+
+Being able to see a command is separate from being allowed to run it. When a command runs, the bot checks the database: admin commands need the `admin` flag, and faculty commands need the `faculty` or `admin` flag. If someone holds the Discord role but not the database flag, run `/update_database` to copy Discord roles into the database (check the flags first, since it overwrites them from the current Discord roles).
 
 ### List of commands
 

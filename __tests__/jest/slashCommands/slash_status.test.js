@@ -2,7 +2,6 @@ const { execute } = require("../../../src/discordBot/commands/faculty/status");
 const {
   sendEphemeral,
   editErrorEphemeral,
-  sendErrorEphemeral,
   editEphemeralForStatus
 } = require("../../../src/discordBot/services/message");
 const {
@@ -17,6 +16,9 @@ const { findAllCourseMembers } = require("../../../src/db/services/courseMemberS
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
+jest.mock("../../../src/discordBot/services/permissions");
+const { requireFaculty } = require("../../../src/discordBot/services/permissions");
+requireFaculty.mockImplementation(() => true);
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/courseMemberService");
@@ -78,11 +80,11 @@ describe("slash status command", () => {
     expect(editEphemeralForStatus).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
-  test("a student cannot use faculty command", async () => {
+  test("a user without faculty access cannot use the command", async () => {
     const client = defaultStudentInteraction.client;
-    const response = "You do not have permission to use this command.";
+    requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
-    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
+    expect(sendEphemeral).not.toHaveBeenCalled();
   });
 });

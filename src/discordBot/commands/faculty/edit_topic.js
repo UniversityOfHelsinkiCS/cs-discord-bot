@@ -1,4 +1,5 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 const {
   handleCooldown,
   checkCourseCooldown,
@@ -6,19 +7,13 @@ const {
   getCourseNameFromCategory,
   isCourseCategory
 } = require("../../services/service");
-const { editErrorEphemeral, sendErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
+const { editErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 const { saveChannelTopicToDb } = require("../../../db/services/channelService");
 
 const execute = async (interaction, client, models) => {
-  if (
-    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
-    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
-  ) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Editing topic...");
   const newTopic = interaction.options.getString("topic").trim();

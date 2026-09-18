@@ -1,4 +1,5 @@
 const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 const { containsEmojis } = require("../../services/service");
 const {
   createCourseToDatabase,
@@ -11,13 +12,7 @@ const { createCourseMemberToDatabase, findCourseMember } = require("../../../db/
 const { findUserByDiscordId } = require("../../../db/services/userService");
 
 const execute = async (interaction, client, models) => {
-  if (
-    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
-    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
-  ) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   const courseCode = interaction.options.getString("coursecode").replace(/\s/g, "");
   const courseFullName = interaction.options.getString("full_name").trim();

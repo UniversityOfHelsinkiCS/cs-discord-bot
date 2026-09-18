@@ -8,11 +8,11 @@ const {
   PermissionFlagsBits,
   SlashCommandBuilder
 } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 
 const {
   sendEphemeral,
   editEphemeral,
-  sendErrorEphemeral,
   editEphemeralWithComponents,
   editEphemeralClearComponents
 } = require("../../services/message");
@@ -20,14 +20,8 @@ const {
 const { facultyRole } = require("../../../../config.json");
 const numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
-const execute = async (interaction, client) => {
-  if (
-    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
-    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
-  ) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+const execute = async (interaction, client, models) => {
+  if (!(await requireFaculty(interaction, models))) return;
 
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);

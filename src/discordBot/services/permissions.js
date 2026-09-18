@@ -6,10 +6,22 @@ const isDbAdmin = async (discordId, models) => {
   return Boolean(user?.admin);
 };
 
-const requireAdmin = async (interaction, models) => {
-  if (await isDbAdmin(interaction.user.id, models)) return true;
+// Admins can use everything faculty can.
+const isDbFaculty = async (discordId, models) => {
+  const user = await findUserByDiscordId(discordId, models.User);
+  return Boolean(user?.admin || user?.faculty);
+};
+
+const allowOrDeny = async (interaction, allowed) => {
+  if (allowed) return true;
   await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
   return false;
 };
 
-module.exports = { isDbAdmin, requireAdmin };
+const requireAdmin = async (interaction, models) =>
+  allowOrDeny(interaction, await isDbAdmin(interaction.user.id, models));
+
+const requireFaculty = async (interaction, models) =>
+  allowOrDeny(interaction, await isDbFaculty(interaction.user.id, models));
+
+module.exports = { isDbAdmin, isDbFaculty, requireAdmin, requireFaculty };

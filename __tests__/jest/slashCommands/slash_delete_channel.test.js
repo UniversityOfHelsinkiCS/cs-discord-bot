@@ -1,17 +1,15 @@
 const { ChannelType } = require("discord.js");
 const { execute } = require("../../../src/discordBot/commands/faculty/delete_channel");
-const {
-  sendEphemeral,
-  editEphemeral,
-  editErrorEphemeral,
-  sendErrorEphemeral
-} = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { removeChannelFromDb, findChannelFromDbByName } = require("../../../src/db/services/channelService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { getCourseNameFromCategory } = require("../../../src/discordBot/services/service");
 
 jest.mock("../../../src/discordBot/services/message");
+jest.mock("../../../src/discordBot/services/permissions");
+const { requireFaculty } = require("../../../src/discordBot/services/permissions");
+requireFaculty.mockImplementation(() => true);
 jest.mock("../../../src/discordBot/services/confirm");
 jest.mock("../../../src/db/services/channelService");
 jest.mock("../../../src/db/services/courseService");
@@ -132,11 +130,11 @@ describe("slash delete_channel", () => {
     expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
-  test("a student cannot use faculty command", async () => {
+  test("a user without faculty access cannot use the command", async () => {
     const client = defaultStudentInteraction.client;
-    const response = "You do not have permission to use this command.";
+    requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
-    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
+    expect(sendEphemeral).not.toHaveBeenCalled();
   });
 });
