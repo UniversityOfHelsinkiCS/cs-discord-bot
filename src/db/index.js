@@ -1,7 +1,7 @@
 const { sequelize } = require("./dbInit");
 const { assertEncryptionKey } = require("./crypto");
 const { logError } = require("./../discordBot/services/logger");
-const Umzug = require("umzug");
+const { createMigrator } = require("./migrator");
 
 const DB_CONNECTION_RETRY_LIMIT = 10;
 
@@ -13,21 +13,9 @@ const shutDown = async (error) => {
 };
 
 const runMigrations = async () => {
-  const migrator = new Umzug({
-    storage: "sequelize",
-    storageOptions: {
-      sequelize,
-      tableName: "migrations",
-    },
-    migrations: {
-      params: [sequelize.getQueryInterface()],
-      path: `${process.cwd()}/src/db/migrations`,
-      pattern: /\.js$/,
-    },
-  });
-  const migrations = await migrator.up();
+  const migrations = await createMigrator(sequelize).up();
   console.log("Ran the following migrations: ", {
-    files: migrations.map((mig) => mig.file),
+    files: migrations.map((mig) => mig.name),
   });
 };
 

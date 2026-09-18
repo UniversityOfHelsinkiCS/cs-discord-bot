@@ -1,8 +1,8 @@
 "use strict";
 
 // One-off runner for the `down` step of encryptUserIdentity-migration.js.
-// No Umzug CLI is wired into this project, so this rebuilds the same migrator
-// config as src/db/index.js and reverts that single migration.
+// No Umzug CLI is wired into this project, so this builds the same migrator
+// (src/db/migrator.js) as src/db/index.js and reverts that single migration.
 //
 //   NODE_ENV=production node src/db/rollback.js
 //
@@ -10,7 +10,7 @@
 
 const { sequelize } = require("./dbInit");
 const { assertEncryptionKey } = require("./crypto");
-const Umzug = require("umzug");
+const { createMigrator } = require("./migrator");
 
 const MIGRATION = "encryptUserIdentity-migration.js";
 
@@ -20,21 +20,8 @@ const run = async () => {
   assertEncryptionKey();
   await sequelize.authenticate();
 
-  const migrator = new Umzug({
-    storage: "sequelize",
-    storageOptions: {
-      sequelize,
-      tableName: "migrations",
-    },
-    migrations: {
-      params: [sequelize.getQueryInterface()],
-      path: `${process.cwd()}/src/db/migrations`,
-      pattern: /\.js$/,
-    },
-  });
-
-  const reverted = await migrator.down({ migrations: [MIGRATION] });
-  console.log("Reverted migrations:", reverted.map((m) => m.file));
+  const reverted = await createMigrator(sequelize).down({ migrations: [MIGRATION] });
+  console.log("Reverted migrations:", reverted.map((m) => m.name));
   await sequelize.close();
 };
 
