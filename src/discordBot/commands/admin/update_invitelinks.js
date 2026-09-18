@@ -1,17 +1,25 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { updateInviteLinks } = require("../../services/service");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral } = require("../../services/message");
 
-const execute = async (message) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    await updateInviteLinks(message.guild);
-  }
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
+
+  await sendEphemeral(interaction, "Updating invite links...");
+
+  await updateInviteLinks(client.guild);
+
+  return await editEphemeral(interaction, "Updated invite links.");
 };
 
 module.exports = {
-  prefix: true,
-  name: "update_invitelinks",
-  description: "Update invitation links.",
-  role: "admin",
-  usage: "!update_invitelinks",
-  args: false,
+  data: new SlashCommandBuilder()
+    .setName("update_invitelinks")
+    .setDescription("Update invitation links.")
+    .setDefaultPermission(false),
   execute,
+  usage: "/update_invitelinks",
+  description: "Update invitation links.",
+  roles: ["admin"],
 };

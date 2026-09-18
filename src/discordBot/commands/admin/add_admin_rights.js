@@ -1,33 +1,43 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { findUserByDiscordId } = require("../../../db/services/userService");
-const { confirmChoiceNoInteraction } = require("../../services/confirm");
+const { confirmChoice } = require("../../services/confirm");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    const guild = message.guild;
-    const userId = args[0];
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
 
-    const user = await findUserByDiscordId(userId, models.User);
+  await sendEphemeral(interaction, "Adding admin rights...");
 
-    if (!user) {
-      return message.reply(`Error: no user found with the id ${userId}.`);
-    }
+  const targetUser = interaction.options.getUser("user");
+  const user = await findUserByDiscordId(targetUser.id, models.User);
 
-    const confirm = await confirmChoiceNoInteraction(message, "Give admin rights to " + user.name, guild);
-    if (!confirm) {
-      return;
-    }
-
-    user.admin = true;
-    await user.save();
+  if (!user) {
+    return await editErrorEphemeral(interaction, `No user found with the id ${targetUser.id}.`);
   }
+
+  const confirm = await confirmChoice(interaction, "Give admin rights to " + user.name);
+  if (!confirm) {
+    return;
+  }
+
+  user.admin = true;
+  await user.save();
+
+  return await editEphemeral(interaction, `Gave admin rights to ${user.name}.`);
 };
 
 module.exports = {
-  prefix: true,
-  name: "add_admin_rights",
-  description: "Give admin rights to a user.",
-  role: "admin",
-  usage: "!add_admin_rights [user's Discord id]",
-  args: true,
+  data: new SlashCommandBuilder()
+    .setName("add_admin_rights")
+    .setDescription("Give admin rights to a user.")
+    .setDefaultPermission(false)
+    .addUserOption(option =>
+      option.setName("user")
+        .setDescription("The user to give admin rights to")
+        .setRequired(true)),
   execute,
+  usage: "/add_admin_rights [user]",
+  description: "Give admin rights to a user.",
+  roles: ["admin"],
 };

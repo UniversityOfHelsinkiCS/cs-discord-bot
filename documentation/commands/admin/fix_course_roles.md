@@ -1,10 +1,8 @@
-## !fix_course_roles
+## /fix_course_roles
 
-- :heavy_check_mark: Can be used only in the #commands text channel.
-- :heavy_check_mark: Reacts to the command with ✅ if command succeeded, and with ❌ if didn't succeed.
-
-- :x: All members can use this command.
+- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
 - :x: Needs arguments.
+- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
 
 Reconciles course membership between Discord and the database. For every guild member and every course:
 

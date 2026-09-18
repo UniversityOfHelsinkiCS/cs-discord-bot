@@ -1,3 +1,4 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { getAllCourses } = require("../../../db/services/courseService");
 const { findUserByDiscordId, findUserByDbId, createUserToDatabase } = require("../../../db/services/userService");
 const {
@@ -6,11 +7,15 @@ const {
   createCourseMemberToDatabase,
   removeCourseMemberFromDb } = require("../../../db/services/courseMemberService");
 const { courseAdminRole } = require("../../../../config.json");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, replyInChunks } = require("../../services/message");
 
-const execute = async (message, args, models) => {
-  if (!message.member.permissions.has("ADMINISTRATOR")) return;
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
 
-  const guild = message.client.guild;
+  await sendEphemeral(interaction, "Fixing course roles...");
+
+  const guild = client.guild;
   await guild.roles.fetch();
   const members = await guild.members.fetch();
   const courses = await getAllCourses(models.Course);
@@ -68,17 +73,16 @@ const execute = async (message, args, models) => {
   }
 
   const report = fixes.length ? fixes.join("\n") : "No course role mismatches found.";
-  for (let i = 0; i < report.length; i += 1000) {
-    await message.reply(report.substring(i, i + 1000));
-  }
+  await replyInChunks(interaction, report);
 };
 
 module.exports = {
-  prefix: true,
-  name: "fix_course_roles",
-  description: "Add missing course roles and sync course memberships from Discord to the database",
-  role: "admin",
-  usage: "!fix_course_roles",
-  args: false,
+  data: new SlashCommandBuilder()
+    .setName("fix_course_roles")
+    .setDescription("Add missing course roles and sync course memberships from Discord to the database")
+    .setDefaultPermission(false),
   execute,
+  usage: "/fix_course_roles",
+  description: "Add missing course roles and sync course memberships from Discord to the database",
+  roles: ["admin"],
 };

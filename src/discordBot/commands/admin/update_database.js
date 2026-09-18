@@ -1,3 +1,4 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { createCourseMemberToDatabase } = require("../../../db/services/courseMemberService");
 const { saveCourseIdWithName } = require("../../../db/services/courseService");
 const { getCourseNameFromCategory, isCourseCategory } = require("../../services/service");
@@ -5,17 +6,23 @@ const { findCourseFromDb } = require("../../../db/services/courseService");
 const { createChannelToDatabase, saveChannelIdWithName, findChannelFromDbByName } = require("../../../db/services/channelService");
 const { createUserToDatabase } = require("../../../db/services/userService");
 const { facultyRole } = require("../../../../config.json");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral } = require("../../services/message");
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    const guild = message.client.guild;
-    const members = await guild.members.fetch();
-    await saveChannelsToDb(models, guild);
-    await saveChannelIdToDb(models, guild);
-    await saveCategoryIdtoDb(models, guild);
-    await saveUsersToDb(models, guild, members);
-    await saveCourseMembersToDb(models, guild, members);
-  }
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
+
+  await sendEphemeral(interaction, "Updating database...");
+
+  const guild = client.guild;
+  const members = await guild.members.fetch();
+  await saveChannelsToDb(models, guild);
+  await saveChannelIdToDb(models, guild);
+  await saveCategoryIdtoDb(models, guild);
+  await saveUsersToDb(models, guild, members);
+  await saveCourseMembersToDb(models, guild, members);
+
+  return await editEphemeral(interaction, "Database updated.");
 };
 
 const saveChannelsToDb = async (models, guild) => {
@@ -156,11 +163,12 @@ const saveCourseMembersToDb = async (models, guild, members) => {
 };
 
 module.exports = {
-  prefix: true,
-  name: "update_database",
-  description: "Save existing channels to database.",
-  role: "admin",
-  usage: "!update_database",
-  args: false,
+  data: new SlashCommandBuilder()
+    .setName("update_database")
+    .setDescription("Save existing channels to database.")
+    .setDefaultPermission(false),
   execute,
+  usage: "/update_database",
+  description: "Save existing channels to database.",
+  roles: ["admin"],
 };

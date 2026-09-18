@@ -1,30 +1,41 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { removeCourseFromDb, findCourseFromDb } = require("../../../db/services/courseService");
-const { confirmChoiceNoInteraction } = require("../../services/confirm");
+const { confirmChoice } = require("../../services/confirm");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    const courseName = args.join(" ");
-    const guild = message.guild;
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
 
-    const confirm = await confirmChoiceNoInteraction(message, "Delete course: " + courseName, guild);
-    if (!confirm) {
-      return;
-    }
+  await sendEphemeral(interaction, "Deleting course...");
 
-    const course = await findCourseFromDb(courseName, models.Course);
-    if (!course) return message.reply(`Error: Invalid course name: ${courseName}.`);
+  const courseName = interaction.options.getString("course_name").trim();
 
-    await removeCourseFromDb(courseName, models.Course);
+  const confirm = await confirmChoice(interaction, "Delete course: " + courseName);
+  if (!confirm) {
+    return;
   }
+
+  const course = await findCourseFromDb(courseName, models.Course);
+  if (!course) return await editErrorEphemeral(interaction, `Invalid course name: ${courseName}.`);
+
+  await removeCourseFromDb(courseName, models.Course);
+  await client.emit("COURSES_CHANGED", models);
+
+  return await editEphemeral(interaction, `Deleted course ${courseName}.`);
 };
 
 module.exports = {
-  prefix: true,
-  name: "delete_course",
-  description: "Delete course.",
-  usage: "!delete_course [course name]",
-  role: "admin",
-  emit: true,
-  args: true,
+  data: new SlashCommandBuilder()
+    .setName("delete_course")
+    .setDescription("Delete course.")
+    .setDefaultPermission(false)
+    .addStringOption(option =>
+      option.setName("course_name")
+        .setDescription("The name of the course to delete")
+        .setRequired(true)),
   execute,
+  usage: "/delete_course [course name]",
+  description: "Delete course.",
+  roles: ["admin"],
 };

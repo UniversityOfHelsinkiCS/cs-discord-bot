@@ -98,6 +98,13 @@ const sendFollowUpEphemeral = async (interaction, msg) => {
   await interaction.followUp({ content: `${msg}`, ephemeral: true });
 };
 
+const replyInChunks = async (interaction, text, chunkSize = 1000) => {
+  const chunks = [];
+  for (let i = 0; i < text.length; i += chunkSize) chunks.push(text.substring(i, i + chunkSize));
+  await editEphemeral(interaction, chunks[0] ?? "Done.");
+  for (const chunk of chunks.slice(1)) await sendFollowUpEphemeral(interaction, chunk);
+};
+
 module.exports = {
   sendPullDateMessage,
   sendErrorReport,
@@ -112,4 +119,5 @@ module.exports = {
   editErrorEphemeral,
   sendReplyMessage,
   sendFollowUpEphemeral,
+  replyInChunks,
 };

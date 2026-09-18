@@ -1,50 +1,40 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { getAllCourses } = require("../../../db/services/courseService");
-const { findChannelsByCourse, getAllChannels } = require("../../../db/services/channelService");
+const { findChannelsByCourse } = require("../../../db/services/channelService");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, replyInChunks } = require("../../services/message");
 
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    let statusMessage = "";
-    const allCourses = await getAllCourses(models.Course);
-    for (const course in allCourses) {
-      const currentCourse = allCourses[course];
+  await sendEphemeral(interaction, "Listing courses...");
 
+  let statusMessage = "";
+  const allCourses = await getAllCourses(models.Course);
+  for (const course in allCourses) {
+    const currentCourse = allCourses[course];
 
-      statusMessage += "Course: " + currentCourse.name + " " + currentCourse.categoryId + "\n";
+    statusMessage += "Course: " + currentCourse.name + " " + currentCourse.categoryId + "\n";
 
+    const courseChannels = await findChannelsByCourse(currentCourse.id, models.Channel);
 
-      const courseChannels = await findChannelsByCourse(currentCourse.id, models.Channel);
-
-      for (const channel in courseChannels) {
-        const currentChannel = courseChannels[channel];
-        statusMessage += currentChannel.name + " " + currentChannel.discordId + "\n";
-      }
-      statusMessage += "\n";
-    }
-
-    for (let i = 0; i < statusMessage.length;) {
-      message.reply(statusMessage.substring(i, i + 1000));
-      i += 1000;
-    }
-
-
-    statusMessage = "";
-    const allChannels = await getAllChannels(models.Channel);
-    for (const channel in allChannels) {
-      const currentChannel = allChannels[channel];
+    for (const channel in courseChannels) {
+      const currentChannel = courseChannels[channel];
       statusMessage += currentChannel.name + " " + currentChannel.discordId + "\n";
     }
-
+    statusMessage += "\n";
   }
+
+  await replyInChunks(interaction, statusMessage || "No courses found.");
 };
 
-
 module.exports = {
-  prefix: true,
-  name: "list_courses",
-  description: "List all courses and channels",
-  role: "admin",
-  usage: "!list_courses",
-  args: false,
+  data: new SlashCommandBuilder()
+    .setName("list_courses")
+    .setDescription("List all courses and channels")
+    .setDefaultPermission(false),
   execute,
+  usage: "/list_courses",
+  description: "List all courses and channels",
+  roles: ["admin"],
 };

@@ -2,20 +2,26 @@
 
 ### Admin commands
 
-#### Note that admin commands must be run inside the _#commands_ text channel.
+Admin commands are registered with `.setDefaultPermission(false)`, but Discord's Integrations page does not reliably reflect that as a "hidden by default" state (this repo is on the old, deprecated command-permissions v1 field; Discord's current permissions v2 system may not honor it). After adding or redeploying an admin command, a server admin must go to **Server Settings → Integrations → [bot name]** and, for that command, explicitly add `@everyone` and set it to **disabled**, then add the `admin` and `cs-admin` roles and set them to **enabled**. Don't rely on the command being hidden without the explicit `@everyone` deny — otherwise the command won't be reliably restricted. This is a one-time step per command; running `/reload_commands` does not re-apply it automatically. Execution is additionally gated in code by the invoking user's `admin` flag in the database.
 
 Command | Description | Example
 --- |--- | ---
-`!add_admin_rights` | Add admin rights to given user (requires Discord ID of user). | `!add_admin_rights 123456789012345678`
-`!delete_command` | Delete the given slash command. | `!delete help`
-`!delete_course` | Delete the given course channel. | `!delete_course ohpe`
-`!fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `!fix_course_roles`
-`!reload_commands` | Reload all slash commands, returning deleted commands, registering new commands, and updating command permissions. | `!reload_commands`
-`!remove_admin_rights` | Remove admin rights from given user (requires Discord ID of user). | `!remove_admin_rights 123456789012345678`
-`!remove_faculty_rights` | Remove faculty rights from given user (requires Discord ID of user). | `!remove_faculty_rights 123456789012345678`
-`!sort_courses` | Sort courses alphabetically. | `!sort_courses`
-`!update_instructors` | Update course instructor roles. | `!update_instructors`
-`!update_invitelinks` | Update course invitation links. | `!update_invitelinks`
+`/add_admin_rights` | Add admin rights to given user. | `/add_admin_rights user:@someone`
+`/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
+`/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
+`/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
+`/list_bridges` | List all courses with their telegram bridge id and whether it is in use. | `/list_bridges`
+`/list_courses` | List all courses and channels. | `/list_courses`
+`/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
+`/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`
+`/remove_faculty_rights` | Remove faculty rights from given user. | `/remove_faculty_rights user:@someone`
+`/restore_server_from_database` | Recreate the Discord server from the database. | `/restore_server_from_database`
+`/server_status` | Check if the Discord server and database are in sync. | `/server_status`
+`/sort_courses` | Sort courses alphabetically. | `/sort_courses`
+`/update_categorynames` | Update category names to the new format. | `/update_categorynames`
+`/update_database` | Save existing channels to database. | `/update_database`
+`/update_instructors` | Update course instructor roles. | `/update_instructors`
+`/update_invitelinks` | Update course invitation links. | `/update_invitelinks`
 
 ### Faculty commands
 

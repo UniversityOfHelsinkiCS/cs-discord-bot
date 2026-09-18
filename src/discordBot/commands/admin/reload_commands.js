@@ -1,17 +1,25 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { setUpCommands } = require("../../services/command");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral } = require("../../services/message");
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    setUpCommands(message.client, models.Course);
-  }
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
+
+  await sendEphemeral(interaction, "Reloading commands...");
+
+  await setUpCommands(client, models.Course);
+
+  return await editEphemeral(interaction, "Reloaded slash commands.");
 };
 
 module.exports = {
-  prefix: true,
-  name: "reload_commands",
-  description: "Reload slash commands.",
-  role: "admin",
-  usage: "!reload_commands",
-  args: false,
+  data: new SlashCommandBuilder()
+    .setName("reload_commands")
+    .setDescription("Reload slash commands.")
+    .setDefaultPermission(false),
   execute,
+  usage: "/reload_commands",
+  description: "Reload slash commands.",
+  roles: ["admin"],
 };

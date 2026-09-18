@@ -1,8 +1,11 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { getAllCourses, saveCourseIdWithName, findCourseFromDbById, getCourseByDiscordId } = require("../../../db/services/courseService");
 const { getAllChannels, saveChannelIdWithName, getChannelByDiscordId } = require("../../../db/services/channelService");
 const { getAllUsers, findUserByDbId } = require("../../../db/services/userService");
 const { getAllMembers } = require("../../../db/services/courseMemberService");
-const { confirmChoiceNoInteraction } = require("../../services/confirm");
+const { confirmChoice } = require("../../services/confirm");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral } = require("../../services/message");
 const {
   findOrCreateChannel,
   findOrCreateRoleWithName,
@@ -14,26 +17,31 @@ const {
 const { updateGuide } = require("../../services/guide");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    const guild = message.client.guild;
-    const confirm = await confirmChoiceNoInteraction(message, "Restore EVERYTHING from database?", guild);
-    if (!confirm) {
-      return;
-    }
-    const confirm2 = await confirmChoiceNoInteraction(message, "Are you ABSOLUTELY sure?", guild);
-    if (!confirm2) {
-      return;
-    }
-    await restoreCategories(guild, models);
-    await restoreChannels(guild, models);
-    await restorePermissions(guild, models);
-    await restoreUsers(guild, models);
-    await restoreCourseMembers(guild, models);
-    await deleteExtraChannels(guild, models);
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
 
-    await updateGuide(guild, models);
+  await sendEphemeral(interaction, "Restore EVERYTHING from database?");
+
+  const confirm = await confirmChoice(interaction, "Restore EVERYTHING from database?");
+  if (!confirm) {
+    return;
   }
+  const confirm2 = await confirmChoice(interaction, "Are you ABSOLUTELY sure?");
+  if (!confirm2) {
+    return;
+  }
+
+  const guild = client.guild;
+  await restoreCategories(guild, models);
+  await restoreChannels(guild, models);
+  await restorePermissions(guild, models);
+  await restoreUsers(guild, models);
+  await restoreCourseMembers(guild, models);
+  await deleteExtraChannels(guild, models);
+
+  await updateGuide(guild, models);
+
+  return await editEphemeral(interaction, "Server restored from database.");
 };
 
 const restoreCategories = async (guild, models) => {
@@ -252,13 +260,13 @@ const emojiName = (categoryObject, currentCourse) => {
   return categoryObject;
 };
 
-
 module.exports = {
-  prefix: true,
-  name: "restore_server_from_database",
-  description: "Recreate Discord server from database",
-  role: "admin",
-  usage: "!restore_server_from_database",
-  args: false,
+  data: new SlashCommandBuilder()
+    .setName("restore_server_from_database")
+    .setDescription("Recreate Discord server from database")
+    .setDefaultPermission(false),
   execute,
+  usage: "/restore_server_from_database",
+  description: "Recreate Discord server from database",
+  roles: ["admin"],
 };

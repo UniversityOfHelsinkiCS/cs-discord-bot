@@ -1,34 +1,43 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
 const { findUserByDiscordId } = require("../../../db/services/userService");
-const { confirmChoiceNoInteraction } = require("../../services/confirm");
+const { confirmChoice } = require("../../services/confirm");
+const { requireAdmin } = require("../../services/permissions");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
-const execute = async (message, args, models) => {
-  if (message.member.permissions.has("ADMINISTRATOR")) {
-    const guild = message.guild;
-    const userId = args[0];
+const execute = async (interaction, client, models) => {
+  if (!(await requireAdmin(interaction, models))) return;
 
-    const user = await findUserByDiscordId(userId, models.User);
+  await sendEphemeral(interaction, "Removing admin rights...");
 
-    if (!user) {
-      return message.reply(`Error: no user found with the id ${userId}.`);
-    }
+  const targetUser = interaction.options.getUser("user");
+  const user = await findUserByDiscordId(targetUser.id, models.User);
 
-    const confirm = await confirmChoiceNoInteraction(message, "Remove admin rights from " + user.name, guild);
-    if (!confirm) {
-      return;
-    }
-
-    user.admin = false;
-    await user.save();
-
+  if (!user) {
+    return await editErrorEphemeral(interaction, `No user found with the id ${targetUser.id}.`);
   }
+
+  const confirm = await confirmChoice(interaction, "Remove admin rights from " + user.name);
+  if (!confirm) {
+    return;
+  }
+
+  user.admin = false;
+  await user.save();
+
+  return await editEphemeral(interaction, `Removed admin rights from ${user.name}.`);
 };
 
 module.exports = {
-  prefix: true,
-  name: "remove_admin_rights",
-  description: "Remove admin rights from a user.",
-  role: "admin",
-  usage: "!remove_admin_rights [user's Discord id]",
-  args: true,
+  data: new SlashCommandBuilder()
+    .setName("remove_admin_rights")
+    .setDescription("Remove admin rights from a user.")
+    .setDefaultPermission(false)
+    .addUserOption(option =>
+      option.setName("user")
+        .setDescription("The user to remove admin rights from")
+        .setRequired(true)),
   execute,
+  usage: "/remove_admin_rights [user]",
+  description: "Remove admin rights from a user.",
+  roles: ["admin"],
 };
