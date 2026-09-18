@@ -121,7 +121,9 @@ const checkImageMessageFingerprints = (images) => {
 
 const banAndUnban = async (message, reason, action) => {
   await message.author.send(buildRecoveryMessage(action)).catch(logError);
-  const banned = await message.guild.members.ban(message.author.id, { days: 1, reason }).catch(logError);
+  const banned = await message.guild.members
+    .ban(message.author.id, { deleteMessageSeconds: 86400, reason })
+    .catch(logError);
   if (banned) await message.guild.members.unban(message.author.id).catch(logError);
 };
 
@@ -209,7 +211,7 @@ const checkHoneypot = async (message, client) => {
     if (postedInHoneypotWithinTtl(userId)) {
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
       const banned = await message.guild.members
-        .ban(userId, { days: 1, reason: "Sent multiple messages in honeypot channel" })
+        .ban(userId, { deleteMessageSeconds: 86400, reason: "Sent multiple messages in honeypot channel" })
         .catch(logError);
       if (banned) await message.guild.members.unban(userId).catch(logError);
       const report = `**HONEYPOT REPEAT MESSAGE KICK**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;

@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const Discord = require("discord.js");
 const fs = require("fs");
 const path = require("path");
@@ -16,17 +17,17 @@ const client = {
     },
     channels: {
       cache: [],
-      create: jest.fn((name) =>
+      create: jest.fn((options) =>
         client.guild.channels.cache.push({
-          name: name,
-          type: "GUILD_TEXT",
+          name: options.name,
+          type: ChannelType.GuildText,
           send: jest.fn((content) => {
             return { content: content, pin: jest.fn() };
           }),
           lastPinTimestamp: null,
           createInvite: jest.fn(() =>
             client.guild.invites.cache.push({
-              name: name,
+              name: options.name,
               code: 1
             })
           )
@@ -34,7 +35,7 @@ const client = {
       ),
       messages: {
         cache: [],
-        fetchPinned: jest.fn(() => []),
+        fetchPins: jest.fn(() => ({ items: [] })),
         send: jest.fn()
       }
     },

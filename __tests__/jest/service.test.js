@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const axios = require("axios");
 jest.mock("axios");
 const {
@@ -63,20 +64,20 @@ describe("Service", () => {
   });
 
   test("dont find invalid channel with name and type", () => {
-    const channelFound = findChannelWithNameAndType("guide", "GUILD_TEXT", client.guild);
+    const channelFound = findChannelWithNameAndType("guide", ChannelType.GuildText, client.guild);
     expect(channelFound).toBeUndefined();
   });
 
   test("find valid channel with name and type", () => {
-    const channelObject = { name: "guide", options: { type: "GUILD_TEXT" } };
-    client.guild.channels.create(channelObject.name, channelObject.options);
-    const channelFound = findChannelWithNameAndType("guide", "GUILD_TEXT", client.guild);
-    const result = { name: "guide", type: "GUILD_TEXT" };
+    const channelObject = { name: "guide", options: { type: ChannelType.GuildText } };
+    client.guild.channels.create({ name: channelObject.name, ...channelObject.options });
+    const channelFound = findChannelWithNameAndType("guide", ChannelType.GuildText, client.guild);
+    const result = { name: "guide", type: ChannelType.GuildText };
     expect(channelFound).toMatchObject(result);
   });
 
   test("find valid channel with id", () => {
-    const channel = { name: "guide", type: "GUILD_TEXT" };
+    const channel = { name: "guide", type: ChannelType.GuildText };
     const channelFound = findChannelWithId(1, client.guild);
     expect(channelFound).toMatchObject(channel);
   });
@@ -84,7 +85,12 @@ describe("Service", () => {
   test("creating guide invitation call createInvite", async () => {
     const msg = { pin: jest.fn() };
     const invite = { code: 1 };
-    const guide = { name: "guide", type: "GUILD_TEXT", createInvite: jest.fn(() => invite), send: jest.fn(() => msg) };
+    const guide = {
+      name: "guide",
+      type: ChannelType.GuildText,
+      createInvite: jest.fn(() => invite),
+      send: jest.fn(() => msg)
+    };
     client.guild.channels.cache = [guide];
     await createInvitation(client.guild, "guide");
     expect(guide.createInvite).toHaveBeenCalledTimes(1);
@@ -95,8 +101,13 @@ describe("Service", () => {
   test("creating invitation not guide", async () => {
     const msg = { pin: jest.fn() };
     const invite = { code: 1 };
-    const guide = { name: "guide", type: "GUILD_TEXT", createInvite: jest.fn(() => invite), send: jest.fn(() => msg) };
-    const testAnnouncement = { name: "test_announcement", type: "GUILD_TEXT", send: jest.fn(() => msg) };
+    const guide = {
+      name: "guide",
+      type: ChannelType.GuildText,
+      createInvite: jest.fn(() => invite),
+      send: jest.fn(() => msg)
+    };
+    const testAnnouncement = { name: "test_announcement", type: ChannelType.GuildText, send: jest.fn(() => msg) };
     client.guild.channels.cache = [guide, testAnnouncement];
     await createInvitation(client.guild, "test");
     expect(guide.createInvite).toHaveBeenCalledTimes(0);
@@ -107,7 +118,7 @@ describe("Service", () => {
   test("find public category", () => {
     const courseString = "test";
     const pubCategoryName = "📚 test";
-    const pubChan = { name: pubCategoryName, type: "GUILD_CATEGORY" };
+    const pubChan = { name: pubCategoryName, type: ChannelType.GuildCategory };
     client.guild.channels.cache = [pubChan];
 
     const result = findCategoryWithCourseName(courseString, client.guild);
@@ -118,7 +129,7 @@ describe("Service", () => {
   test("find private category", () => {
     const courseString = "test";
     const privCategoryName = "👻 test";
-    const privChan = { name: privCategoryName, type: "GUILD_CATEGORY" };
+    const privChan = { name: privCategoryName, type: ChannelType.GuildCategory };
     client.guild.channels.cache = [privChan];
 
     const result = findCategoryWithCourseName(courseString, client.guild);
@@ -162,15 +173,15 @@ describe("Service", () => {
 
   test("create a new channel if it does not exist", async () => {
     client.guild.channels.init();
-    const channelObject = { name: "test", options: { type: "GUILD_TEXT" } };
+    const channelObject = { name: "test", options: { type: ChannelType.GuildText } };
     const guild = client.guild;
     await findOrCreateChannel(channelObject, guild);
     expect(guild.channels.create).toHaveBeenCalledTimes(1);
-    expect(guild.channels.create).toHaveBeenCalledWith(channelObject.name, channelObject.options);
+    expect(guild.channels.create).toHaveBeenCalledWith({ name: channelObject.name, ...channelObject.options });
   });
 
   test("Dont create a new channel if exists", async () => {
-    const channelObject = { name: "test", options: { type: "GUILD_TEXT" } };
+    const channelObject = { name: "test", options: { type: ChannelType.GuildText } };
     const guild = client.guild;
     await findOrCreateChannel(channelObject, guild);
     expect(guild.channels.create).toHaveBeenCalledTimes(0);

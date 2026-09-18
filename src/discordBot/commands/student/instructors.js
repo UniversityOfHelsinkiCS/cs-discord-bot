@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const { getCourseNameFromCategory, listCourseInstructors } = require("../../services/service");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
@@ -23,10 +23,7 @@ const execute = async (interaction, client, models) => {
 };
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("instructors")
-    .setDescription("Prints out the instructors of the course.*")
-    .setDefaultPermission(true),
+  data: new SlashCommandBuilder().setName("instructors").setDescription("Prints out the instructors of the course.*"),
   execute,
   usage: "/instructors",
   description: "Prints out the instructors of the course.*"

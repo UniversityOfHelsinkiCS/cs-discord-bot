@@ -1,14 +1,14 @@
-const { MessageActionRow, MessageButton, MessageEmbed } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder } = require("discord.js");
 
 const confirmChoice = async (interaction, msg) => {
-  const answerRow = new MessageActionRow();
+  const answerRow = new ActionRowBuilder();
   answerRow.addComponents(
-    new MessageButton().setCustomId("confirm").setLabel("Confirm").setStyle("SUCCESS"),
-    new MessageButton().setCustomId("decline").setLabel("Decline").setStyle("DANGER")
+    new ButtonBuilder().setCustomId("confirm").setLabel("Confirm").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("decline").setLabel("Decline").setStyle(ButtonStyle.Danger)
   );
 
-  const reply = await interaction.editReply({ content: `${msg}`, components: [answerRow], ephemeral: true });
-  const collector = reply.createMessageComponentCollector({ componentType: "BUTTON", time: 60000 });
+  const reply = await interaction.editReply({ content: `${msg}`, components: [answerRow] });
+  const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
   let stop = false;
   let confirm = false;
   collector.on("collect", (i) => {
@@ -36,18 +36,18 @@ const confirmChoice = async (interaction, msg) => {
 };
 
 const confirmChoiceNoInteraction = async (message, interactionMessage, guild) => {
-  const confirmEmbed = new MessageEmbed().setColor().setColor("#0099ff").setTitle(interactionMessage);
+  const confirmEmbed = new EmbedBuilder().setColor("#0099ff").setTitle(interactionMessage);
 
-  const row = new MessageActionRow();
+  const row = new ActionRowBuilder();
   row.addComponents(
-    new MessageButton().setCustomId("confirm").setLabel("Confirm").setStyle("SUCCESS"),
-    new MessageButton().setCustomId("decline").setLabel("Decline").setStyle("DANGER")
+    new ButtonBuilder().setCustomId("confirm").setLabel("Confirm").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("decline").setLabel("Decline").setStyle(ButtonStyle.Danger)
   );
 
   const channel = guild.channels.cache.get(message.channelId);
   const messageAuthorId = message.author.id;
   const msgEmbed = await channel.send({ embeds: [confirmEmbed], components: [row] });
-  const collector = msgEmbed.createMessageComponentCollector({ componentType: "BUTTON", time: 60000 });
+  const collector = msgEmbed.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
   let stop = false;
   let confirm = false;
   collector.on("collect", (i) => {

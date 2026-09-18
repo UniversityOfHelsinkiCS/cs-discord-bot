@@ -93,11 +93,10 @@ Invite: https://discord.gg/V5R9dZFCkD
 | Guilds | Channel, role, and guild state. |
 | **Guild Members** (privileged) | Join/leave events drive database sync and role management; `!fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
 | **Message Content** (privileged) | Parse `!` prefix commands and copy-pasted `/join`; compare message text for spam/scam detection. |
-| Guild Webhooks, Guild Invites | Course invite-link management and channel webhooks. |
-| Guild Messages, Guild Message Reactions | Command handling, polls, confirmations. |
+| Guild Messages, Guild Message Reactions | Spam firewall and copy-pasted `/join` (messages); joining and leaving courses from the guide channel (reactions). |
 | Guild Voice States | Voice-channel state used by course channels. |
 
-The Guild Presences intent is **not** used.
+The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
 
 ## Documentation
 

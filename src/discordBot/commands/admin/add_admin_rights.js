@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { confirmChoice } = require("../../services/confirm");
 const { requireAdmin } = require("../../services/permissions");
@@ -31,7 +31,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("add_admin_rights")
     .setDescription("Give admin rights to a user.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addUserOption((option) =>
       option.setName("user").setDescription("The user to give admin rights to").setRequired(true)
     ),

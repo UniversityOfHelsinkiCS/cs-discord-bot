@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { createCourseMemberToDatabase } = require("../../../db/services/courseMemberService");
 const { saveCourseIdWithName } = require("../../../db/services/courseService");
 const { getCourseNameFromCategory, isCourseCategory } = require("../../services/service");
@@ -52,8 +52,8 @@ const saveChannelsToDb = async (models, guild) => {
       const defaultChannel =
         currentChannel.name.includes("_general") ||
         currentChannel.name.includes("_announcement") ||
-        currentChannel.type === "GUILD_VOICE";
-      const voiceChannel = currentChannel.type === "GUILD_VOICE";
+        currentChannel.type === ChannelType.GuildVoice;
+      const voiceChannel = currentChannel.type === ChannelType.GuildVoice;
 
       const channelInstance = await findChannelFromDbByName(currentChannel.name, models.Channel);
       if (channelInstance) {
@@ -130,8 +130,8 @@ const saveUsersToDb = async (models, guild, members) => {
     notBots.map(async (m) => {
       const u = m.user;
       const user = await createUserToDatabase(u.id, u.username, models.User);
-      user.admin = m._roles.includes(adminRoleId);
-      user.faculty = m._roles.includes(facultyRoleId);
+      user.admin = m.roles.cache.has(adminRoleId);
+      user.faculty = m.roles.cache.has(facultyRoleId);
       user.save();
     })
   );
@@ -152,16 +152,14 @@ const saveCourseMembersToDb = async (models, guild, members) => {
   );
 
   const instructorRoles = roles.filter((r) => r.name.includes("instructor"));
-  const instructorRoleIds = instructorRoles.map((r) => r.id);
   const courseRoles = roles.filter((r) => courses.includes(r.name));
-  const courseRoleIds = courseRoles.map((r) => r.id);
 
   await Promise.all(
     notBots.map(async (m) => {
-      const coursesJoined = m._roles.filter((r) => courseRoleIds.includes(r)).map((id) => courseRoles.get(id).name);
-      const instructorIn = m._roles
-        .filter((r) => instructorRoleIds.includes(r))
-        .map((id) => instructorRoles.get(id).name.replace(" instructor", ""));
+      const coursesJoined = m.roles.cache.filter((role) => courseRoles.has(role.id)).map((role) => role.name);
+      const instructorIn = m.roles.cache
+        .filter((role) => instructorRoles.has(role.id))
+        .map((role) => role.name.replace(" instructor", ""));
 
       const user = m.user;
       const userFromDb = await createUserToDatabase(user.id, user.username, models.User);
@@ -185,7 +183,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("update_database")
     .setDescription("Save existing channels to database.")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/update_database",
   description: "Save existing channels to database.",

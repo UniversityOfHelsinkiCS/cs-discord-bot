@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const { editEphemeral, editErrorEphemeral, sendEphemeral, sendFollowUpEphemeral } = require("../../services/message");
 const { facultyRole, courseAdminRole, githubRepo } = require("../../../../config.json");
 const prefix = "/";
@@ -112,7 +112,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
     .setDescription("Get info on how to use command(s).")
-    .setDefaultPermission(true)
     .addStringOption((option) => option.setName("command").setDescription("command instructions").setRequired(false)),
   execute,
   usage: "/help <command name>",

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getAllCourses } = require("../../../db/services/courseService");
 const { findUserByDiscordId, findUserByDbId, createUserToDatabase } = require("../../../db/services/userService");
 const {
@@ -81,7 +81,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("fix_course_roles")
     .setDescription("Add missing course roles and sync course memberships from Discord to the database")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/fix_course_roles",
   description: "Add missing course roles and sync course memberships from Discord to the database",

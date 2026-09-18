@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getAllCourses, findCourseFromDbById, getCourseByDiscordId } = require("../../../db/services/courseService");
 const { getChannelByDiscordId, findChannelsByCourse } = require("../../../db/services/channelService");
 const { getAllUsers, findUserByDbId } = require("../../../db/services/userService");
@@ -47,10 +47,10 @@ const execute = async (interaction, client, models) => {
       }
       if (courseRole && courseInstructorRole) {
         if (locked) {
-          if (courseRole.permissionsIn(categoryFound).has("SEND_MESSAGES")) {
+          if (courseRole.permissionsIn(categoryFound).has(PermissionFlagsBits.SendMessages)) {
             statusMessage += "Course members can speak in locked course\n";
           }
-        } else if (!courseRole.permissionsIn(categoryFound).has("SEND_MESSAGES")) {
+        } else if (!courseRole.permissionsIn(categoryFound).has(PermissionFlagsBits.SendMessages)) {
           statusMessage += "Course members can't talk in unlocked course\n";
         }
       } else {
@@ -73,25 +73,25 @@ const execute = async (interaction, client, models) => {
           statusMessage += "Channel: " + currentChannel.name + " placed in wrong category\n";
         }
         if (locked && !currentChannel.name.includes("announcement")) {
-          if (courseRole.permissionsIn(channelFound).has("SEND_MESSAGES")) {
+          if (courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages)) {
             statusMessage += "Channel: " + currentChannel.name + " Course members can speak in locked channel\n";
           }
         } else if (
-          !courseRole.permissionsIn(channelFound).has("SEND_MESSAGES") &&
+          !courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages) &&
           !currentChannel.name.includes("announcement")
         ) {
           statusMessage += "Channel: " + currentChannel.name + " Course members can't talk in unlocked channel\n";
         }
         if (currentChannel.hidden) {
           if (
-            courseRole.permissionsIn(channelFound).has("SEND_MESSAGES") &&
-            courseRole.permissionsIn(channelFound).has("VIEW_CHANNEL")
+            courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages) &&
+            courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.ViewChannel)
           ) {
             statusMessage +=
               "Channel: " + currentChannel.name + " Regular course members can see and talk in hidden channel\n";
-          } else if (courseRole.permissionsIn(channelFound).has("SEND_MESSAGES")) {
+          } else if (courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages)) {
             statusMessage += "Channel: " + currentChannel.name + " Regular course members can talk in hidden channel\n";
-          } else if (courseRole.permissionsIn(channelFound).has("VIEW_CHANNEL")) {
+          } else if (courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.ViewChannel)) {
             statusMessage += "Channel: " + currentChannel.name + " Regular course members can see a hidden channel\n";
           }
         }
@@ -160,7 +160,7 @@ const execute = async (interaction, client, models) => {
   let orphanChannelsMessage = "";
   await Promise.all(
     guild.channels.cache.map(async (aChannel) => {
-      if (aChannel.type !== "GUILD_CATEGORY") {
+      if (aChannel.type !== ChannelType.GuildCategory) {
         const channelToRemove = await getChannelByDiscordId(aChannel.id, models.Channel);
         if (!channelToRemove) {
           if (aChannel.parent) {
@@ -198,7 +198,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("server_status")
     .setDescription("Check if Discord server and database are in sync")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/server_status",
   description: "Check if Discord server and database are in sync",

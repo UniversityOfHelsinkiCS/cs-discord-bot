@@ -2,7 +2,7 @@ const { sendErrorReport, sendErrorEphemeral } = require("../services/message");
 const { logInteractionError } = require("../services/logger");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.isCommand()) return;
+  if (!interaction.isChatInputCommand()) return;
   const command = client.slashCommands.get(interaction.commandName);
   if (!command) return;
   try {

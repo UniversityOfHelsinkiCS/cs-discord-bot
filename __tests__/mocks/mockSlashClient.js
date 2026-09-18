@@ -12,18 +12,15 @@ const client = {
     id: 1
   },
   guild: {
-    me: {
-      roles: ["admin"]
-    },
     invites: {
       cache: [],
       fetch: jest.fn(() => client.guild.invites.cache)
     },
     channels: {
       cache: new Discord.Collection(),
-      create: jest.fn((name, options) =>
+      create: jest.fn((options) =>
         client.guild.channels.cache.set(id, {
-          name: name,
+          name: options.name,
           type: options.type,
           send: jest.fn((content) => {
             return { content: content, pin: jest.fn() };
@@ -43,7 +40,7 @@ const client = {
       init: jest.fn(() => (client.guild.channels.cache = new Discord.Collection())),
       messages: {
         cache: [],
-        fetchPinned: jest.fn(() => []),
+        fetchPins: jest.fn(() => ({ items: [] })),
         send: jest.fn()
       }
     },
@@ -61,6 +58,7 @@ const client = {
       init: () => (client.guild.roles.cache = new Discord.Collection())
     },
     members: {
+      me: { roles: ["admin"] },
       cache: new Discord.Collection(),
       fetch: jest.fn(() => {
         return client.guild.members.cache;

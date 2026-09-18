@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const {
   findChannelWithNameAndType,
   msToMinutesAndSeconds,
@@ -20,7 +20,7 @@ const changeCourseCode = async (interaction, client, models, courseName, newValu
   const trimmedNewCourseName = newValue.replace(/\s/g, "");
   if (databaseValue.code.toLowerCase() === databaseValue.name.toLowerCase()) {
     if (
-      findChannelWithNameAndType(trimmedNewCourseName, "GUILD_CATEGORY", guild) &&
+      findChannelWithNameAndType(trimmedNewCourseName, ChannelType.GuildCategory, guild) &&
       databaseValue.code.toLowerCase() !== trimmedNewCourseName.toLowerCase()
     ) {
       await editErrorEphemeral(interaction, "Course code already exists");
@@ -58,7 +58,7 @@ const changeCourseNick = async (interaction, client, models, courseName, newValu
   const trimmedNewCourseName = newValue.replace(/\s/g, "").toLowerCase();
 
   if (
-    findChannelWithNameAndType(trimmedNewCourseName, "GUILD_CATEGORY", guild) &&
+    findChannelWithNameAndType(trimmedNewCourseName, ChannelType.GuildCategory, guild) &&
     databaseValue.name.toLowerCase() !== trimmedNewCourseName.toLowerCase()
   ) {
     await editErrorEphemeral(interaction, "Course name already exists");
@@ -72,7 +72,7 @@ const changeCourseNick = async (interaction, client, models, courseName, newValu
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -131,15 +131,17 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("edit_course")
     .setDescription("Edit course code, name or nickname")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
       option
         .setName("options")
         .setDescription("Edit current course")
         .setRequired(true)
-        .addChoice("coursecode", "code")
-        .addChoice("full name", "name")
-        .addChoice("nickname", "nick")
+        .addChoices(
+          { name: "coursecode", value: "code" },
+          { name: "full name", value: "name" },
+          { name: "nickname", value: "nick" }
+        )
     )
     .addStringOption((option) => option.setName("new_value").setDescription("Give new value").setRequired(true)),
   execute,

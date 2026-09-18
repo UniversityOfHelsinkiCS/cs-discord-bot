@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { msToMinutesAndSeconds, handleCooldown, checkCourseCooldown } = require("../../services/service");
 const { setCourseToPublic, findCourseFromDb } = require("../../../db/services/courseService");
 const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../services/message");
@@ -7,7 +7,7 @@ const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -44,7 +44,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("unhide_course")
     .setDescription("Unhide course")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) => option.setName("course").setDescription("Unhide given course").setRequired(true)),
   execute,
   usage: "/unhide_course [course name]",

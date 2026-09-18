@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { updateInviteLinks } = require("../../services/service");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
@@ -17,7 +17,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("update_invitelinks")
     .setDescription("Update invitation links.")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/update_invitelinks",
   description: "Update invitation links.",

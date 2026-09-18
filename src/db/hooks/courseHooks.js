@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const {
   findOrCreateChannel,
   findCategoryWithCourseName,
@@ -52,7 +53,7 @@ const initCourseHooks = (guild, models) => {
 
     const channelObjects = await getDefaultChannelObjects(guild, course.name, student, admin, category);
     const defaultChannelObjects = channelObjects.map((channelObject) => {
-      const voiceChannel = channelObject.options.type === "GUILD_VOICE";
+      const voiceChannel = channelObject.options.type === ChannelType.GuildVoice;
       return {
         courseId: course.id,
         name: channelObject.name,
@@ -78,21 +79,21 @@ const initCourseHooks = (guild, models) => {
           await setEmojisLock(category, hidden, courseName, models);
           category.permissionOverwrites.create(
             guild.roles.cache.find((r) => r.name === course.name),
-            { VIEW_CHANNEL: true, SEND_MESSAGES: false }
+            { ViewChannel: true, SendMessages: false }
           );
           category.permissionOverwrites.create(
             guild.roles.cache.find((r) => r.name === "faculty"),
-            { SEND_MESSAGES: true }
+            { SendMessages: true }
           );
           category.permissionOverwrites.create(
             guild.roles.cache.find((r) => r.name === "admin"),
-            { SEND_MESSAGES: true }
+            { SendMessages: true }
           );
         } else {
           await setEmojisUnlock(category, hidden, courseName, models);
           category.permissionOverwrites.create(
             guild.roles.cache.find((r) => r.name === course.name),
-            { VIEW_CHANNEL: true, SEND_MESSAGES: true }
+            { ViewChannel: true, SendMessages: true }
           );
         }
       } else if (changedValue.has("private")) {

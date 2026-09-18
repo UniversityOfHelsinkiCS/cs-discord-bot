@@ -1,16 +1,15 @@
 require("dotenv").config({ quiet: true });
 const supertest = require("supertest");
-const fetch = require("node-fetch");
-const { Response } = jest.requireActual("node-fetch");
 const SequelizeMock = require("sequelize-mock");
 const dbMock = new SequelizeMock();
 
 const makeApp = require("../../src/server/app");
 
+const fetch = jest.spyOn(global, "fetch").mockImplementation(() => Promise.reject(new Error("unexpected fetch")));
+
 const app = makeApp(dbMock);
 const api = supertest(app);
 
-jest.mock("node-fetch");
 jest.mock("../../src/server/strategies/discordstrategy", () => jest.fn((req, res, next) => next()));
 
 afterEach(() => {

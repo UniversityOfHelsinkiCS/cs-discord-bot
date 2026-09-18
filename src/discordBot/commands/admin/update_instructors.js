@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { courseAdminRole } = require("../../../../config.json");
 const { findAndUpdateInstructorRole } = require("../../services/service");
 const { findAllCourseNames } = require("../../../db/services/courseService");
@@ -24,7 +24,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("update_instructors")
     .setDescription("Update course instructor roles.")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/update_instructors",
   description: "Update course instructor roles.",

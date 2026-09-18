@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const {
   findChannelFromDbByName,
   createChannelToDatabase,
@@ -36,15 +37,15 @@ const getDefaultChannelObjects = (courseName) => {
   return [
     {
       name: `${courseName}_announcement`,
-      type: "GUILD_TEXT"
+      type: ChannelType.GuildText
     },
     {
       name: `${courseName}_general`,
-      type: "GUILD_TEXT"
+      type: ChannelType.GuildText
     },
     {
       name: `${courseName}_voice`,
-      type: "GUILD_VOICE"
+      type: ChannelType.GuildVoice
     }
   ];
 };
@@ -89,7 +90,7 @@ describe("channelService", () => {
   test("create default channels", async () => {
     const channelObjects = getDefaultChannelObjects("testi2");
     const defaultChannelObjects = channelObjects.map((channelObject) => {
-      const voiceChannel = channelObject.type === "GUILD_VOICE";
+      const voiceChannel = channelObject.type === ChannelType.GuildVoice;
       return {
         courseId: 4,
         name: channelObject.name,

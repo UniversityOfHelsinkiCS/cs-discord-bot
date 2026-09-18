@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const {
   getAllCourses,
   saveCourseIdWithName,
@@ -103,21 +103,21 @@ const restoreChannels = async (guild, models) => {
             name: currentChannel.name,
             parent: parentChannel,
             options: {
-              type: "GUILD_TEXT",
+              type: ChannelType.GuildText,
               parent: parentChannel,
               permissionOverwrites: [
                 {
                   id: guild.id,
-                  deny: ["VIEW_CHANNEL"]
+                  deny: [PermissionFlagsBits.ViewChannel]
                 },
                 {
                   id: student,
-                  deny: ["SEND_MESSAGES"],
-                  allow: ["VIEW_CHANNEL"]
+                  deny: [PermissionFlagsBits.SendMessages],
+                  allow: [PermissionFlagsBits.ViewChannel]
                 },
                 {
                   id: admin,
-                  allow: ["VIEW_CHANNEL", "SEND_MESSAGES"]
+                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
                 }
               ],
               topic: currentChannel.topic
@@ -128,20 +128,20 @@ const restoreChannels = async (guild, models) => {
             name: currentChannel.name,
             parent: parentChannel,
             options: {
-              type: "GUILD_TEXT",
+              type: ChannelType.GuildText,
               parent: parentChannel,
               permissionOverwrites: [
                 {
                   id: guild.id,
-                  deny: ["VIEW_CHANNEL"]
+                  deny: [PermissionFlagsBits.ViewChannel]
                 },
                 {
                   id: student,
-                  deny: ["SEND_MESSAGES", "VIEW_CHANNEL"]
+                  deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel]
                 },
                 {
                   id: admin,
-                  allow: ["VIEW_CHANNEL", "SEND_MESSAGES"]
+                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
                 }
               ],
               topic: currentChannel.topic
@@ -152,7 +152,7 @@ const restoreChannels = async (guild, models) => {
             name: currentChannel.name,
             parent: parentChannel,
             options: {
-              type: "GUILD_TEXT",
+              type: ChannelType.GuildText,
               parent: parentChannel,
               permissionOverwrites: [],
               topic: currentChannel.topic
@@ -171,7 +171,12 @@ const restoreChannels = async (guild, models) => {
         const channelObject = {
           name: currentChannel.name,
           parent: parentChannel,
-          options: { type: "GUILD_VOICE", parent: parentChannel, permissionOverwrites: [], topic: currentChannel.topic }
+          options: {
+            type: ChannelType.GuildVoice,
+            parent: parentChannel,
+            permissionOverwrites: [],
+            topic: currentChannel.topic
+          }
         };
 
         const newChannel = await findOrCreateChannel(channelObject, guild);
@@ -191,24 +196,24 @@ const restorePermissions = async (guild, models) => {
     if (currentCourse.locked) {
       discordCategory.permissionOverwrites.create(
         guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name}`),
-        { VIEW_CHANNEL: true, SEND_MESSAGES: false }
+        { ViewChannel: true, SendMessages: false }
       );
       discordCategory.permissionOverwrites.create(
         guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name} ${courseAdminRole}`),
-        { VIEW_CHANNEL: true, SEND_MESSAGES: true }
+        { ViewChannel: true, SendMessages: true }
       );
       discordCategory.permissionOverwrites.create(
         guild.roles.cache.find((r) => r.name === "faculty"),
-        { SEND_MESSAGES: true }
+        { SendMessages: true }
       );
       discordCategory.permissionOverwrites.create(
         guild.roles.cache.find((r) => r.name === "admin"),
-        { SEND_MESSAGES: true }
+        { SendMessages: true }
       );
     } else {
       discordCategory.permissionOverwrites.create(
         guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name}`),
-        { VIEW_CHANNEL: true, SEND_MESSAGES: true }
+        { ViewChannel: true, SendMessages: true }
       );
     }
   }
@@ -258,7 +263,7 @@ const restoreCourseMembers = async (guild, models) => {
 const deleteExtraChannels = async (guild, models) => {
   await Promise.all(
     guild.channels.cache.map(async (aChannel) => {
-      if (aChannel.type !== "GUILD_CATEGORY") {
+      if (aChannel.type !== ChannelType.GuildCategory) {
         const channelToRemove = await getChannelByDiscordId(aChannel.id, models.Channel);
         if (!channelToRemove) {
           if (aChannel.parent) {
@@ -291,7 +296,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("restore_server_from_database")
     .setDescription("Recreate Discord server from database")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/restore_server_from_database",
   description: "Recreate Discord server from database",

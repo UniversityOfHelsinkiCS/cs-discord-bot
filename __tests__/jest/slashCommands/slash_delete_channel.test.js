@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const { execute } = require("../../../src/discordBot/commands/faculty/delete_channel");
 const {
   sendEphemeral,
@@ -59,7 +60,7 @@ describe("slash delete_channel", () => {
     defaultTeacherInteraction.options = { getString: jest.fn(() => courseName) };
     defaultTeacherInteraction.channelId = 4;
     const client = defaultTeacherInteraction.client;
-    client.guild.channels.create("notcourse", "GUILD_CATEGORY");
+    client.guild.channels.create({ name: "notcourse", type: ChannelType.GuildCategory });
     await execute(defaultTeacherInteraction, client, models);
     expect(confirmChoice).toHaveBeenCalledTimes(0);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);

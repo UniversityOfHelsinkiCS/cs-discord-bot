@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const { getChannelByDiscordId } = require("../../../db/services/channelService");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
@@ -62,7 +62,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("instructor_disconnect")
     .setDescription("Disconnect user from voice channel.")
-    .setDefaultPermission(true)
     .addStringOption((option) => option.setName("user").setDescription("User to disconnect.").setRequired(true)),
   execute,
   usage: "/instructor_disconnect",

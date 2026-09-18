@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const {
   checkCourseCooldown,
   handleCooldown,
@@ -17,7 +17,7 @@ const { confirmChoice } = require("../../services/confirm");
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -77,7 +77,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("rename_channel")
     .setDescription("Rename text channel the command was used in.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) => option.setName("name").setDescription("New name for the channel").setRequired(true)),
   execute,
   usage: "/rename_channel [new name]",

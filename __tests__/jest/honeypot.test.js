@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const Discord = require("discord.js");
 const { setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 
@@ -19,11 +20,13 @@ const makeChannel = ({ messages = [], pinnedIds = [] } = {}) => {
   messages.forEach((m) => collection.set(m.id, { ...m, pinned: pinnedIds.includes(m.id) }));
 
   return {
-    type: "GUILD_TEXT",
+    type: ChannelType.GuildText,
     name: HONEYPOT_CHANNEL_NAME,
     messages: {
       fetch: jest.fn(() => collection),
-      fetchPinned: jest.fn(() => collection.filter((m) => m.pinned))
+      fetchPins: jest.fn(() => ({
+        items: [...collection.filter((m) => m.pinned).values()].map((message) => ({ message }))
+      }))
     },
     bulkDelete: jest.fn(),
     send: jest.fn((content) => makeMessage("new", content))

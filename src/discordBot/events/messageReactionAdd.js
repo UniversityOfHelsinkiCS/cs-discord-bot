@@ -22,7 +22,8 @@ const removeNonBotReactions = async (message) => {
   );
 };
 
-const execute = async (reaction, user, client, models) => {
+// discord.js v14 passes a third `details` argument to reaction events, ahead of the client and models.
+const execute = async (reaction, user, details, client, models) => {
   const { message } = reaction;
   try {
     if (user.bot) return;

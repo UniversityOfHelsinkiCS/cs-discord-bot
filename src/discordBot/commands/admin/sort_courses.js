@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { findAllCourseNames } = require("../../../db/services/courseService");
 const { findCategoryWithCourseName } = require("../../services/service");
 const { requireAdmin } = require("../../services/permissions");
@@ -37,7 +37,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("sort_courses")
     .setDescription("Sort courses to alphabetical order.")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/sort_courses",
   description: "Sort courses to alphabetical order.",

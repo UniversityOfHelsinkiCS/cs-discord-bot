@@ -1,3 +1,4 @@
+const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const { findOrCreateRoleWithName } = require("./service");
 const { facultyRole, githubRepo } = require("../../../config.json");
 const { updateGuide } = require("../../discordBot/services/guide");
@@ -17,7 +18,7 @@ const findOrCreateChannel = async (channelObject, guild) => {
     }
     return alreadyExists;
   }
-  return await guild.channels.create(name, options);
+  return await guild.channels.create({ name, ...options });
 };
 
 const initChannels = async (guild, client) => {
@@ -27,30 +28,32 @@ const initChannels = async (guild, client) => {
     {
       name: "commands",
       options: {
-        type: "GUILD_TEXT",
+        type: ChannelType.GuildText,
         permissionOverwrites: [
-          { id: guild.id, deny: ["SEND_MESSAGES", "VIEW_CHANNEL"] },
-          { id: client.user.id, allow: ["SEND_MESSAGES", "VIEW_CHANNEL"] },
-          { id: admin.id, allow: ["SEND_MESSAGES", "VIEW_CHANNEL"] }
+          { id: guild.id, deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] },
+          { id: client.user.id, allow: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] },
+          { id: admin.id, allow: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] }
         ]
       }
     },
     {
       name: "guide",
       options: {
-        type: "GUILD_TEXT",
+        type: ChannelType.GuildText,
         topic: `User manual for students: ${githubRepo}/blob/main/documentation/usermanual-student.md`,
         permissionOverwrites: [
-          { id: guild.id, deny: ["SEND_MESSAGES"], allow: ["VIEW_CHANNEL"] },
-          { id: client.user.id, allow: ["SEND_MESSAGES", "VIEW_CHANNEL"] }
+          { id: guild.id, deny: [PermissionFlagsBits.SendMessages], allow: [PermissionFlagsBits.ViewChannel] },
+          { id: client.user.id, allow: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] }
         ]
       }
     },
     {
       name: HONEYPOT_CHANNEL_NAME,
       options: {
-        type: "GUILD_TEXT",
-        permissionOverwrites: [{ id: guild.id, allow: ["SEND_MESSAGES", "VIEW_CHANNEL"] }]
+        type: ChannelType.GuildText,
+        permissionOverwrites: [
+          { id: guild.id, allow: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] }
+        ]
       }
     }
   ];
@@ -67,7 +70,7 @@ const initRoles = async (guild) => {
 
 const setInitialGuideMessage = async (guild, channelName, models) => {
   console.log("Started initializing guide message");
-  const guideChannel = guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === channelName);
+  const guideChannel = guild.channels.cache.find((c) => c.type === ChannelType.GuildText && c.name === channelName);
   if (!guideChannel.lastPinTimestamp) {
     const msg = await guideChannel.send("initial");
     await msg.pin();

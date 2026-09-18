@@ -77,13 +77,13 @@ const initChannelHooks = (guild, models) => {
       const channelObject = guild.channels.cache.find((c) => c.name === channel.dataValues.name);
       if (channel.hidden) {
         await channelObject.permissionOverwrites.create(student, {
-          VIEW_CHANNEL: false,
-          SEND_MESSAGES: false
+          ViewChannel: false,
+          SendMessages: false
         });
       } else {
         await channelObject.permissionOverwrites.create(student, {
-          VIEW_CHANNEL: true,
-          SEND_MESSAGES: true
+          ViewChannel: true,
+          SendMessages: true
         });
       }
     }

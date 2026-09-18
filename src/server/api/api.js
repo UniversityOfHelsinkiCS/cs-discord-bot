@@ -1,5 +1,3 @@
-const fetch = require("node-fetch");
-
 const version = "9";
 const guildId = process.env.GUILD_ID;
 const DISCORD_API = `https://discord.com/api/v${version}/guilds/${guildId}`;

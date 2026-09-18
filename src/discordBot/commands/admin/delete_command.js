@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { deletecommand } = require("../../services/service");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
@@ -18,7 +18,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("delete_command")
     .setDescription("Delete a slash command.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
       option.setName("command_name").setDescription("The name of the command to delete").setRequired(true)
     ),

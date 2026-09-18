@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getCourseNameFromCategory } = require("../../services/service");
 const { removeChannelFromDb, findChannelFromDbByName } = require("../../../db/services/channelService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
@@ -8,7 +8,7 @@ const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -60,7 +60,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("delete_channel")
     .setDescription("Delete given text channel from course.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
       option.setName("channel").setDescription("Delete given text channel").setRequired(true)
     ),

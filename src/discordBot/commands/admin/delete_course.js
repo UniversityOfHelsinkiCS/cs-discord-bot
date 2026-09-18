@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { removeCourseFromDb, findCourseFromDb } = require("../../../db/services/courseService");
 const { confirmChoice } = require("../../services/confirm");
 const { requireAdmin } = require("../../services/permissions");
@@ -29,7 +29,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("delete_course")
     .setDescription("Delete course.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
       option.setName("course_name").setDescription("The name of the course to delete").setRequired(true)
     ),

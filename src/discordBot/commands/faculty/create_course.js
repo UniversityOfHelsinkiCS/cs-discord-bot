@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { containsEmojis } = require("../../services/service");
 const {
   createCourseToDatabase,
@@ -12,7 +12,7 @@ const { findUserByDiscordId } = require("../../../db/services/userService");
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -65,7 +65,7 @@ const execute = async (interaction, client, models) => {
 
   // Generating final ephemeral message with #channel link in the message
   const channels = await interaction.guild.channels.fetch();
-  const courseChannel = channels.find((c) => c.name === `${courseName}_general` && c.type === "GUILD_TEXT");
+  const courseChannel = channels.find((c) => c.name === `${courseName}_general` && c.type === ChannelType.GuildText);
   let channelLink = "";
   if (courseChannel) {
     channelLink = `<#${courseChannel.id}>`;
@@ -80,7 +80,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("create_course")
     .setDescription("Create a new course.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) => option.setName("coursecode").setDescription("Course coursecode").setRequired(true))
     .addStringOption((option) => option.setName("full_name").setDescription("Course full name").setRequired(true))
     .addStringOption((option) => option.setName("nick_name").setDescription("Course nick name").setRequired(false)),

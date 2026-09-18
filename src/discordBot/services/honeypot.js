@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const HONEYPOT_CHANNEL_NAME = "do_not_post";
 const HONEYPOT_MESSAGE = `
 # Tämä on ansa boteille. Älä laitaviestiä tänne tai sinut saatetaan poistaa serveriltä.
@@ -9,14 +10,16 @@ const HONEYPOT_MESSAGE = `
 
 const setInitialHoneypotMessage = async (guild) => {
   console.log("Started initializing honeypot message");
-  const honeypotChannel = guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === HONEYPOT_CHANNEL_NAME);
+  const honeypotChannel = guild.channels.cache.find(
+    (c) => c.type === ChannelType.GuildText && c.name === HONEYPOT_CHANNEL_NAME
+  );
   if (!honeypotChannel) {
     console.error("Honeypot channel not found!");
     return;
   }
 
-  const pinnedMessages = await honeypotChannel.messages.fetchPinned();
-  let infoMessage = pinnedMessages.find((m) => m.content === HONEYPOT_MESSAGE.trim());
+  const pins = await honeypotChannel.messages.fetchPins();
+  let infoMessage = pins.items.map((pin) => pin.message).find((m) => m.content === HONEYPOT_MESSAGE.trim());
 
   const messages = await honeypotChannel.messages.fetch();
   const otherMessages = messages.filter((m) => m.id !== infoMessage?.id);

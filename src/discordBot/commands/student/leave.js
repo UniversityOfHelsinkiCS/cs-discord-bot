@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { findUserByDiscordId } = require("../../../db/services/userService");
@@ -37,7 +37,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("leave")
     .setDescription("Leave the course.")
-    .setDefaultPermission(true)
     .addStringOption((option) => option.setName("course").setDescription("Course to leave.").setRequired(true)),
   execute,
   usage: "/leave",

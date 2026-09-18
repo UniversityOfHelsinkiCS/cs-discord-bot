@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const {
   handleCooldown,
   checkCourseCooldown,
@@ -13,7 +13,7 @@ const { saveChannelTopicToDb } = require("../../../db/services/channelService");
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -55,7 +55,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("edit_topic")
     .setDescription("Add or update course channel topics.")
-    .setDefaultPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) => option.setName("topic").setDescription("Topic text").setRequired(true)),
   execute,
   usage: "/edit_topic [new topic]",

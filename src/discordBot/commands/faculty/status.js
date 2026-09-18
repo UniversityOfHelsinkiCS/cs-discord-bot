@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
@@ -18,7 +18,7 @@ const { findAllCourseMembers } = require("../../../db/services/courseMemberServi
 
 const execute = async (interaction, client, models) => {
   if (
-    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.permissions.has(PermissionFlagsBits.Administrator) &&
     !interaction.member.roles.cache.some((r) => r.name === facultyRole)
   ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
@@ -64,7 +64,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("status")
     .setDescription("Get full status of course.*")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/status",
   description: "Get full status of course.*",

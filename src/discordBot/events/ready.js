@@ -28,7 +28,7 @@ const execute = async (client, models) => {
 };
 
 module.exports = {
-  name: "ready",
+  name: "clientReady",
   once: true,
   execute
 };

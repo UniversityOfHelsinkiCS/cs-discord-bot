@@ -1,3 +1,4 @@
+const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
@@ -36,10 +37,11 @@ const createCourseInvitationLink = (courseName) => {
 };
 
 const createInvitation = async (guild, args) => {
-  const guide = guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === "guide");
+  const guide = guild.channels.cache.find((c) => c.type === ChannelType.GuildText && c.name === "guide");
   const name = args;
   const category = guild.channels.cache.find(
-    (c) => c.type === "GUILD_CATEGORY" && getCourseNameFromCategory(c.name.toLowerCase()) === name.toLowerCase()
+    (c) =>
+      c.type === ChannelType.GuildCategory && getCourseNameFromCategory(c.name.toLowerCase()) === name.toLowerCase()
   );
   let course;
   let invitationlink;
@@ -59,7 +61,8 @@ const findCategoryWithCourseName = (courseString, guild) => {
   try {
     const category = guild.channels.cache.find(
       (c) =>
-        c.type === "GUILD_CATEGORY" && getCourseNameFromCategory(c.name.toLowerCase()) === courseString.toLowerCase()
+        c.type === ChannelType.GuildCategory &&
+        getCourseNameFromCategory(c.name.toLowerCase()) === courseString.toLowerCase()
     );
     return category;
   } catch (error) {
@@ -102,7 +105,7 @@ const getChannelObject = (roleName, channelName, category) => {
   return {
     name: `${roleName}_${channelName}`,
     parent: category,
-    options: { type: "GUILD_TEXT", parent: category, permissionOverwrites: [] }
+    options: { type: ChannelType.GuildText, parent: category, permissionOverwrites: [] }
   };
 };
 
@@ -117,21 +120,15 @@ const findOrCreateChannel = async (channelObject, guild) => {
     }
     return alreadyExists;
   }
-  return await guild.channels.create(name, options);
+  return await guild.channels.create({ name, ...options });
 };
 
 const deletecommand = async (client, commandToDeleteName) => {
-  client.api
-    .applications(client.user.id)
-    .guilds(process.env.GUILD_ID)
-    .commands.get()
-    .then((commands) => {
-      commands.forEach(async (command) => {
-        if (command.name === commandToDeleteName) {
-          await client.api.applications(client.user.id).guilds(process.env.GUILD_ID).commands(command.id).delete();
-        }
-      });
-    });
+  const commands = await client.guilds.cache.get(process.env.GUILD_ID).commands.fetch();
+  const command = commands.find((c) => c.name === commandToDeleteName);
+  if (command) {
+    await command.delete();
+  }
 };
 
 const emojiRegex = new RegExp(
@@ -225,8 +222,8 @@ const listCourseInstructors = async (guild, roleString) => {
   let adminsString = "";
 
   members.forEach((m) => {
-    const roles = m._roles;
-    if (roles.some((r) => r === facultyRoleObject.id) && roles.some((r) => r === instructorRole.id)) {
+    const roles = m.roles.cache;
+    if (roles.has(facultyRoleObject.id) && roles.has(instructorRole.id)) {
       if (adminsString === "") {
         adminsString = "<@" + m.user.id + ">";
       } else {
@@ -236,8 +233,8 @@ const listCourseInstructors = async (guild, roleString) => {
   });
 
   members.forEach((m) => {
-    const roles = m._roles;
-    if (!roles.some((r) => r === facultyRoleObject.id) && roles.some((r) => r === instructorRole.id)) {
+    const roles = m.roles.cache;
+    if (!roles.has(facultyRoleObject.id) && roles.has(instructorRole.id)) {
       if (adminsString === "") {
         adminsString = "<@" + m.user.id + ">";
       } else {
@@ -250,8 +247,10 @@ const listCourseInstructors = async (guild, roleString) => {
 
 const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
   if (!channelAnnouncement) return;
-  const pinnedMessages = await channelAnnouncement.messages.fetchPinned();
-  const invMessage = pinnedMessages.find((msg) => msg.author.bot && msg.content.includes("Invitation link for"));
+  const pins = await channelAnnouncement.messages.fetchPins();
+  const invMessage = pins.items
+    .map((pin) => pin.message)
+    .find((msg) => msg.author.bot && msg.content.includes("Invitation link for"));
   if (!invMessage) return;
   const courseName = getCourseNameFromCategory(channelAnnouncement.parent);
   let updatedMsg = createCourseInvitationLink(courseName);
@@ -301,19 +300,19 @@ const setCoursePositionABC = async (guild, courseString, Course) => {
 const getCategoryChannelPermissionOverwrites = (guild, admin, student) => [
   {
     id: guild.id,
-    deny: ["VIEW_CHANNEL"]
+    deny: [PermissionFlagsBits.ViewChannel]
   },
   {
-    id: guild.me.roles.highest,
-    allow: ["VIEW_CHANNEL"]
+    id: guild.members.me.roles.highest,
+    allow: [PermissionFlagsBits.ViewChannel]
   },
   {
     id: admin.id,
-    allow: ["VIEW_CHANNEL"]
+    allow: [PermissionFlagsBits.ViewChannel]
   },
   {
     id: student.id,
-    allow: ["VIEW_CHANNEL"]
+    allow: [PermissionFlagsBits.ViewChannel]
   }
 ];
 
@@ -324,22 +323,22 @@ const getDefaultChannelObjects = async (guild, courseName, student, admin, categ
     {
       name: `${courseName}_announcement`,
       options: {
-        type: "GUILD_TEXT",
+        type: ChannelType.GuildText,
         description: "Messages from course admins",
         parent: category,
         permissionOverwrites: [
           {
             id: guild.id,
-            deny: ["VIEW_CHANNEL"]
+            deny: [PermissionFlagsBits.ViewChannel]
           },
           {
             id: student,
-            deny: ["SEND_MESSAGES"],
-            allow: ["VIEW_CHANNEL"]
+            deny: [PermissionFlagsBits.SendMessages],
+            allow: [PermissionFlagsBits.ViewChannel]
           },
           {
             id: admin,
-            allow: ["VIEW_CHANNEL", "SEND_MESSAGES"]
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
           }
         ]
       }
@@ -347,12 +346,12 @@ const getDefaultChannelObjects = async (guild, courseName, student, admin, categ
     {
       name: `${courseName}_general`,
       parent: category,
-      options: { type: "GUILD_TEXT", parent: category, permissionOverwrites: [] }
+      options: { type: ChannelType.GuildText, parent: category, permissionOverwrites: [] }
     },
     {
       name: `${courseName}_voice`,
       parent: category,
-      options: { type: "GUILD_VOICE", parent: category, permissionOverwrites: [] }
+      options: { type: ChannelType.GuildVoice, parent: category, permissionOverwrites: [] }
     }
   ];
 };
@@ -360,7 +359,7 @@ const getDefaultChannelObjects = async (guild, courseName, student, admin, categ
 const getCategoryObject = (categoryName, permissionOverwrites) => ({
   name: `📚 ${categoryName}`,
   options: {
-    type: "GUILD_CATEGORY",
+    type: ChannelType.GuildCategory,
     permissionOverwrites
   }
 });

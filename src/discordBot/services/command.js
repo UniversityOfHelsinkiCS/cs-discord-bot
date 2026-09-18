@@ -1,8 +1,7 @@
 const fs = require("fs");
-const { Collection } = require("discord.js");
+const { Collection, SlashCommandBuilder } = require("discord.js");
 const { REST } = require("@discordjs/rest");
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { Routes } = require("discord-api-types/v9");
+const { Routes } = require("discord-api-types/v10");
 const clientId = process.env.BOT_ID;
 const guildId = process.env.GUILD_ID;
 const token = process.env.DISCORD_BOT_TOKEN;
@@ -33,16 +32,15 @@ const addOptions = async (command, obj, courseData) => {
   const parsedChoices = parseCourseData(courseData);
   parsedChoices.forEach((ch) => {
     try {
-      obj.data.options[0].addChoice(ch.name, ch.value);
+      obj.data.options[0].addChoices({ name: ch.name, value: ch.value });
     } catch {
       // Ignore choices the option rejects (e.g. duplicates).
     }
   });
 
-  const options = obj.data.options;
   await command
     .edit({
-      options: options
+      options: obj.data.toJSON().options
     })
     .catch(console.error);
 };
@@ -55,7 +53,6 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
       data: new SlashCommandBuilder()
         .setName(c.name)
         .setDescription(c.description)
-        .setDefaultPermission(!c.role)
         .addStringOption((option) =>
           option.setName(c.options[0].name).setDescription(c.options[0].description).setRequired(true)
         )
@@ -75,7 +72,7 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
 };
 
 const deployCommands = async (commands) => {
-  const rest = new REST({ version: "9" }).setToken(token);
+  const rest = new REST({ version: "10" }).setToken(token);
 
   (async () => {
     try {

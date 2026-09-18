@@ -1,6 +1,11 @@
+const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const { client } = require("./mockSlashClient");
 const { courseAdminRole, facultyRole, githubRepo } = require("../../config.json");
 const prefix = "/";
+
+// A real role cache is a Collection keyed by role id. These plain arrays only need the has() lookup the code uses.
+const withRoleIds = (cache, roleIds) =>
+  Object.defineProperty(cache, "has", { value: (id) => roleIds.includes(id), enumerable: false, configurable: true });
 
 const isAdminOnly = (command) =>
   command.roles &&
@@ -81,11 +86,17 @@ const teacher = {
   id: 1,
   nickname: "teacher",
   roles: {
-    cache: [{ name: facultyRole }, { name: `test ${courseAdminRole}` }],
+    cache: withRoleIds([{ name: facultyRole }, { name: `test ${courseAdminRole}` }], [1, 3, 4]),
     add: jest.fn((name) => teacher.roles.cache.push({ name: name })),
     highest: { name: facultyRole },
     fetch: jest.fn(),
-    remove: jest.fn((role) => (teacher.roles.cache = teacher.roles.cache.filter((r) => r.name !== role.name)))
+    remove: jest.fn(
+      (role) =>
+        (teacher.roles.cache = withRoleIds(
+          teacher.roles.cache.filter((r) => r.name !== role.name),
+          [1, 3, 4]
+        ))
+    )
   },
   permissions: {
     list: [],
@@ -93,7 +104,6 @@ const teacher = {
       return this.list.includes(perm);
     }
   },
-  _roles: [1, 3, 4],
   fetch: jest.fn(),
   displayName: "teacher",
   user: {
@@ -105,11 +115,17 @@ const student = {
   id: 2,
   nickname: "student",
   roles: {
-    cache: [{ name: "student" }],
+    cache: withRoleIds([{ name: "student" }], [3]),
     add: jest.fn((name) => student.roles.cache.push({ name: name })),
     highest: { name: "@everyone" },
     fetch: jest.fn(),
-    remove: jest.fn((role) => (student.roles.cache = student.roles.cache.filter((r) => r.name !== role.name)))
+    remove: jest.fn(
+      (role) =>
+        (student.roles.cache = withRoleIds(
+          student.roles.cache.filter((r) => r.name !== role.name),
+          [3]
+        ))
+    )
   },
   permissions: {
     list: [],
@@ -117,7 +133,6 @@ const student = {
       return this.list.includes(perm);
     }
   },
-  _roles: [3],
   fetch: jest.fn(),
   displayName: "student",
   user: {
@@ -129,19 +144,24 @@ const admin = {
   id: 3,
   nickname: "admin",
   roles: {
-    cache: [{ name: "admin" }],
+    cache: withRoleIds([{ name: "admin" }], [2, 3]),
     add: jest.fn((name) => admin.roles.cache.push({ name: name })),
     highest: { name: "admin" },
     fetch: jest.fn(),
-    remove: jest.fn((role) => (admin.roles.cache = admin.roles.cache.filter((r) => r.name !== role.name)))
+    remove: jest.fn(
+      (role) =>
+        (admin.roles.cache = withRoleIds(
+          admin.roles.cache.filter((r) => r.name !== role.name),
+          [2, 3]
+        ))
+    )
   },
   permissions: {
-    list: ["ADMINISTRATOR"],
+    list: [PermissionFlagsBits.Administrator],
     has(perm) {
       return this.list.includes(perm);
     }
   },
-  _roles: [2, 3],
   fetch: jest.fn(),
   displayName: "admin",
   user: {
@@ -152,28 +172,28 @@ const admin = {
 
 const guideChannel = {
   name: "guide",
-  type: "GUILD_TEXT",
+  type: ChannelType.GuildText,
   parent: undefined,
   delete: jest.fn()
 };
 
 const testCatecory = {
   name: "📚 test",
-  type: "GUILD_CATEGORY",
+  type: ChannelType.GuildCategory,
   delete: jest.fn()
 };
 
 const testChannel = {
   name: "test_test",
   parent: testCatecory,
-  type: "GUILD_TEXT",
+  type: ChannelType.GuildText,
   delete: jest.fn()
 };
 
 const testChannelGeneral = {
   name: "test_general",
   parent: testCatecory,
-  type: "GUILD_TEXT",
+  type: ChannelType.GuildText,
   delete: jest.fn(),
   setTopic: jest.fn()
 };
@@ -181,22 +201,22 @@ const testChannelGeneral = {
 const testChannelAccouncement = {
   name: "test_announcement",
   parent: testCatecory,
-  type: "GUILD_TEXT",
+  type: ChannelType.GuildText,
   delete: jest.fn(),
   setTopic: jest.fn()
 };
 
 const chat = {
   name: "chat",
-  type: "GUILD_TEXT",
-  parent: { name: "general", type: "GUILD_TEXT" },
+  type: ChannelType.GuildText,
+  parent: { name: "general", type: ChannelType.GuildText },
   delete: jest.fn(),
   send: jest.fn()
 };
 
 const commands = {
   name: "commands",
-  type: "GUILD_TEXT",
+  type: ChannelType.GuildText,
   delete: jest.fn(),
   send: jest.fn()
 };
@@ -223,7 +243,6 @@ const defaultTeacherInteraction = {
   channelId: 1,
   member: {
     user: teacher,
-    _roles: [1, 3, 4],
     roles: {
       cache: teacher.roles.cache
     },
@@ -243,7 +262,6 @@ const defaultStudentInteraction = {
   channelId: 2,
   member: {
     user: student,
-    _roles: [1],
     roles: {
       cache: student.roles.cache
     },
@@ -280,12 +298,11 @@ const defaultAdminInteraction = {
   channelId: 2,
   member: {
     user: admin,
-    _roles: [2, 3],
     roles: {
       cache: admin.roles.cache
     },
     permissions: {
-      list: ["ADMINISTRATOR"],
+      list: [PermissionFlagsBits.Administrator],
       has(perm) {
         return this.list.includes(perm);
       }

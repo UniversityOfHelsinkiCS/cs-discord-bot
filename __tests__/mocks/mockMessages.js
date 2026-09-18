@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const { client } = require("./mockSlashClient");
 
 const teacher = {
@@ -70,18 +71,18 @@ const messageInCommandsChannel = {
         {
           name: "test_announcement",
           messages: {
-            fetchPinned: jest.fn(() => {
-              return [{ author: client.user, content: "Invitation link for", edit: jest.fn() }];
-            })
+            fetchPins: jest.fn(() => ({
+              items: [{ message: { author: client.user, content: "Invitation link for", edit: jest.fn() } }]
+            }))
           },
           parent: {
             name: "📚 test",
-            type: "GUILD_CATEGORY"
+            type: ChannelType.GuildCategory
           }
         },
         {
           name: "📚 test",
-          type: "GUILD_CATEGORY",
+          type: ChannelType.GuildCategory,
           delete: jest.fn()
         }
       ]
