@@ -12,7 +12,7 @@ const { findUserByDiscordId } = require("../../../db/services/userService");
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return
+    return;
   }
 
   const courseCode = interaction.options.getString("coursecode").replace(/\s/g, "");
@@ -45,23 +45,23 @@ const execute = async (interaction, client, models) => {
   await createCourseToDatabase(courseCode, courseFullName, courseName, models.Course);
   await editEphemeral(interaction, `Created course ${courseName}. Adding you as an instructor to the course.`);
 
-  //Adding user as a member of the course
-  console.log("Adding user as a member of course")
+  // Adding user as a member of the course
+  console.log("Adding user as a member of course");
   const course = await findCourseFromDb(courseName, models.Course);
   const user = await findUserByDiscordId(interaction.member.user.id, models.User);
   await createCourseMemberToDatabase(user.id, course.id, models.CourseMember);
 
-  //Modifying user to be an instructor of the course
-  courseMember = await findCourseMember(user.id, course.id, models.CourseMember);
+  // Modifying user to be an instructor of the course
+  const courseMember = await findCourseMember(user.id, course.id, models.CourseMember);
   courseMember.instructor = true;
   await courseMember.save();
   const instructorRole = await interaction.guild.roles.cache.find(r => r.name === `${courseName} ${courseAdminRole}`);
   await interaction.member.roles.add(instructorRole);
 
-  //Generating final ephemeral message with #channel link in the message 
+  // Generating final ephemeral message with #channel link in the message
   const channels = await interaction.guild.channels.fetch();
   const courseChannel = channels.find(
-  c => c.name === `${courseName}_general` && c.type === "GUILD_TEXT"
+    c => c.name === `${courseName}_general` && c.type === "GUILD_TEXT",
   );
   let channelLink = "";
   if (courseChannel) {

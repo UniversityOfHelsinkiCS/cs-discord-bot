@@ -1,5 +1,7 @@
 class PapertrailConnection {
-  on() {}
+  on() {
+    // Stub: the real connection emits events, the mock never does.
+  }
 }
 
 class PapertrailTransport {}

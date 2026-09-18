@@ -1,4 +1,4 @@
-const { findCoursesFromDb, findAllCourseNames, findCourseFromDb } = require("../../db/services/courseService");
+const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
 
 require("dotenv").config();
@@ -36,7 +36,7 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
 
   // Collecting all course member counts in parallel
   const courseMemberCounts = await Promise.all(courseData.map(course =>
-    findCourseMemberCount(course.id, models.CourseMember)
+    findCourseMemberCount(course.id, models.CourseMember),
   ));
 
   const rows = courseData.map((course, index) => {
@@ -66,16 +66,16 @@ In course specific channels you can list instructors with the command \`/instruc
 See more with \`/help\` command.
 
 Invitation link for the server ${invite_url}
-`
+`;
 
   const messagesArray = Array.from(sortedMessages.values());
 
-  const courseMessages = messagesArray.filter(m => m.id !== infoMessage.id && m.type !== 'CHANNEL_PINNED_MESSAGE');
+  const courseMessages = messagesArray.filter(m => m.id !== infoMessage.id && m.type !== "CHANNEL_PINNED_MESSAGE");
 
   // Editing the info message
   await infoMessage.edit(infoContent);
 
-  //Editing course messages
+  // Editing course messages
   const editOrSendPromises = [];
   for (let i = 0; i < rows.length; i++) {
     const rowContent = rows[i];
@@ -85,15 +85,17 @@ Invitation link for the server ${invite_url}
       if (courseMessage.content !== rowContent) {
         editOrSendPromises.push(courseMessage.edit(rowContent));
       }
-    } else {
+    }
+    else {
       // If not enough courseMessages exist, send a new message and react to it
       editOrSendPromises.push(
-        channel.send(rowContent).then(msg => msg.react("👤"))
+        channel.send(rowContent).then(msg => msg.react("👤")),
       );
     }
   }
 
-  await Promise.all(editOrSendPromises); // Promise all at once
+  // Promise all at once
+  await Promise.all(editOrSendPromises);
 
   // Delete any extra old course messages
   if (courseMessages.length > rows.length) {

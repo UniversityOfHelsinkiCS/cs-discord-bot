@@ -71,14 +71,20 @@ const handleSingleCommand = async (interaction, member, commandsReadyToPrint) =>
   return await editEphemeral(interaction, data.join(" \n"));
 };
 
+const isAdminOnly = (command) => command.roles
+  && command.roles.includes("admin")
+  && !command.roles.includes(facultyRole)
+  && !command.roles.includes(courseAdminRole);
+
 const execute = async (interaction, client) => {
   await sendEphemeral(interaction, "Hold on...");
   const guild = client.guild;
   const member = guild.members.cache.get(interaction.member.user.id);
   const highestRole = getBestRole(member);
-  const adminData = client.commands.filter(command => member.roles.cache.find(role => role.name === command.role));
+  const adminData = client.slashCommands.filter(command => isAdminOnly(command) && highestRole === "admin");
   const facultyData = client.slashCommands
     .filter(command => command.roles)
+    .filter(command => !isAdminOnly(command))
     .filter(command => !command.roles.includes(courseAdminRole))
     .filter(command => {
       if (highestRole === "admin" || highestRole === facultyRole) return true;

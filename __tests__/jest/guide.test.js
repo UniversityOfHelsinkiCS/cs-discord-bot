@@ -32,15 +32,16 @@ const setupMocks = (courseCount = 2, extraMessages = 1) => {
 
   const infoMessage = { id: "info", edit: jest.fn() };
   let courseMessages = Array.from({ length: courseCount }, (_, i) =>
-    createMockMessage(`msg${i + 1}`)
+    createMockMessage(`msg${i + 1}`),
   );
   let extras = [];
 
   if (extraMessages >= 0) {
     extras = Array.from({ length: extraMessages }, (_, i) =>
-      createMockMessage(`extra${i + 1}`, "extra")
+      createMockMessage(`extra${i + 1}`, "extra"),
     );
-  } else {
+  }
+  else {
     const removeCount = Math.abs(extraMessages);
     if (removeCount > courseMessages.length) {
       throw new Error("extraMessages is too negative, cannot remove more course messages than exist.");
@@ -55,10 +56,10 @@ const setupMocks = (courseCount = 2, extraMessages = 1) => {
   ]);
 
   const channel = {
-    send: jest.fn((content) =>
+    send: jest.fn(() =>
       Promise.resolve({
         react: jest.fn(() => Promise.resolve()),
-      })
+      }),
     ),
   };
 

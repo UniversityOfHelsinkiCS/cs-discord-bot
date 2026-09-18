@@ -1,34 +1,37 @@
 const { execute } = require("../../../src/discordBot/commands/admin/update_instructors");
 const { findAndUpdateInstructorRole } = require("../../../src/discordBot/services/service");
 const { findAllCourseNames } = require("../../../src/db/services/courseService");
+const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { courseAdminRole } = require("../../../config.json");
-const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/service");
+jest.mock("../../../src/discordBot/services/message");
+jest.mock("../../../src/discordBot/services/permissions");
 jest.mock("../../../src/db/services/courseService");
 
-const { messageInCommandsChannel, teacher, student } = require("../../mocks/mockMessages");
-const courseString = "test";
-const args = "";
+const { defaultAdminInteraction } = require("../../mocks/mockInteraction");
+const models = require("../../mocks/mockModels");
 
+const courseString = "test";
+
+requireAdmin.mockImplementation(() => true);
 findAllCourseNames.mockImplementation(() => [courseString]);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe("prefix update_instructors command", () => {
-  test("if user does not have administrator permission do nothing", async () => {
-    messageInCommandsChannel.member = student;
-    await execute(messageInCommandsChannel, args, models);
+describe("slash update_instructors command", () => {
+  test("non-admin cannot update roles", async () => {
+    requireAdmin.mockImplementationOnce(() => false);
+    await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
     expect(findAllCourseNames).toHaveBeenCalledTimes(0);
     expect(findAndUpdateInstructorRole).toHaveBeenCalledTimes(0);
   });
 
-  test("if user has administrator permission then update roles", async () => {
-    messageInCommandsChannel.member = teacher;
-    const client = messageInCommandsChannel.client;
-    await execute(messageInCommandsChannel, args, models);
+  test("admin can update roles", async () => {
+    const client = defaultAdminInteraction.client;
+    await execute(defaultAdminInteraction, client, models);
     expect(findAllCourseNames).toHaveBeenCalledTimes(1);
     expect(findAllCourseNames).toHaveBeenCalledWith(models.Course);
     expect(findAndUpdateInstructorRole).toHaveBeenCalledTimes(1);

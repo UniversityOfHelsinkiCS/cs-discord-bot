@@ -9,7 +9,7 @@ const { sendMessageToTelegram } = require("../../../telegramBot/bridge/service")
 const execute = async (interaction, client, models) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return
+    return;
   }
 
   await sendEphemeral(interaction, "Deleting bridge...");

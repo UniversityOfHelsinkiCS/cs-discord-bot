@@ -36,7 +36,10 @@ const addOptions = async (command, obj, courseData) => {
   parsedChoices.forEach((ch) => {
     try {
       obj.data.options[0].addChoice(ch.name, ch.value);
-    } catch (e) {}
+    }
+    catch (e) {
+      // Ignore choices the option rejects (e.g. duplicates).
+    }
   });
 
   const options = obj.data.options;
@@ -52,7 +55,7 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
     .get(guildId)
     ?.commands.fetch();
   const filteredCommands = await loadedCommands.filter((command) =>
-    commandNames.includes(command.name)
+    commandNames.includes(command.name),
   );
   filteredCommands.map(async (c) => {
     const obj = {
@@ -64,19 +67,23 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
           option
             .setName(c.options[0].name)
             .setDescription(c.options[0].description)
-            .setRequired(true)
+            .setRequired(true),
         ),
     };
     if (obj.data.name === "join" || obj.data.name === "hide_course") {
-      await addOptions(c, obj, (await findPublicCoursesFromDb("code", Course)).slice(0,24));
-    } else if (obj.data.name === "leave") {
-      await addOptions(c, obj, (await findCoursesFromDb("code", Course)).slice(0,24));
-    } else if (obj.data.name === "unhide_course") {
-      await addOptions(c, obj, (await findPrivateCoursesFromDb("code", Course)).slice(0,24));
-    } else if (obj.data.name === "lock_chat") {
-      await addOptions(c, obj, (await findUnlockedCoursesFromDb("code", Course)).slice(0,24));
-    } else if (obj.data.name === "unlock_chat") {
-      await addOptions(c, obj, (await findLockedCoursesFromDb("code", Course)).slice(0,24));
+      await addOptions(c, obj, (await findPublicCoursesFromDb("code", Course)).slice(0, 24));
+    }
+    else if (obj.data.name === "leave") {
+      await addOptions(c, obj, (await findCoursesFromDb("code", Course)).slice(0, 24));
+    }
+    else if (obj.data.name === "unhide_course") {
+      await addOptions(c, obj, (await findPrivateCoursesFromDb("code", Course)).slice(0, 24));
+    }
+    else if (obj.data.name === "lock_chat") {
+      await addOptions(c, obj, (await findUnlockedCoursesFromDb("code", Course)).slice(0, 24));
+    }
+    else if (obj.data.name === "unlock_chat") {
+      await addOptions(c, obj, (await findLockedCoursesFromDb("code", Course)).slice(0, 24));
     }
   });
 };
@@ -90,7 +97,8 @@ const deployCommands = async (commands) => {
         body: commands,
       });
       console.log("Successfully registered application commands.");
-    } catch (error) {
+    }
+    catch (error) {
       logError(error);
       console.error(error);
     }
@@ -114,7 +122,8 @@ const loadCommands = (client) => {
       const command = require(`../commands/${folder}/${file}`);
       if (command.prefix) {
         client.commands.set(command.name, command);
-      } else {
+      }
+      else {
         slashCommands.set(command.data.name, command);
         commands.push(command.data.toJSON());
       }
@@ -138,7 +147,7 @@ const setUpCommands = async (client, Course) => {
       "lock_chat",
       "unlock_chat",
     ],
-    Course
+    Course,
   );
 };
 

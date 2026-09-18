@@ -2,8 +2,15 @@ const { client } = require("./mockSlashClient");
 const { courseAdminRole, facultyRole, githubRepo } = require("../../config.json");
 const prefix = "/";
 
-const adminD = client.commands.map(c => c);
-const faculty = client.slashCommands.filter(command => command.roles).filter(command => !command.roles.includes(courseAdminRole));
+const isAdminOnly = (command) => command.roles
+  && command.roles.includes("admin")
+  && !command.roles.includes(facultyRole)
+  && !command.roles.includes(courseAdminRole);
+const adminD = client.slashCommands.filter(isAdminOnly).map(c => c);
+const faculty = client.slashCommands
+  .filter(command => command.roles)
+  .filter(command => !isAdminOnly(command))
+  .filter(command => !command.roles.includes(courseAdminRole));
 const studentD = client.slashCommands.filter(command => !command.roles && command.name !== "auth");
 
 const teacherData = [];

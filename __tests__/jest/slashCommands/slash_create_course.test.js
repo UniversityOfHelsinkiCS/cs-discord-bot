@@ -25,7 +25,7 @@ createCourseToDatabase.mockImplementation(() => {return { name: "nickname", id: 
 findUserByDiscordId.mockImplementation(() => ({ id: 1 }));
 const mockCourseMember = { instructor: false, save: jest.fn() };
 findCourseMember.mockImplementation(() => mockCourseMember);
-createCourseMemberToDatabase.mockImplementation(() => {});
+createCourseMemberToDatabase.mockImplementation(() => undefined);
 
 const { defaultTeacherInteraction, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 

@@ -9,7 +9,7 @@ const numbers = [ "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️�
 const execute = async (interaction, client) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return
+    return;
   }
 
   const guild = client.guild;
