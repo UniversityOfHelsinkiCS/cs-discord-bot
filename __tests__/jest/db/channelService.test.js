@@ -1,4 +1,13 @@
-const { findChannelFromDbByName, createChannelToDatabase, createDefaultChannelsToDatabase, removeChannelFromDb, findChannelsByCourse, countChannelsByCourse, editChannelNames, saveChannelTopicToDb } = require("../../../src/db/services/channelService");
+const {
+  findChannelFromDbByName,
+  createChannelToDatabase,
+  createDefaultChannelsToDatabase,
+  removeChannelFromDb,
+  findChannelsByCourse,
+  countChannelsByCourse,
+  editChannelNames,
+  saveChannelTopicToDb
+} = require("../../../src/db/services/channelService");
 
 const channelModelInstanceMock = {
   id: 1,
@@ -8,7 +17,7 @@ const channelModelInstanceMock = {
   bridged: false,
   defaultChannel: true,
   voiceChannel: false,
-  save: jest.fn(),
+  save: jest.fn()
 };
 
 const channelModelMock = {
@@ -18,7 +27,7 @@ const channelModelMock = {
   create: jest.fn().mockResolvedValue(channelModelInstanceMock),
   bulkCreate: jest.fn().mockResolvedValue(channelModelInstanceMock),
   findAll: jest.fn().mockResolvedValue([channelModelInstanceMock]),
-  count: jest.fn().mockResolvedValue([channelModelInstanceMock]),
+  count: jest.fn().mockResolvedValue([channelModelInstanceMock])
 };
 
 const getDefaultChannelObjects = (courseName) => {
@@ -27,16 +36,16 @@ const getDefaultChannelObjects = (courseName) => {
   return [
     {
       name: `${courseName}_announcement`,
-      type: "GUILD_TEXT",
+      type: "GUILD_TEXT"
     },
     {
       name: `${courseName}_general`,
-      type: "GUILD_TEXT",
+      type: "GUILD_TEXT"
     },
     {
       name: `${courseName}_voice`,
-      type: "GUILD_VOICE",
-    },
+      type: "GUILD_VOICE"
+    }
   ];
 };
 
@@ -45,7 +54,6 @@ afterEach(() => {
 });
 
 describe("channelService", () => {
-
   test("find channel from db by name", async () => {
     const response = await findChannelFromDbByName("discotg_general", channelModelMock);
     expect(channelModelMock.findOne).toHaveBeenCalledTimes(1);
@@ -57,7 +65,7 @@ describe("channelService", () => {
       courseId: 2,
       name: "kurssi_uusi",
       defaultChannel: false,
-      voiceChannel: false,
+      voiceChannel: false
     };
     channelModelMock.findOne.mockResolvedValueOnce(null);
     await createChannelToDatabase(attributes, channelModelMock);
@@ -71,7 +79,7 @@ describe("channelService", () => {
       courseId: 2,
       name: "kurssi_uusi",
       defaultChannel: false,
-      voiceChannel: false,
+      voiceChannel: false
     };
     await createChannelToDatabase(attributes, channelModelMock);
     expect(channelModelMock.findOne).toHaveBeenCalledTimes(1);
@@ -80,13 +88,13 @@ describe("channelService", () => {
 
   test("create default channels", async () => {
     const channelObjects = getDefaultChannelObjects("testi2");
-    const defaultChannelObjects = channelObjects.map(channelObject => {
+    const defaultChannelObjects = channelObjects.map((channelObject) => {
       const voiceChannel = channelObject.type === "GUILD_VOICE";
       return {
         courseId: 4,
         name: channelObject.name,
         defaultChannel: true,
-        voiceChannel: voiceChannel,
+        voiceChannel: voiceChannel
       };
     });
     await createDefaultChannelsToDatabase(defaultChannelObjects, channelModelMock);
@@ -111,8 +119,7 @@ describe("channelService", () => {
     await findChannelsByCourse(3, channelModelMock);
     expect(channelModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(channelModelMock.findAll).toHaveBeenCalledWith({
-      where:
-        { courseId: 3 },
+      where: { courseId: 3 }
     });
   });
 
@@ -120,8 +127,7 @@ describe("channelService", () => {
     await countChannelsByCourse(3, channelModelMock);
     expect(channelModelMock.count).toHaveBeenCalledTimes(1);
     expect(channelModelMock.count).toHaveBeenCalledWith({
-      where:
-        { courseId: 3 },
+      where: { courseId: 3 }
     });
   });
 
@@ -129,8 +135,7 @@ describe("channelService", () => {
     await editChannelNames(3, "discotg", "tgdisco", channelModelMock);
     expect(channelModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(channelModelMock.findAll).toHaveBeenCalledWith({
-      where:
-        { courseId: 3 },
+      where: { courseId: 3 }
     });
     expect(channelModelInstanceMock.save).toHaveBeenCalledTimes(1);
     expect(channelModelInstanceMock.name).toBe("tgdisco_general");

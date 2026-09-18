@@ -1,15 +1,17 @@
-const { findCourseMember,
+const {
+  findCourseMember,
   findAllCourseMembers,
   createCourseMemberToDatabase,
   removeCourseMemberFromDb,
   findCourseMemberCount,
-  findAllCourseMembersByUser } = require("../../../src/db/services/courseMemberService");
+  findAllCourseMembersByUser
+} = require("../../../src/db/services/courseMemberService");
 
 const courseMemberModelInstanceMock = {
   id: 1,
   instructor: false,
   userId: 1,
-  courseId: 1,
+  courseId: 1
 };
 
 const courseMemberModelMock = {
@@ -18,7 +20,7 @@ const courseMemberModelMock = {
   create: jest.fn().mockResolvedValue(courseMemberModelInstanceMock),
   destroy: jest.fn().mockResolvedValue(courseMemberModelInstanceMock),
   update: jest.fn().mockResolvedValue(courseMemberModelInstanceMock),
-  count: jest.fn().mockResolvedValue([courseMemberModelInstanceMock]),
+  count: jest.fn().mockResolvedValue([courseMemberModelInstanceMock])
 };
 
 afterEach(() => {
@@ -26,14 +28,11 @@ afterEach(() => {
 });
 
 describe("courseMemberService", () => {
-
   test("find a member of a course", async () => {
     await findCourseMember(1, 1, courseMemberModelMock);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { userId: 1,
-          courseId: 1 },
+      where: { userId: 1, courseId: 1 }
     });
   });
 
@@ -41,8 +40,7 @@ describe("courseMemberService", () => {
     await findAllCourseMembers(1, courseMemberModelMock);
     expect(courseMemberModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findAll).toHaveBeenCalledWith({
-      where:
-        { courseId: 1 },
+      where: { courseId: 1 }
     });
   });
 
@@ -50,8 +48,7 @@ describe("courseMemberService", () => {
     await findCourseMemberCount(1, courseMemberModelMock);
     expect(courseMemberModelMock.count).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.count).toHaveBeenCalledWith({
-      where:
-        { courseId: 1 },
+      where: { courseId: 1 }
     });
   });
 
@@ -59,8 +56,7 @@ describe("courseMemberService", () => {
     await findAllCourseMembersByUser(1, courseMemberModelMock);
     expect(courseMemberModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findAll).toHaveBeenCalledWith({
-      where:
-        { userId: 1 },
+      where: { userId: 1 }
     });
   });
 
@@ -70,10 +66,7 @@ describe("courseMemberService", () => {
     expect(result).toBe(courseMemberModelInstanceMock);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { userId: 2,
-          courseId: 1,
-        },
+      where: { userId: 2, courseId: 1 }
     });
     expect(courseMemberModelMock.create).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.create).toHaveBeenCalledWith({ userId: 2, courseId: 1 });
@@ -84,17 +77,14 @@ describe("courseMemberService", () => {
       id: 2,
       instructor: false,
       userId: 2,
-      courseId: 1,
+      courseId: 1
     };
     courseMemberModelMock.findOne.mockResolvedValueOnce(courseMemberModelInstanceMock2);
     const result = await createCourseMemberToDatabase(2, 1, courseMemberModelMock);
     expect(result).toBe(courseMemberModelInstanceMock2);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { userId: 2,
-          courseId: 1,
-        },
+      where: { userId: 2, courseId: 1 }
     });
     expect(courseMemberModelMock.create).toHaveBeenCalledTimes(0);
   });
@@ -103,17 +93,11 @@ describe("courseMemberService", () => {
     await removeCourseMemberFromDb(1, 1, courseMemberModelMock);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { userId: 1,
-          courseId: 1,
-        },
+      where: { userId: 1, courseId: 1 }
     });
     expect(courseMemberModelMock.destroy).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.destroy).toHaveBeenCalledWith({
-      where:
-        { userId: 1,
-          courseId: 1,
-        },
+      where: { userId: 1, courseId: 1 }
     });
   });
 
@@ -122,12 +106,8 @@ describe("courseMemberService", () => {
     await removeCourseMemberFromDb(1, 1, courseMemberModelMock);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(courseMemberModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { userId: 1,
-          courseId: 1,
-        },
+      where: { userId: 1, courseId: 1 }
     });
     expect(courseMemberModelMock.destroy).toHaveBeenCalledTimes(0);
   });
-
 });

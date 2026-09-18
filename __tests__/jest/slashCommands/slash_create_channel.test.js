@@ -1,8 +1,17 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/create_channel");
-const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
+const {
+  editEphemeral,
+  editErrorEphemeral,
+  sendErrorEphemeral,
+  sendEphemeral
+} = require("../../../src/discordBot/services/message");
 const { getCourseNameFromCategory } = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
-const { createChannelToDatabase, countChannelsByCourse, findChannelFromDbByName } = require("../../../src/db/services/channelService");
+const {
+  createChannelToDatabase,
+  countChannelsByCourse,
+  findChannelFromDbByName
+} = require("../../../src/db/services/channelService");
 
 const models = require("../../mocks/mockModels");
 jest.mock("../../../src/discordBot/services/message");
@@ -36,7 +45,7 @@ describe("slash create channel command", () => {
   });
 
   test("Cannot use command if channel is not course channel", async () => {
-    findCourseFromDb.mockImplementationOnce(() => (null));
+    findCourseFromDb.mockImplementationOnce(() => null);
     const client = defaultTeacherInteraction.client;
     defaultTeacherInteraction.channelId = 4;
     const response = "This is not a course category, can not create new channel.";
@@ -66,7 +75,10 @@ describe("slash create channel command", () => {
     await execute(defaultTeacherInteraction, client, models);
     expect(findCourseFromDb).toHaveBeenCalledTimes(2);
     expect(createChannelToDatabase).toHaveBeenCalledTimes(1);
-    expect(createChannelToDatabase).toHaveBeenCalledWith({ courseId: 1, name: `${courseName}_${channelName}` }, models.Channel);
+    expect(createChannelToDatabase).toHaveBeenCalledWith(
+      { courseId: 1, name: `${courseName}_${channelName}` },
+      models.Channel
+    );
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);

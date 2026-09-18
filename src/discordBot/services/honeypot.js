@@ -9,17 +9,17 @@ const HONEYPOT_MESSAGE = `
 
 const setInitialHoneypotMessage = async (guild) => {
   console.log("Started initializing honeypot message");
-  const honeypotChannel = guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === HONEYPOT_CHANNEL_NAME);
+  const honeypotChannel = guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === HONEYPOT_CHANNEL_NAME);
   if (!honeypotChannel) {
     console.error("Honeypot channel not found!");
     return;
   }
 
   const pinnedMessages = await honeypotChannel.messages.fetchPinned();
-  let infoMessage = pinnedMessages.find(m => m.content === HONEYPOT_MESSAGE.trim());
+  let infoMessage = pinnedMessages.find((m) => m.content === HONEYPOT_MESSAGE.trim());
 
   const messages = await honeypotChannel.messages.fetch();
-  const otherMessages = messages.filter(m => m.id !== infoMessage?.id);
+  const otherMessages = messages.filter((m) => m.id !== infoMessage?.id);
 
   if (otherMessages.size > 0) {
     await honeypotChannel.bulkDelete(otherMessages, true);
@@ -34,5 +34,6 @@ const setInitialHoneypotMessage = async (guild) => {
 };
 
 module.exports = {
-  setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME,
+  setInitialHoneypotMessage,
+  HONEYPOT_CHANNEL_NAME
 };

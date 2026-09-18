@@ -9,7 +9,8 @@ const {
   findOrCreateChannel,
   getCourseNameFromCategory,
   findChannelWithNameAndType,
-  getWorkshopInfo } = require("../../src/discordBot/services/service");
+  getWorkshopInfo
+} = require("../../src/discordBot/services/service");
 const { createCourseToDatabase, removeCourseFromDb } = require("../../src/db/services/courseService");
 const { data } = require("../mocks/workshopData.json");
 
@@ -22,7 +23,7 @@ const Course = {
     .mockImplementationOnce(() => false)
     .mockImplementationOnce(() => false),
   findAll: jest.fn(() => courses),
-  destroy: jest.fn(),
+  destroy: jest.fn()
 };
 
 const { client } = require("../mocks/mockSlashClient");
@@ -131,7 +132,12 @@ describe("Service", () => {
     const courseString = "test";
     await createCourseToDatabase(courseCode, courseFullName, courseString, Course);
     // expect(Course.create).toHaveBeenCalledTimes(1);
-    expect(Course.create).toHaveBeenCalledWith({ code: courseCode, fullName: courseFullName, name: courseString, private: false });
+    expect(Course.create).toHaveBeenCalledWith({
+      code: courseCode,
+      fullName: courseFullName,
+      name: courseString,
+      private: false
+    });
   });
 
   test("remove group - if no group dont destroy", async () => {
@@ -189,8 +195,8 @@ describe("Service", () => {
   test("Get workshops info returns proper info for course that exists", async () => {
     axios.get.mockImplementationOnce(() =>
       Promise.resolve({
-        data: data,
-      }),
+        data: data
+      })
     );
     let returnedValue = "";
     returnedValue = returnedValue.concat(`**Monday, November 29, 2021**
@@ -216,8 +222,8 @@ describe("Service", () => {
   test("Get workshops info returns proper info for course that doesn't exist", async () => {
     axios.get.mockImplementationOnce(() =>
       Promise.resolve({
-        data: [],
-      }),
+        data: []
+      })
     );
 
     const result = await getWorkshopInfo("TKT-101");

@@ -1,6 +1,10 @@
 const { findCourseFromDb } = require("../../db/services/courseService");
 const { findUserByDiscordId, createUserToDatabase } = require("../../db/services/userService");
-const { createCourseMemberToDatabase, removeCourseMemberFromDb, findAllCourseMembersByUser } = require("../../db/services/courseMemberService");
+const {
+  createCourseMemberToDatabase,
+  removeCourseMemberFromDb,
+  findAllCourseMembersByUser
+} = require("../../db/services/courseMemberService");
 const { sendErrorReportNoInteraction } = require("../services/message");
 
 const emoji = "👤";
@@ -13,10 +17,8 @@ const removeNonBotReactions = async (message) => {
   await Promise.all(
     [...reactions.values()].map(async (r) => {
       const users = await r.users.fetch();
-      await Promise.all(
-        [...users.values()].filter(u => !u.bot).map(u => r.users.remove(u.id)),
-      );
-    }),
+      await Promise.all([...users.values()].filter((u) => !u.bot).map((u) => r.users.remove(u.id)));
+    })
   );
 };
 
@@ -60,7 +62,7 @@ const execute = async (reaction, user, client, models) => {
 
     // Find what courses the user is already in
     const courseMembers = await findAllCourseMembersByUser(dbUser.id, models.CourseMember);
-    const existingCourseMember = courseMembers.find(cm => cm.courseId === course.id);
+    const existingCourseMember = courseMembers.find((cm) => cm.courseId === course.id);
 
     // Always remove their reaction
     console.log("try removing reaction");
@@ -73,20 +75,18 @@ const execute = async (reaction, user, client, models) => {
       console.log(`Removing user ${user.username} from course ${courseCode} via reaction.`);
       await removeCourseMemberFromDb(dbUser.id, course.id, models.CourseMember);
       console.log("Removed user.");
-    }
-    else {
+    } else {
       // User is not in the course -> ADD them
       console.log(`Adding user ${user.username} to course ${courseCode} via reaction.`);
       await createCourseMemberToDatabase(dbUser.id, course.id, models.CourseMember);
       console.log("Added user.");
     }
-  }
-  catch (error) {
+  } catch (error) {
     await sendErrorReportNoInteraction(0, user, message.channel.name, client, error.toString());
   }
 };
 
 module.exports = {
   name: "messageReactionAdd",
-  execute,
+  execute
 };

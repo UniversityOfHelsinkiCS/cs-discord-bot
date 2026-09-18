@@ -4,15 +4,9 @@ const { encrypt, decrypt, blindIndex, isEncrypted, VERSION } = require("../../..
 // comes from __tests__/setup/env.js, wired in as a jest setupFiles entry.
 
 describe("crypto", () => {
-
   describe("encrypt / decrypt", () => {
     test("round-trips ascii, unicode and long strings", () => {
-      const samples = [
-        "JonDoe",
-        "123456789012345678",
-        "ääkkösiä ja 漢字 と 絵文字 😀",
-        "x".repeat(5000),
-      ];
+      const samples = ["JonDoe", "123456789012345678", "ääkkösiä ja 漢字 と 絵文字 😀", "x".repeat(5000)];
       for (const s of samples) {
         expect(decrypt(encrypt(s))).toBe(s);
       }
@@ -43,7 +37,7 @@ describe("crypto", () => {
       const raw = Buffer.from(token.slice(VERSION.length + 1), "base64");
       raw[raw.length - 1] ^= 0xff;
       const tampered = `${VERSION}:${raw.toString("base64")}`;
-      expect(() => decrypt(tampered)).toThrow();
+      expect(() => decrypt(tampered)).toThrow(/does not decrypt/);
     });
   });
 
@@ -77,5 +71,4 @@ describe("crypto", () => {
       expect(isEncrypted(10)).toBe(false);
     });
   });
-
 });

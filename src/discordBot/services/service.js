@@ -8,9 +8,10 @@ const { courseAdminRole, facultyRole } = require("../../../config.json");
 require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
 
-let invite_url = "";
-
-process.env.NODE_ENV === "production" ? invite_url = `${process.env.BACKEND_SERVER_URL}` : invite_url = `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
+const invite_url =
+  process.env.NODE_ENV === "production"
+    ? `${process.env.BACKEND_SERVER_URL}`
+    : `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
 
 const cooldownMap = new Map();
 
@@ -24,7 +25,7 @@ const findOrCreateRoleWithName = async (name, guild) => {
   return (
     guild.roles.cache.find((role) => role.name === name) ||
     (await guild.roles.create({
-      name,
+      name
     }))
   );
 };
@@ -35,26 +36,19 @@ const createCourseInvitationLink = (courseName) => {
 };
 
 const createInvitation = async (guild, args) => {
-  const guide = guild.channels.cache.find(
-    c => c.type === "GUILD_TEXT" && c.name === "guide",
-  );
+  const guide = guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === "guide");
   const name = args;
   const category = guild.channels.cache.find(
-    c => c.type === "GUILD_CATEGORY" && getCourseNameFromCategory(c.name.toLowerCase()) === name.toLowerCase(),
+    (c) => c.type === "GUILD_CATEGORY" && getCourseNameFromCategory(c.name.toLowerCase()) === name.toLowerCase()
   );
   let course;
   let invitationlink;
   if (args === GUIDE_CHANNEL_NAME) {
-    course = guild.channels.cache.find(
-      (c => c.parent === category),
-    );
+    course = guild.channels.cache.find((c) => c.parent === category);
     await guide.createInvite({ maxAge: 0, unique: true, reason: args });
     invitationlink = `Invitation link for the server <${invite_url}>`;
-  }
-  else {
-    course = guild.channels.cache.find(
-      (c => c.parent === category && c.name === `${name}_announcement`),
-    );
+  } else {
+    course = guild.channels.cache.find((c) => c.parent === category && c.name === `${name}_announcement`);
     invitationlink = createCourseInvitationLink(args);
   }
   const message = await course.send(invitationlink);
@@ -63,17 +57,21 @@ const createInvitation = async (guild, args) => {
 
 const findCategoryWithCourseName = (courseString, guild) => {
   try {
-    const category = guild.channels.cache.find(c => c.type === "GUILD_CATEGORY" && getCourseNameFromCategory(c.name.toLowerCase()) === courseString.toLowerCase());
+    const category = guild.channels.cache.find(
+      (c) =>
+        c.type === "GUILD_CATEGORY" && getCourseNameFromCategory(c.name.toLowerCase()) === courseString.toLowerCase()
+    );
     return category;
-  }
-  catch (error) {
+  } catch (error) {
     logError(error);
     // console.log(error);
   }
 };
 
 const findChannelWithNameAndType = (name, type, guild) => {
-  return guild.channels.cache.find(c => c.type === type && getCourseNameFromCategory(c.name.toLowerCase()) === name.toLowerCase());
+  return guild.channels.cache.find(
+    (c) => c.type === type && getCourseNameFromCategory(c.name.toLowerCase()) === name.toLowerCase()
+  );
 };
 
 const findChannelWithId = (id, guild) => {
@@ -83,7 +81,7 @@ const findChannelWithId = (id, guild) => {
 const msToMinutesAndSeconds = (ms) => {
   const minutes = Math.floor(ms / 60000);
   const seconds = ((ms % 60000) / 1000).toFixed(0);
-  return `${minutes}:${(seconds < 10 ? "0" : "")}${seconds}`;
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
 const checkCourseCooldown = (courseName) => {
@@ -104,14 +102,15 @@ const getChannelObject = (roleName, channelName, category) => {
   return {
     name: `${roleName}_${channelName}`,
     parent: category,
-    options: { type: "GUILD_TEXT", parent: category, permissionOverwrites: [] },
+    options: { type: "GUILD_TEXT", parent: category, permissionOverwrites: [] }
   };
 };
 
 const findOrCreateChannel = async (channelObject, guild) => {
   const { name, options } = channelObject;
   const alreadyExists = guild.channels.cache.find(
-    (c) => c.type === options.type && c.name.toLowerCase() === name.toLowerCase());
+    (c) => c.type === options.type && c.name.toLowerCase() === name.toLowerCase()
+  );
   if (alreadyExists) {
     if (options?.topic && alreadyExists.topic !== options.topic) {
       return await alreadyExists.setTopic(options.topic);
@@ -122,16 +121,22 @@ const findOrCreateChannel = async (channelObject, guild) => {
 };
 
 const deletecommand = async (client, commandToDeleteName) => {
-  client.api.applications(client.user.id).guilds(process.env.GUILD_ID).commands.get().then(commands => {
-    commands.forEach(async command => {
-      if (command.name === commandToDeleteName) {
-        await client.api.applications(client.user.id).guilds(process.env.GUILD_ID).commands(command.id).delete();
-      }
+  client.api
+    .applications(client.user.id)
+    .guilds(process.env.GUILD_ID)
+    .commands.get()
+    .then((commands) => {
+      commands.forEach(async (command) => {
+        if (command.name === commandToDeleteName) {
+          await client.api.applications(client.user.id).guilds(process.env.GUILD_ID).commands(command.id).delete();
+        }
+      });
     });
-  });
 };
 
-const emojiRegex = new RegExp(/(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/gi);
+const emojiRegex = new RegExp(
+  /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/gi
+);
 
 const containsEmojis = (text) => {
   const result = emojiRegex.test(text);
@@ -143,8 +148,7 @@ const getCourseNameFromCategory = (category) => {
   let trimmedName = "";
   if (category.name) {
     trimmedName = category.name.replace(emojiRegex, "").trim();
-  }
-  else {
+  } else {
     trimmedName = category.replace(emojiRegex, "").trim();
   }
   return trimmedName;
@@ -172,7 +176,7 @@ const downloadImage = async (course) => {
   try {
     const response = await axios.get(url, {
       responseType: "stream",
-      headers: { "Authorization": `Bearer ${process.env.GRAFANA_TOKEN}` },
+      headers: { Authorization: `Bearer ${process.env.GRAFANA_TOKEN}` }
     });
     response.data.pipe(writer);
 
@@ -180,8 +184,7 @@ const downloadImage = async (course) => {
       writer.on("finish", resolve);
       writer.on("error", reject);
     });
-  }
-  catch (error) {
+  } catch (error) {
     logError(error);
     return;
   }
@@ -199,8 +202,7 @@ const getWorkshopInfo = async (courseCode) => {
     }
     let msg = "";
     response.data.forEach((s) => {
-      let description;
-      (s.description !== null && s.description !== "") ? description = `Description: ${s.description}\n` : description = "\n";
+      const description = s.description !== null && s.description !== "" ? `Description: ${s.description}\n` : "\n";
       const startTime = s.startTime.split(":");
       const endTime = s.endTime.split(":");
       msg = msg.concat(`**${new Date(s.sessionDate).toLocaleString("en-US", { dateStyle: "full" })}**
@@ -210,40 +212,36 @@ const getWorkshopInfo = async (courseCode) => {
       ${description}`);
     });
     return msg;
-  }
-  catch (error) {
+  } catch (error) {
     logError(error);
     return;
   }
 };
 
 const listCourseInstructors = async (guild, roleString) => {
-
-  const facultyRoleObject = await guild.roles.cache.find(r => r.name === facultyRole);
-  const instructorRole = await guild.roles.cache.find(r => r.name === `${roleString} ${courseAdminRole}`);
+  const facultyRoleObject = await guild.roles.cache.find((r) => r.name === facultyRole);
+  const instructorRole = await guild.roles.cache.find((r) => r.name === `${roleString} ${courseAdminRole}`);
   const members = guild.members.cache;
   let adminsString = "";
 
-  members.forEach(m => {
+  members.forEach((m) => {
     const roles = m._roles;
-    if (roles.some(r => r === facultyRoleObject.id) && roles.some(r => r === instructorRole.id)) {
+    if (roles.some((r) => r === facultyRoleObject.id) && roles.some((r) => r === instructorRole.id)) {
       if (adminsString === "") {
         adminsString = "<@" + m.user.id + ">";
-      }
-      else {
-        adminsString = adminsString + ", " + "<@" + m.user.id + ">";
+      } else {
+        adminsString = adminsString + ", <@" + m.user.id + ">";
       }
     }
   });
 
-  members.forEach(m => {
+  members.forEach((m) => {
     const roles = m._roles;
-    if (!roles.some(r => r === facultyRoleObject.id) && roles.some(r => r === instructorRole.id)) {
+    if (!roles.some((r) => r === facultyRoleObject.id) && roles.some((r) => r === instructorRole.id)) {
       if (adminsString === "") {
         adminsString = "<@" + m.user.id + ">";
-      }
-      else {
-        adminsString = adminsString + ", " + "<@" + m.user.id + ">";
+      } else {
+        adminsString = adminsString + ", <@" + m.user.id + ">";
       }
     }
   });
@@ -253,7 +251,7 @@ const listCourseInstructors = async (guild, roleString) => {
 const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
   if (!channelAnnouncement) return;
   const pinnedMessages = await channelAnnouncement.messages.fetchPinned();
-  const invMessage = pinnedMessages.find(msg => msg.author.bot && msg.content.includes("Invitation link for"));
+  const invMessage = pinnedMessages.find((msg) => msg.author.bot && msg.content.includes("Invitation link for"));
   if (!invMessage) return;
   const courseName = getCourseNameFromCategory(channelAnnouncement.parent);
   let updatedMsg = createCourseInvitationLink(courseName);
@@ -265,16 +263,18 @@ const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
 };
 
 const updateInviteLinks = async (guild) => {
-  const announcementChannels = guild.channels.cache.filter(c => c.name.includes("announcement"));
-  await Promise.all(announcementChannels.map(async aChannel => {
-    await updateAnnouncementChannelMessage(guild, aChannel);
-  }));
+  const announcementChannels = guild.channels.cache.filter((c) => c.name.includes("announcement"));
+  await Promise.all(
+    announcementChannels.map(async (aChannel) => {
+      await updateAnnouncementChannelMessage(guild, aChannel);
+    })
+  );
 };
 
 const isCourseCategory = async (channel, Course) => {
   if (channel && channel.name) {
     const course = await findCourseFromDb(getCourseNameFromCategory(channel.name), Course);
-    return course ? true : false;
+    return Boolean(course);
   }
 };
 
@@ -283,7 +283,7 @@ const setCoursePositionABC = async (guild, courseString, Course) => {
   const categoryNames = await findAllCourseNames(Course);
   categoryNames.sort((a, b) => a.localeCompare(b));
   const categories = [];
-  categoryNames.forEach(cat => {
+  categoryNames.forEach((cat) => {
     const guildCat = findCategoryWithCourseName(cat, guild);
     if (guildCat) {
       categories.push(guildCat);
@@ -298,24 +298,24 @@ const setCoursePositionABC = async (guild, courseString, Course) => {
   }
 };
 
-const getCategoryChannelPermissionOverwrites = (guild, admin, student) => ([
+const getCategoryChannelPermissionOverwrites = (guild, admin, student) => [
   {
     id: guild.id,
-    deny: ["VIEW_CHANNEL"],
+    deny: ["VIEW_CHANNEL"]
   },
   {
     id: guild.me.roles.highest,
-    allow: ["VIEW_CHANNEL"],
+    allow: ["VIEW_CHANNEL"]
   },
   {
     id: admin.id,
-    allow: ["VIEW_CHANNEL"],
+    allow: ["VIEW_CHANNEL"]
   },
   {
     id: student.id,
-    allow: ["VIEW_CHANNEL"],
-  },
-]);
+    allow: ["VIEW_CHANNEL"]
+  }
+];
 
 const getDefaultChannelObjects = async (guild, courseName, student, admin, category) => {
   courseName = courseName.replace(/ /g, "-");
@@ -330,30 +330,30 @@ const getDefaultChannelObjects = async (guild, courseName, student, admin, categ
         permissionOverwrites: [
           {
             id: guild.id,
-            deny: ["VIEW_CHANNEL"],
+            deny: ["VIEW_CHANNEL"]
           },
           {
             id: student,
             deny: ["SEND_MESSAGES"],
-            allow: ["VIEW_CHANNEL"],
+            allow: ["VIEW_CHANNEL"]
           },
           {
             id: admin,
-            allow: ["VIEW_CHANNEL", "SEND_MESSAGES"],
-          },
-        ],
-      },
+            allow: ["VIEW_CHANNEL", "SEND_MESSAGES"]
+          }
+        ]
+      }
     },
     {
       name: `${courseName}_general`,
       parent: category,
-      options: { type: "GUILD_TEXT", parent: category, permissionOverwrites: [] },
+      options: { type: "GUILD_TEXT", parent: category, permissionOverwrites: [] }
     },
     {
       name: `${courseName}_voice`,
       parent: category,
-      options: { type: "GUILD_VOICE", parent: category, permissionOverwrites: [] },
-    },
+      options: { type: "GUILD_VOICE", parent: category, permissionOverwrites: [] }
+    }
   ];
 };
 
@@ -361,8 +361,8 @@ const getCategoryObject = (categoryName, permissionOverwrites) => ({
   name: `📚 ${categoryName}`,
   options: {
     type: "GUILD_CATEGORY",
-    permissionOverwrites,
-  },
+    permissionOverwrites
+  }
 });
 
 const getUserWithUserId = async (guild, userId) => {
@@ -370,33 +370,33 @@ const getUserWithUserId = async (guild, userId) => {
 };
 
 const changeCourseRoles = async (courseName, newValue, guild) => {
-  await Promise.all(guild.roles.cache
-    .filter(r => (r.name === `${courseName} ${courseAdminRole}` || r.name === courseName))
-    .map(async role => {
-      if (role.name.includes("instructor")) {
-        role.setName(`${newValue} instructor`);
-      }
-      else {
-        role.setName(newValue);
-      }
-    },
-    ));
+  await Promise.all(
+    guild.roles.cache
+      .filter((r) => r.name === `${courseName} ${courseAdminRole}` || r.name === courseName)
+      .map(async (role) => {
+        if (role.name.includes("instructor")) {
+          role.setName(`${newValue} instructor`);
+        } else {
+          role.setName(newValue);
+        }
+      })
+  );
 };
 
 const setEmojisLock = async (category, hidden, courseName) => {
-  hidden ? await category.setName(`👻🔐 ${courseName}`) : await category.setName(`📚🔐 ${courseName}`);
+  await category.setName(hidden ? `👻🔐 ${courseName}` : `📚🔐 ${courseName}`);
 };
 
 const setEmojisUnlock = async (category, hidden, courseName) => {
-  hidden ? await category.setName(`👻 ${courseName}`) : await category.setName(`📚 ${courseName}`);
+  await category.setName(hidden ? `👻 ${courseName}` : `📚 ${courseName}`);
 };
 
 const setEmojisHide = async (category, locked, courseName) => {
-  locked ? await category.setName(`👻🔐 ${courseName}`) : await category.setName(`👻 ${courseName}`);
+  await category.setName(locked ? `👻🔐 ${courseName}` : `👻 ${courseName}`);
 };
 
 const setEmojisUnhide = async (category, locked, courseName) => {
-  locked ? await category.setName(`📚🔐 ${courseName}`) : await category.setName(`📚 ${courseName}`);
+  await category.setName(locked ? `📚🔐 ${courseName}` : `📚 ${courseName}`);
 };
 
 module.exports = {
@@ -430,5 +430,5 @@ module.exports = {
   setEmojisHide,
   setEmojisUnhide,
   setCoursePositionABC,
-  isCourseCategory,
+  isCourseCategory
 };

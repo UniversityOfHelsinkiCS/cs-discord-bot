@@ -1,30 +1,22 @@
 const { MessageActionRow, MessageButton, MessageEmbed } = require("discord.js");
 
 const confirmChoice = async (interaction, msg) => {
-
   const answerRow = new MessageActionRow();
   answerRow.addComponents(
-    new MessageButton()
-      .setCustomId("confirm")
-      .setLabel("Confirm")
-      .setStyle("SUCCESS"),
-    new MessageButton()
-      .setCustomId("decline")
-      .setLabel("Decline")
-      .setStyle("DANGER"),
+    new MessageButton().setCustomId("confirm").setLabel("Confirm").setStyle("SUCCESS"),
+    new MessageButton().setCustomId("decline").setLabel("Decline").setStyle("DANGER")
   );
 
   const reply = await interaction.editReply({ content: `${msg}`, components: [answerRow], ephemeral: true });
   const collector = reply.createMessageComponentCollector({ componentType: "BUTTON", time: 60000 });
   let stop = false;
   let confirm = false;
-  collector.on("collect", i => {
+  collector.on("collect", (i) => {
     if (i.customId === "confirm") {
       interaction.editReply({ content: "Confirming...", components: [] });
       confirm = true;
       stop = true;
-    }
-    else if (i.customId === "decline") {
+    } else if (i.customId === "decline") {
       interaction.editReply({ content: "Declining...", components: [] });
       stop = true;
     }
@@ -44,20 +36,12 @@ const confirmChoice = async (interaction, msg) => {
 };
 
 const confirmChoiceNoInteraction = async (message, interactionMessage, guild) => {
-  const confirmEmbed = new MessageEmbed()
-    .setColor().setColor("#0099ff")
-    .setTitle(interactionMessage);
+  const confirmEmbed = new MessageEmbed().setColor().setColor("#0099ff").setTitle(interactionMessage);
 
   const row = new MessageActionRow();
   row.addComponents(
-    new MessageButton()
-      .setCustomId("confirm")
-      .setLabel("Confirm")
-      .setStyle("SUCCESS"),
-    new MessageButton()
-      .setCustomId("decline")
-      .setLabel("Decline")
-      .setStyle("DANGER"),
+    new MessageButton().setCustomId("confirm").setLabel("Confirm").setStyle("SUCCESS"),
+    new MessageButton().setCustomId("decline").setLabel("Decline").setStyle("DANGER")
   );
 
   const channel = guild.channels.cache.get(message.channelId);
@@ -66,17 +50,15 @@ const confirmChoiceNoInteraction = async (message, interactionMessage, guild) =>
   const collector = msgEmbed.createMessageComponentCollector({ componentType: "BUTTON", time: 60000 });
   let stop = false;
   let confirm = false;
-  collector.on("collect", i => {
+  collector.on("collect", (i) => {
     const userId = i.user.id;
     const buttonId = i.customId;
     if (userId === messageAuthorId && buttonId === "confirm") {
       confirm = true;
       stop = true;
-    }
-    else if (userId === messageAuthorId && buttonId === "decline") {
+    } else if (userId === messageAuthorId && buttonId === "decline") {
       stop = true;
-    }
-    else {
+    } else {
       i.reply({ content: "Wrong user!" });
     }
   });
@@ -96,10 +78,9 @@ const confirmChoiceNoInteraction = async (message, interactionMessage, guild) =>
       setTimeout(resolve, ms);
     });
   }
-
 };
 
 module.exports = {
   confirmChoice,
-  confirmChoiceNoInteraction,
+  confirmChoiceNoInteraction
 };

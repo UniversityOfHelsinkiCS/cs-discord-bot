@@ -6,7 +6,8 @@ const {
   sendErrorReportNoInteraction,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
-  editErrorEphemeral } = require("../../src/discordBot/services/message");
+  editErrorEphemeral
+} = require("../../src/discordBot/services/message");
 
 const { defaultAdminInteraction } = require("../mocks/mockInteraction");
 
@@ -82,7 +83,11 @@ describe("message service", () => {
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", ephemeral: true });
     expect(defaultAdminInteraction.editReply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `${msg}`, components: [components], ephemeral: true });
+    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({
+      content: `${msg}`,
+      components: [components],
+      ephemeral: true
+    });
   });
 
   test("edit ephemeral clear components", async () => {
@@ -92,6 +97,10 @@ describe("message service", () => {
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", ephemeral: true });
     expect(defaultAdminInteraction.editReply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `${msg}`, components: [], ephemeral: true });
+    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({
+      content: `${msg}`,
+      components: [],
+      ephemeral: true
+    });
   });
 });

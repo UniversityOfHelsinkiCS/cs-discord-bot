@@ -32,12 +32,11 @@ module.exports = {
     .setName("remove_admin_rights")
     .setDescription("Remove admin rights from a user.")
     .setDefaultPermission(false)
-    .addUserOption(option =>
-      option.setName("user")
-        .setDescription("The user to remove admin rights from")
-        .setRequired(true)),
+    .addUserOption((option) =>
+      option.setName("user").setDescription("The user to remove admin rights from").setRequired(true)
+    ),
   execute,
   usage: "/remove_admin_rights [user]",
   description: "Remove admin rights from a user.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

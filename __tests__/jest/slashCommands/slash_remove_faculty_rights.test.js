@@ -21,7 +21,7 @@ const userModelInstanceMock = {
   admin: false,
   faculty: true,
   discordId: 10,
-  save: jest.fn(),
+  save: jest.fn()
 };
 
 requireAdmin.mockImplementation(() => true);
@@ -48,7 +48,10 @@ describe("slash remove_faculty_rights", () => {
     expect(confirmChoice).toHaveBeenCalledTimes(0);
     expect(userModelInstanceMock.save).toHaveBeenCalledTimes(0);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(editErrorEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, `No user found with the id ${targetUserId}.`);
+    expect(editErrorEphemeral).toHaveBeenCalledWith(
+      defaultAdminInteraction,
+      `No user found with the id ${targetUserId}.`
+    );
   });
 
   test("Does nothing if command is declined", async () => {

@@ -10,11 +10,16 @@ const execute = async (message, client, models) => {
 
   let args = message.content.slice(prefix.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
-  args = args.map(arg => arg.toLowerCase().trim());
+  args = args.map((arg) => arg.toLowerCase().trim());
   const guideChannel = client.guild.channels.cache.find((c) => c.name === "guide");
-  const copyPasteGuideReply = "Sorry, <@" + message.author + ">, I didn't quite catch what you meant.\nPlease read <#" + guideChannel + "> for more info on commands and available courses.\n" +
-  "You can also type `/help` to view a helpful *(pun intended)* list of commands.\n" +
-  "Note that you have to **manually** type the commands; I rarely understand copy-pasted commands!";
+  const copyPasteGuideReply =
+    "Sorry, <@" +
+    message.author +
+    ">, I didn't quite catch what you meant.\nPlease read <#" +
+    guideChannel +
+    "> for more info on commands and available courses.\n" +
+    "You can also type `/help` to view a helpful *(pun intended)* list of commands.\n" +
+    "Note that you have to **manually** type the commands; I rarely understand copy-pasted commands!";
 
   const channel = message.channel;
 
@@ -30,8 +35,7 @@ const execute = async (message, client, models) => {
         command.execute(message, client, models);
         return;
       }
-    }
-    else {
+    } else {
       // Unknown command
       return sendReplyMessage(message, channel, copyPasteGuideReply);
     }
@@ -42,22 +46,23 @@ const execute = async (message, client, models) => {
   // Prefix command
   if (!client.commands.has(commandName)) return;
   const command = client.commands.get(commandName);
-  if (command.role && !message.member.roles.cache.find(r => r.name === command.role)) return;
+  if (command.role && !message.member.roles.cache.find((r) => r.name === command.role)) return;
   if (command.args && !args.length) {
-    return message.channel.send({ content: `You didn't provide any arguments, ${message.author}!`, reply: { messageReference: message.id } });
+    return message.channel.send({
+      content: `You didn't provide any arguments, ${message.author}!`,
+      reply: { messageReference: message.id }
+    });
   }
   try {
     if (commandName === "update_database") {
       await command.execute(message, args, models);
-    }
-    else {
+    } else {
       await command.execute(message, args, models);
     }
 
     if (command.emit) await client.emit("COURSES_CHANGED", models);
     await message.react("✅");
-  }
-  catch (error) {
+  } catch (error) {
     logError(error);
     console.error(error);
     await message.react("❌");
@@ -66,5 +71,5 @@ const execute = async (message, client, models) => {
 
 module.exports = {
   name: "messageCreate",
-  execute,
+  execute
 };

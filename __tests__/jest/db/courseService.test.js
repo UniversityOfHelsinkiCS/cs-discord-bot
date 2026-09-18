@@ -1,4 +1,17 @@
-const { setCourseToPrivate, setCourseToPublic, setCourseToLocked, setCourseToUnlocked, removeCourseFromDb, createCourseToDatabase, findCourseFromDb, findCourseFromDbById, findCoursesFromDb, findCourseFromDbWithFullName, findCourseNickNameFromDbWithCourseCode, findAllCourseNames } = require("../../../src/db/services/courseService");
+const {
+  setCourseToPrivate,
+  setCourseToPublic,
+  setCourseToLocked,
+  setCourseToUnlocked,
+  removeCourseFromDb,
+  createCourseToDatabase,
+  findCourseFromDb,
+  findCourseFromDbById,
+  findCoursesFromDb,
+  findCourseFromDbWithFullName,
+  findCourseNickNameFromDbWithCourseCode,
+  findAllCourseNames
+} = require("../../../src/db/services/courseService");
 
 const courseModelInstanceMock = {
   id: 1,
@@ -8,16 +21,15 @@ const courseModelInstanceMock = {
   telegramId: null,
   private: false,
   locked: false,
-  save: jest.fn(),
+  save: jest.fn()
 };
 
 const courseModelMock = {
   findOne: jest.fn().mockResolvedValue(courseModelInstanceMock),
   destroy: jest.fn().mockResolvedValue(courseModelInstanceMock),
   create: jest.fn().mockResolvedValue(courseModelInstanceMock),
-  findAll: jest.fn().mockResolvedValue([courseModelInstanceMock]),
+  findAll: jest.fn().mockResolvedValue([courseModelInstanceMock])
 };
-
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -118,8 +130,8 @@ describe("courseService", () => {
     expect(courseModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(courseModelMock.findOne).toHaveBeenCalledWith({
       where: {
-        id: 1,
-      },
+        id: 1
+      }
     });
   });
 
@@ -128,14 +140,14 @@ describe("courseService", () => {
     const filter = {
       true: { private: true },
       false: { private: false },
-      undefined: {},
+      undefined: {}
     };
     expect(courseModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(courseModelMock.findAll).toHaveBeenCalledWith({
       attributes: ["id", "code", "fullName", "name", "private", "locked", "categoryId"],
       order: ["fullName"],
       where: filter[false],
-      raw: true,
+      raw: true
     });
   });
 
@@ -144,14 +156,14 @@ describe("courseService", () => {
     const filter = {
       true: { private: true },
       false: { private: false },
-      undefined: {},
+      undefined: {}
     };
     expect(courseModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(courseModelMock.findAll).toHaveBeenCalledWith({
       attributes: ["id", "code", "fullName", "name", "private", "locked", "categoryId"],
       order: ["fullName"],
       where: filter[true],
-      raw: true,
+      raw: true
     });
   });
 
@@ -170,5 +182,4 @@ describe("courseService", () => {
     expect(courseModelMock.findAll).toHaveBeenCalledTimes(1);
     expect(result).toStrictEqual(["test"]);
   });
-
 });

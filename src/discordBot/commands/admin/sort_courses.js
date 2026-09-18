@@ -16,7 +16,7 @@ const execute = async (interaction, client, models) => {
   const categoryNames = await findAllCourseNames(models.Course);
   categoryNames.sort((a, b) => a.localeCompare(b));
   const categories = [];
-  categoryNames.forEach(cat => {
+  categoryNames.forEach((cat) => {
     const guildCat = findCategoryWithCourseName(cat, guild);
     if (guildCat) {
       categories.push(guildCat);
@@ -41,5 +41,5 @@ module.exports = {
   execute,
   usage: "/sort_courses",
   description: "Sort courses to alphabetical order.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

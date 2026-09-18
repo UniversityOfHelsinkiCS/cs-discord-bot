@@ -1,15 +1,15 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const {
-  msToMinutesAndSeconds,
-  handleCooldown,
-  checkCourseCooldown } = require("../../services/service");
+const { msToMinutesAndSeconds, handleCooldown, checkCourseCooldown } = require("../../services/service");
 const { setCourseToPublic, findCourseFromDb } = require("../../../db/services/courseService");
 const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+  if (
+    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
+  ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return;
   }
@@ -32,8 +32,7 @@ const execute = async (interaction, client, models) => {
     const timeRemaining = Math.floor(cooldown - Date.now());
     const time = msToMinutesAndSeconds(timeRemaining);
     return await editErrorEphemeral(interaction, `Command cooldown [mm:ss]: you need to wait ${time}!`);
-  }
-  else {
+  } else {
     await editEphemeral(interaction, `This course ${courseName} is now public.`);
     await setCourseToPublic(courseName, models.Course);
     await client.emit("COURSES_CHANGED", models.Course);
@@ -46,12 +45,9 @@ module.exports = {
     .setName("unhide_course")
     .setDescription("Unhide course")
     .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("course")
-        .setDescription("Unhide given course")
-        .setRequired(true)),
+    .addStringOption((option) => option.setName("course").setDescription("Unhide given course").setRequired(true)),
   execute,
   usage: "/unhide_course [course name]",
   description: "Unhide course.",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

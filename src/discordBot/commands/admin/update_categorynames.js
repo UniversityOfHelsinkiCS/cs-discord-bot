@@ -8,8 +8,8 @@ const execute = async (interaction, client, models) => {
 
   await sendEphemeral(interaction, "Updating category names...");
 
-  const channels = client.guild.channels.cache.filter(c => c.type === "GUILD_CATEGORY" && c.name.includes("🔒"));
-  channels.forEach(async channel => {
+  const channels = client.guild.channels.cache.filter((c) => c.type === "GUILD_CATEGORY" && c.name.includes("🔒"));
+  channels.forEach(async (channel) => {
     await channel.setName(`👻 ${getCourseNameFromCategory(channel)}`);
   });
 
@@ -24,5 +24,5 @@ module.exports = {
   execute,
   usage: "/update_categorynames",
   description: "Updates category names to the new format",
-  roles: ["admin"],
+  roles: ["admin"]
 };

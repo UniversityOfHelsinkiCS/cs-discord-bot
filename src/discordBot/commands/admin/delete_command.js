@@ -19,12 +19,11 @@ module.exports = {
     .setName("delete_command")
     .setDescription("Delete a slash command.")
     .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("command_name")
-        .setDescription("The name of the command to delete")
-        .setRequired(true)),
+    .addStringOption((option) =>
+      option.setName("command_name").setDescription("The name of the command to delete").setRequired(true)
+    ),
   execute,
   usage: "/delete_command [command name]",
   description: "Delete a slash command.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

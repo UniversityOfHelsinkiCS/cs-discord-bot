@@ -11,8 +11,8 @@ const getChannels = async () => {
   const response = await fetch(`${DISCORD_API}/channels`, {
     method: "GET",
     headers: {
-      Authorization: `${authorization_type} ${authorization_token}`,
-    },
+      Authorization: `${authorization_type} ${authorization_token}`
+    }
   });
   return response.json();
 };
@@ -21,8 +21,8 @@ const getRoles = async () => {
   const response = await fetch(`${DISCORD_API}/roles`, {
     method: "GET",
     headers: {
-      Authorization: `${authorization_type} ${authorization_token}`,
-    },
+      Authorization: `${authorization_type} ${authorization_token}`
+    }
   });
   return response.json();
 };
@@ -31,8 +31,8 @@ const addRole = async (user, role) => {
   await fetch(`${DISCORD_API}/members/${user.id}/roles/${role.id}`, {
     method: "PUT",
     headers: {
-      Authorization: `${authorization_type} ${authorization_token}`,
-    },
+      Authorization: `${authorization_type} ${authorization_token}`
+    }
   });
   return;
 };
@@ -41,8 +41,8 @@ const getMember = async (id) => {
   const response = await fetch(`${DISCORD_API}/members/${id}`, {
     method: "GET",
     headers: {
-      Authorization: `${authorization_type} ${authorization_token}`,
-    },
+      Authorization: `${authorization_type} ${authorization_token}`
+    }
   });
   return response.json();
 };
@@ -52,9 +52,9 @@ const addMember = async (user, role) => {
     method: "PUT",
     headers: {
       Authorization: `${authorization_type} ${authorization_token}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({ access_token: user.accessToken, roles: [role.id] }),
+    body: JSON.stringify({ access_token: user.accessToken, roles: [role.id] })
   });
   return response.json();
 };
@@ -64,5 +64,5 @@ module.exports = {
   getRoles,
   addRole,
   getMember,
-  addMember,
+  addMember
 };

@@ -21,7 +21,10 @@ const run = async () => {
   await sequelize.authenticate();
 
   const reverted = await createMigrator(sequelize).down({ migrations: [MIGRATION] });
-  console.log("Reverted migrations:", reverted.map((m) => m.name));
+  console.log(
+    "Reverted migrations:",
+    reverted.map((m) => m.name)
+  );
   await sequelize.close();
 };
 
@@ -30,5 +33,5 @@ run().then(
   (err) => {
     console.error("Rollback failed:", err);
     process.exit(1);
-  },
+  }
 );

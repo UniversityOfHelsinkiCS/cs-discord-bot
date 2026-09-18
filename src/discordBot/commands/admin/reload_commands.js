@@ -21,5 +21,5 @@ module.exports = {
   execute,
   usage: "/reload_commands",
   description: "Reload slash commands.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

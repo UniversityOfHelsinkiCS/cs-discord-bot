@@ -4,14 +4,18 @@ const {
   checkCourseCooldown,
   msToMinutesAndSeconds,
   getCourseNameFromCategory,
-  isCourseCategory } = require("../../services/service");
+  isCourseCategory
+} = require("../../services/service");
 const { editErrorEphemeral, sendErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 const { saveChannelTopicToDb } = require("../../../db/services/channelService");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+  if (
+    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
+  ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return;
   }
@@ -22,7 +26,7 @@ const execute = async (interaction, client, models) => {
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 
-  if (!await isCourseCategory(channel?.parent, models.Course)) {
+  if (!(await isCourseCategory(channel?.parent, models.Course))) {
     return await editErrorEphemeral(interaction, "This is not a course category, can not execute the command!");
   }
 
@@ -52,12 +56,9 @@ module.exports = {
     .setName("edit_topic")
     .setDescription("Add or update course channel topics.")
     .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("topic")
-        .setDescription("Topic text")
-        .setRequired(true)),
+    .addStringOption((option) => option.setName("topic").setDescription("Topic text").setRequired(true)),
   execute,
   usage: "/edit_topic [new topic]",
   description: "Add or update course channel topics.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

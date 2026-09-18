@@ -1,5 +1,9 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const { getCourseNameFromCategory, updateAnnouncementChannelMessage, getUserWithUserId } = require("../../services/service");
+const {
+  getCourseNameFromCategory,
+  updateAnnouncementChannelMessage,
+  getUserWithUserId
+} = require("../../services/service");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { findCourseMember } = require("../../../db/services/courseMemberService");
@@ -7,7 +11,10 @@ const { editEphemeral, sendErrorEphemeral, editErrorEphemeral, sendEphemeral } =
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+  if (
+    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
+  ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return;
   }
@@ -32,7 +39,7 @@ const execute = async (interaction, client, models) => {
   }
 
   let users = interaction.options.getString("list");
-  const instructorRole = await guild.roles.cache.find(r => r.name === `${roleName} ${courseAdminRole}`);
+  const instructorRole = await guild.roles.cache.find((r) => r.name === `${roleName} ${courseAdminRole}`);
 
   const userIdList = [];
 
@@ -67,7 +74,7 @@ const execute = async (interaction, client, models) => {
     await memberToDemote.roles.remove(instructorRole);
   }
 
-  const announcementChannel = guild.channels.cache.find(c => c.name === `${parentCourse.name}_announcement`);
+  const announcementChannel = guild.channels.cache.find((c) => c.name === `${parentCourse.name}_announcement`);
   await updateAnnouncementChannelMessage(guild, announcementChannel);
 
   return await editEphemeral(interaction, `Removed role '${instructorRole.name}' from all users listed.`);
@@ -78,12 +85,14 @@ module.exports = {
     .setName("remove_instructors")
     .setDescription("Remove instructors from the course.")
     .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("list")
+    .addStringOption((option) =>
+      option
+        .setName("list")
         .setDescription("List all users you wish to remove from instructors using @tags")
-        .setRequired(true)),
+        .setRequired(true)
+    ),
   execute,
   usage: "/remove_instructors [members]",
   description: "Remove instructors from the course.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

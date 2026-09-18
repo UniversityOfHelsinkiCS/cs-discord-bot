@@ -30,12 +30,11 @@ module.exports = {
     .setName("delete_course")
     .setDescription("Delete course.")
     .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("course_name")
-        .setDescription("The name of the course to delete")
-        .setRequired(true)),
+    .addStringOption((option) =>
+      option.setName("course_name").setDescription("The name of the course to delete").setRequired(true)
+    ),
   execute,
   usage: "/delete_course [course name]",
   description: "Delete course.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

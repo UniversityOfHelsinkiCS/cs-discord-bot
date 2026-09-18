@@ -21,5 +21,5 @@ module.exports = {
   execute,
   usage: "/update_invitelinks",
   description: "Update invitation links.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

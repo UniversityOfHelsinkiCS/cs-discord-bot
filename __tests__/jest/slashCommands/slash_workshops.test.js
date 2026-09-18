@@ -4,7 +4,6 @@ const { getWorkshopInfo, getCourseNameFromCategory } = require("../../../src/dis
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const models = require("../../mocks/mockModels");
 
-
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
@@ -13,7 +12,9 @@ const course = { name: "test", fullName: "test course", code: "101", private: fa
 const initialResponse = "Fetching info...";
 getCourseNameFromCategory.mockImplementation((name) => name.replace("📚", "").trim());
 findCourseFromDb.mockImplementation(() => course);
-getWorkshopInfo.mockImplementation(() =>"Monday, November 29, 2021 Between: 14:00 - 16:00 Location: BK107 Instructor: Pekka Puupää Description:");
+getWorkshopInfo.mockImplementation(
+  () => "Monday, November 29, 2021 Between: 14:00 - 16:00 Location: BK107 Instructor: Pekka Puupää Description:"
+);
 
 const { defaultStudentInteraction } = require("../../mocks/mockInteraction");
 
@@ -48,7 +49,8 @@ describe("slash workshops command", () => {
   test("command works in a course channel", async () => {
     defaultStudentInteraction.channelId = 3;
     const client = defaultStudentInteraction.client;
-    const response = "Monday, November 29, 2021 Between: 14:00 - 16:00 Location: BK107 Instructor: Pekka Puupää Description:";
+    const response =
+      "Monday, November 29, 2021 Between: 14:00 - 16:00 Location: BK107 Instructor: Pekka Puupää Description:";
     await execute(defaultStudentInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, initialResponse);

@@ -1,10 +1,16 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/status");
-const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeralForStatus } = require("../../../src/discordBot/services/message");
+const {
+  sendEphemeral,
+  editErrorEphemeral,
+  sendErrorEphemeral,
+  editEphemeralForStatus
+} = require("../../../src/discordBot/services/message");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
   listCourseInstructors,
-  isCourseCategory } = require("../../../src/discordBot/services/service");
+  isCourseCategory
+} = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { findAllCourseMembers } = require("../../../src/db/services/courseMemberService");
 
@@ -14,7 +20,6 @@ jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/courseMemberService");
-
 
 const course = { name: "test", fullName: "test course", code: "101", private: false };
 const url = "mockUrl";
@@ -59,7 +64,7 @@ describe("slash status command", () => {
   });
 
   test("used in course channels", async () => {
-    isCourseCategory.mockImplementationOnce(() => (true));
+    isCourseCategory.mockImplementationOnce(() => true);
     const client = defaultTeacherInteraction.client;
     defaultTeacherInteraction.channelId = 2;
     const response = createResponse();

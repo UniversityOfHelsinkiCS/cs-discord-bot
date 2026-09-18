@@ -33,8 +33,7 @@ const sendErrorReportNoInteraction = async (telegramId, member, channel, client,
 const sendErrorEphemeral = async (interaction, msg) => {
   if (interaction.deferred || interaction.replied) {
     await interaction.editReply({ content: `Error: ${msg}`, ephemeral: true });
-  }
-  else {
+  } else {
     await interaction.reply({ content: `Error: ${msg}`, ephemeral: true });
   }
 };
@@ -49,9 +48,7 @@ const editEphemeral = async (interaction, msg) => {
 
 const editEphemeralForStatus = async (interaction, msg) => {
   const img = new MessageAttachment(path.resolve(__dirname, "../../promMetrics/graph/", "graph.png"));
-  const msgEmbed = new MessageEmbed()
-    .setTitle("Trends")
-    .setImage("attachment://graph.png");
+  const msgEmbed = new MessageEmbed().setTitle("Trends").setImage("attachment://graph.png");
   await interaction.editReply({ content: `${msg}`, ephemeral: true, embeds: [msgEmbed], files: [img] });
 };
 
@@ -73,16 +70,14 @@ const sendReplyMessage = async (message, channel, replyText) => {
     try {
       const fetchedReply = await channel.messages.fetch(reply.id);
       fetchedReply.delete();
-    }
-    catch (e) {
+    } catch (e) {
       logError(e);
       // console.log(error);
     }
     try {
       const fetchedInteraction = await channel.messages.fetch(interactionId);
       fetchedInteraction.delete();
-    }
-    catch (e) {
+    } catch (e) {
       logError(e);
       // console.log(error);
     }
@@ -119,5 +114,5 @@ module.exports = {
   editErrorEphemeral,
   sendReplyMessage,
   sendFollowUpEphemeral,
-  replyInChunks,
+  replyInChunks
 };

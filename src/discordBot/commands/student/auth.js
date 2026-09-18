@@ -14,5 +14,5 @@ module.exports = {
     .setDefaultPermission(true),
   execute,
   usage: "/auth",
-  description: `Get auth URL to acquire ${facultyRole} role.`,
+  description: `Get auth URL to acquire ${facultyRole} role.`
 };

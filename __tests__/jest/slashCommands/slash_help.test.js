@@ -10,7 +10,8 @@ const {
   teacherData2,
   studentInteractionWithoutOptions,
   studentData,
-  studentJoinData } = require("../../mocks/mockInteraction");
+  studentJoinData
+} = require("../../mocks/mockInteraction");
 
 defaultAdminInteraction.options = { getString: jest.fn(() => false) };
 defaultTeacherInteraction.options = { getString: jest.fn(() => false) };
@@ -19,10 +20,15 @@ defaultStudentInteraction.options = {
   getString: jest
     .fn(() => "join")
     .mockImplementationOnce(() => "invalid")
-    .mockImplementationOnce(() => "invalid"),
+    .mockImplementationOnce(() => "invalid")
 };
 
-const { editEphemeral, editErrorEphemeral, sendEphemeral, sendFollowUpEphemeral } = require("../../../src/discordBot/services/message");
+const {
+  editEphemeral,
+  editErrorEphemeral,
+  sendEphemeral,
+  sendFollowUpEphemeral
+} = require("../../../src/discordBot/services/message");
 const initialResponse = "Hold on...";
 
 jest.mock("../../../src/discordBot/services/message");

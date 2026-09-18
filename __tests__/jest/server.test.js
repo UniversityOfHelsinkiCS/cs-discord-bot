@@ -19,40 +19,29 @@ afterEach(() => {
 
 describe("Endpoint urls", () => {
   test("default url redirects", async () => {
-    await api
-      .get("/")
-      .expect(302);
+    await api.get("/").expect(302);
   });
 
   test("invalid url returns status 302", async () => {
-    await api
-      .get("/invalidURL")
-      .expect(302);
+    await api.get("/invalidURL").expect(302);
   });
 
   test("invalid invite returns status 400", async () => {
     const expectedResponse = [{ name: "test" }];
     fetch.mockResolvedValueOnce(new Response(JSON.stringify(expectedResponse)));
-    await api
-      .get("/join/invalidURL")
-      .expect(400);
+    await api.get("/join/invalidURL").expect(400);
   });
 
   test("authenticate fail return 401", async () => {
     const expectedResponse = [{ name: "test" }];
     fetch.mockResolvedValueOnce(new Response(JSON.stringify(expectedResponse)));
-    await api
-      .get("/authenticate_faculty")
-      .expect(401);
+    await api.get("/authenticate_faculty").expect(401);
   });
 
   test("authenticate without faculty role return status 400", async () => {
     const expectedResponse = [{ name: "test" }];
     fetch.mockResolvedValueOnce(new Response(JSON.stringify(expectedResponse)));
-    await api
-      .get("/authenticate_faculty")
-      .set({ employeenumber: 1 })
-      .expect(400);
+    await api.get("/authenticate_faculty").set({ employeenumber: 1 }).expect(400);
   });
 
   test("prometheus endpoint exists", async () => {

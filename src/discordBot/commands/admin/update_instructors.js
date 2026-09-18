@@ -28,5 +28,5 @@ module.exports = {
   execute,
   usage: "/update_instructors",
   description: "Update course instructor roles.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

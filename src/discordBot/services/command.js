@@ -11,7 +11,7 @@ const {
   findPublicCoursesFromDb,
   findLockedCoursesFromDb,
   findUnlockedCoursesFromDb,
-  findCoursesFromDb,
+  findCoursesFromDb
 } = require("../../db/services/courseService");
 const { logError } = require("./logger");
 
@@ -20,12 +20,10 @@ const parseCourseData = (courseData) => {
     const regExp = /[^0-9]*/;
     const fullname = c.fullName.charAt(0).toUpperCase() + c.fullName.slice(1);
     const matches = regExp.exec(c.code)?.[0];
-    const code = matches
-      ? matches.toUpperCase() + c.code.slice(matches.length)
-      : c.code;
+    const code = matches ? matches.toUpperCase() + c.code.slice(matches.length) : c.code;
     return {
       name: `${code} - ${fullname} - ${c.name}`,
-      value: c.name,
+      value: c.name
     };
   });
   return choices;
@@ -36,8 +34,7 @@ const addOptions = async (command, obj, courseData) => {
   parsedChoices.forEach((ch) => {
     try {
       obj.data.options[0].addChoice(ch.name, ch.value);
-    }
-    catch (e) {
+    } catch {
       // Ignore choices the option rejects (e.g. duplicates).
     }
   });
@@ -45,18 +42,14 @@ const addOptions = async (command, obj, courseData) => {
   const options = obj.data.options;
   await command
     .edit({
-      options: options,
+      options: options
     })
     .catch(console.error);
 };
 
 const updateDynamicChoices = async (client, commandNames, Course) => {
-  const loadedCommands = await client.guilds.cache
-    .get(guildId)
-    ?.commands.fetch();
-  const filteredCommands = await loadedCommands.filter((command) =>
-    commandNames.includes(command.name),
-  );
+  const loadedCommands = await client.guilds.cache.get(guildId)?.commands.fetch();
+  const filteredCommands = await loadedCommands.filter((command) => commandNames.includes(command.name));
   filteredCommands.map(async (c) => {
     const obj = {
       data: new SlashCommandBuilder()
@@ -64,25 +57,18 @@ const updateDynamicChoices = async (client, commandNames, Course) => {
         .setDescription(c.description)
         .setDefaultPermission(!c.role)
         .addStringOption((option) =>
-          option
-            .setName(c.options[0].name)
-            .setDescription(c.options[0].description)
-            .setRequired(true),
-        ),
+          option.setName(c.options[0].name).setDescription(c.options[0].description).setRequired(true)
+        )
     };
     if (obj.data.name === "join" || obj.data.name === "hide_course") {
       await addOptions(c, obj, (await findPublicCoursesFromDb("code", Course)).slice(0, 24));
-    }
-    else if (obj.data.name === "leave") {
+    } else if (obj.data.name === "leave") {
       await addOptions(c, obj, (await findCoursesFromDb("code", Course)).slice(0, 24));
-    }
-    else if (obj.data.name === "unhide_course") {
+    } else if (obj.data.name === "unhide_course") {
       await addOptions(c, obj, (await findPrivateCoursesFromDb("code", Course)).slice(0, 24));
-    }
-    else if (obj.data.name === "lock_chat") {
+    } else if (obj.data.name === "lock_chat") {
       await addOptions(c, obj, (await findUnlockedCoursesFromDb("code", Course)).slice(0, 24));
-    }
-    else if (obj.data.name === "unlock_chat") {
+    } else if (obj.data.name === "unlock_chat") {
       await addOptions(c, obj, (await findLockedCoursesFromDb("code", Course)).slice(0, 24));
     }
   });
@@ -94,11 +80,10 @@ const deployCommands = async (commands) => {
   (async () => {
     try {
       await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
-        body: commands,
+        body: commands
       });
       console.log("Successfully registered application commands.");
-    }
-    catch (error) {
+    } catch (error) {
       logError(error);
       console.error(error);
     }
@@ -122,8 +107,7 @@ const loadCommands = (client) => {
       const command = require(`../commands/${folder}/${file}`);
       if (command.prefix) {
         client.commands.set(command.name, command);
-      }
-      else {
+      } else {
         slashCommands.set(command.data.name, command);
         commands.push(command.data.toJSON());
       }
@@ -139,19 +123,12 @@ const setUpCommands = async (client, Course) => {
   if (process.env.NODE_ENV === "production") await deployCommands(commands);
   await updateDynamicChoices(
     client,
-    [
-      "join",
-      "leave",
-      "hide_course",
-      "unhide_course",
-      "lock_chat",
-      "unlock_chat",
-    ],
-    Course,
+    ["join", "leave", "hide_course", "unhide_course", "lock_chat", "unlock_chat"],
+    Course
   );
 };
 
 module.exports = {
   setUpCommands,
-  updateDynamicChoices,
+  updateDynamicChoices
 };

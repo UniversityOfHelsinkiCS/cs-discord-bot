@@ -36,5 +36,5 @@ module.exports = {
   execute,
   usage: "/list_courses",
   description: "List all courses and channels",
-  roles: ["admin"],
+  roles: ["admin"]
 };

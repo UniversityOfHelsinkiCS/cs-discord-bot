@@ -11,17 +11,16 @@ const intents = [
   Intents.FLAGS.GUILD_INVITES,
   Intents.FLAGS.GUILD_MESSAGES,
   Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-  Intents.FLAGS.GUILD_VOICE_STATES,
+  Intents.FLAGS.GUILD_VOICE_STATES
 ];
 const client = new Client({ intents: intents });
 
-const eventFiles = fs.readdirSync("./src/discordBot/events").filter(file => file.endsWith(".js"));
+const eventFiles = fs.readdirSync("./src/discordBot/events").filter((file) => file.endsWith(".js"));
 for (const file of eventFiles) {
   const event = require(`./events/${file}`);
   if (event.once) {
     client.once(event.name, (...args) => event.execute(...args, models));
-  }
-  else {
+  } else {
     client.on(event.name, (...args) => event.execute(...args, client, models));
   }
 }
@@ -33,5 +32,5 @@ const startDiscordBot = async () => {
 
 module.exports = {
   client,
-  startDiscordBot,
+  startDiscordBot
 };

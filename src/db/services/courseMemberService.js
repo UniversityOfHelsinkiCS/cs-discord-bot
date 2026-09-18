@@ -2,32 +2,32 @@ const findCourseMember = async (userId, courseId, CourseMember) => {
   return await CourseMember.findOne({
     where: {
       userId: userId,
-      courseId: courseId,
-    },
+      courseId: courseId
+    }
   });
 };
 
 const findAllCourseMembers = async (courseId, CourseMember) => {
   return await CourseMember.findAll({
     where: {
-      courseId: courseId,
-    },
+      courseId: courseId
+    }
   });
 };
 
 const findCourseMemberCount = async (courseId, CourseMember) => {
   return await CourseMember.count({
     where: {
-      courseId: courseId,
-    },
+      courseId: courseId
+    }
   });
 };
 
 const findAllCourseMembersByUser = async (userId, CourseMember) => {
   return await CourseMember.findAll({
     where: {
-      userId: userId,
-    },
+      userId: userId
+    }
   });
 };
 
@@ -45,8 +45,8 @@ const removeCourseMemberFromDb = async (userId, courseId, CourseMember) => {
     return await CourseMember.destroy({
       where: {
         userId: userId,
-        courseId: courseId,
-      },
+        courseId: courseId
+      }
     });
   }
 };
@@ -54,7 +54,7 @@ const removeCourseMemberFromDb = async (userId, courseId, CourseMember) => {
 const getAllMembers = async (CourseMember) => {
   return await CourseMember.findAll({
     attributes: ["instructor", "userId", "courseId"],
-    raw: true,
+    raw: true
   });
 };
 
@@ -65,5 +65,5 @@ module.exports = {
   removeCourseMemberFromDb,
   findCourseMemberCount,
   findAllCourseMembersByUser,
-  getAllMembers,
+  getAllMembers
 };

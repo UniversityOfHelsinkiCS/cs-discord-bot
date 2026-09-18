@@ -7,7 +7,10 @@ const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+  if (
+    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
+  ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return;
   }
@@ -51,7 +54,6 @@ const execute = async (interaction, client, models) => {
   if (channel.name != deleteChannelName) {
     return await editEphemeral(interaction, `${deleteName} deleted!`);
   }
-
 };
 
 module.exports = {
@@ -59,12 +61,11 @@ module.exports = {
     .setName("delete_channel")
     .setDescription("Delete given text channel from course.")
     .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("channel")
-        .setDescription("Delete given text channel")
-        .setRequired(true)),
+    .addStringOption((option) =>
+      option.setName("channel").setDescription("Delete given text channel").setRequired(true)
+    ),
   execute,
   usage: "/delete_channel [channel name]",
   description: "Delete given text channel from course.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

@@ -32,12 +32,11 @@ module.exports = {
     .setName("add_admin_rights")
     .setDescription("Give admin rights to a user.")
     .setDefaultPermission(false)
-    .addUserOption(option =>
-      option.setName("user")
-        .setDescription("The user to give admin rights to")
-        .setRequired(true)),
+    .addUserOption((option) =>
+      option.setName("user").setDescription("The user to give admin rights to").setRequired(true)
+    ),
   execute,
   usage: "/add_admin_rights [user]",
   description: "Give admin rights to a user.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

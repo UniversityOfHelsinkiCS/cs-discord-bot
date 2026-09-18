@@ -5,10 +5,10 @@ module.exports = {
   up: async (queryInterface) => {
     await queryInterface.addColumn("channel", "defaultChannel", {
       type: BOOLEAN,
-      defaultValue: false,
+      defaultValue: false
     });
   },
   down: async (queryInterface) => {
     await queryInterface.removeColumn("channel", "defaultChannel");
-  },
+  }
 };

@@ -4,16 +4,23 @@ const {
   createCourseInvitationLink,
   downloadImage,
   listCourseInstructors,
-  isCourseCategory,
+  isCourseCategory
 } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
-const { editErrorEphemeral, sendErrorEphemeral, sendEphemeral, editEphemeralForStatus } = require("../../services/message");
+const {
+  editErrorEphemeral,
+  sendErrorEphemeral,
+  sendEphemeral,
+  editEphemeralForStatus
+} = require("../../services/message");
 const { facultyRole, courseAdminRole } = require("../../../../config.json");
 const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
 
-
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+  if (
+    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
+  ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return;
   }
@@ -22,7 +29,7 @@ const execute = async (interaction, client, models) => {
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 
-  if (!await isCourseCategory(channel?.parent, models.Course)) {
+  if (!(await isCourseCategory(channel?.parent, models.Course))) {
     return await editErrorEphemeral(interaction, "This is not a course category, can not execute the command!");
   }
 
@@ -38,7 +45,9 @@ const execute = async (interaction, client, models) => {
   }
   await downloadImage(course.name);
 
-  return await editEphemeralForStatus(interaction, `
+  return await editEphemeralForStatus(
+    interaction,
+    `
 Course: ${course.name}
 Fullname: ${course.fullName}
 Code: ${course.code}
@@ -47,7 +56,8 @@ Invitation Link: ${createCourseInvitationLink(course.name)}
 
 Instructors: ${instructors}
 Members: ${count}
-  `);
+  `
+  );
 };
 
 module.exports = {
@@ -58,5 +68,5 @@ module.exports = {
   execute,
   usage: "/status",
   description: "Get full status of course.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

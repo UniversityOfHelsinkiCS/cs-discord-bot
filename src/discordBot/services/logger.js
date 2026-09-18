@@ -19,15 +19,15 @@ const setupLogger = () => {
       format.splat(),
       format.colorize(),
       errorStackTracerFormat(),
-      format.simple(),
+      format.simple()
     ),
-    transports: [],
+    transports: []
   });
 
   logger.add(
     new transports.Console({
-      format: format.simple(),
-    }),
+      format: format.simple()
+    })
   );
 };
 
@@ -63,5 +63,5 @@ const logInteractionError = (error, client, interaction) => {
 module.exports = {
   logError,
   logInteractionError,
-  logInfo,
+  logInfo
 };

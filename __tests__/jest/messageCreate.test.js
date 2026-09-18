@@ -15,7 +15,7 @@ jest.mock("../../src/discordBot/commands/student/join", () => {
 
   return {
     ...originalModule,
-    execute: jest.fn().mockImplementation(() => true),
+    execute: jest.fn().mockImplementation(() => true)
   };
 });
 
@@ -30,7 +30,7 @@ const emitCommand = { prefix: true, name: "fake_emit", role: "admin", emit: true
 
 beforeAll(() => {
   const client = messageInCommandsChannel.client;
-  [plainCommand, argsCommand, emitCommand].forEach(command => client.commands.set(command.name, command));
+  [plainCommand, argsCommand, emitCommand].forEach((command) => client.commands.set(command.name, command));
 });
 
 afterEach(() => {

@@ -1,7 +1,10 @@
 const { execute } = require("../../../src/discordBot/commands/student/leave");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
-const { findAllCourseMembersByUser, removeCourseMemberFromDb } = require("../../../src/db/services/courseMemberService");
+const {
+  findAllCourseMembersByUser,
+  removeCourseMemberFromDb
+} = require("../../../src/db/services/courseMemberService");
 const { findUserByDiscordId } = require("../../../src/db/services/userService");
 const models = require("../../mocks/mockModels");
 
@@ -18,14 +21,12 @@ defaultStudentInteraction.options = { getString: jest.fn(() => "invalid") };
 const initialResponse = "Leaving course...";
 
 const course = { id: 1, name: "tester", fullName: "test course", code: "101", private: false };
-findCourseFromDb.mockImplementation((role) => role === course.name ? course : undefined);
+findCourseFromDb.mockImplementation((role) => (role === course.name ? course : undefined));
 
 const user = { name: "test", id: 1 };
 findUserByDiscordId.mockImplementation(() => user);
 
-findAllCourseMembersByUser
-  .mockImplementation(() => [ { courseId: 1, userId: 1 } ])
-  .mockImplementationOnce(() => []);
+findAllCourseMembersByUser.mockImplementation(() => [{ courseId: 1, userId: 1 }]).mockImplementationOnce(() => []);
 
 afterEach(() => {
   jest.clearAllMocks();

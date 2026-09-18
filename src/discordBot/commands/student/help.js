@@ -46,18 +46,16 @@ const handleAllCommands = async (interaction, member, adminData, facultyData, co
     data2.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
     await editEphemeral(interaction, data.join("\n"));
     return await sendFollowUpEphemeral(interaction, data2.join("\n"));
-  }
-  else {
+  } else {
     data.push("*Commands can be used only in course channels");
     data.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
     return await editEphemeral(interaction, data.join("\n"));
   }
-
 };
 
 const handleSingleCommand = async (interaction, member, commandsReadyToPrint) => {
   const name = interaction.options.getString("command");
-  const command = commandsReadyToPrint.find(c => c.data.name.replace("/", "") === name);
+  const command = commandsReadyToPrint.find((c) => c.data.name.replace("/", "") === name);
 
   if (!command) {
     return await editErrorEphemeral(interaction, "that's not a valid command!");
@@ -71,40 +69,43 @@ const handleSingleCommand = async (interaction, member, commandsReadyToPrint) =>
   return await editEphemeral(interaction, data.join(" \n"));
 };
 
-const isAdminOnly = (command) => command.roles
-  && command.roles.includes("admin")
-  && !command.roles.includes(facultyRole)
-  && !command.roles.includes(courseAdminRole);
+const isAdminOnly = (command) =>
+  command.roles &&
+  command.roles.includes("admin") &&
+  !command.roles.includes(facultyRole) &&
+  !command.roles.includes(courseAdminRole);
 
 const execute = async (interaction, client) => {
   await sendEphemeral(interaction, "Hold on...");
   const guild = client.guild;
   const member = guild.members.cache.get(interaction.member.user.id);
   const highestRole = getBestRole(member);
-  const adminData = client.slashCommands.filter(command => isAdminOnly(command) && highestRole === "admin");
+  const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && highestRole === "admin");
   const facultyData = client.slashCommands
-    .filter(command => command.roles)
-    .filter(command => !isAdminOnly(command))
-    .filter(command => !command.roles.includes(courseAdminRole))
-    .filter(command => {
+    .filter((command) => command.roles)
+    .filter((command) => !isAdminOnly(command))
+    .filter((command) => !command.roles.includes(courseAdminRole))
+    .filter((command) => {
       if (highestRole === "admin" || highestRole === facultyRole) return true;
-      return member.roles.cache.find(role => role.name.includes(command.role));
+      return member.roles.cache.find((role) => role.name.includes(command.role));
     });
   const courseAdminData = client.slashCommands
-    .filter(command => command.roles)
-    .filter(command => command.roles.includes(courseAdminRole))
-    .filter(command => {
+    .filter((command) => command.roles)
+    .filter((command) => command.roles.includes(courseAdminRole))
+    .filter((command) => {
       if (highestRole === "admin" || highestRole === facultyRole) return true;
-      return member.roles.cache.find(role => role.name.includes(command.role));
+      return member.roles.cache.find((role) => role.name.includes(command.role));
     });
-  const studentData = client.slashCommands.filter(command => !command.roles && command.name !== "auth");
-  const commandsReadyToPrint = client.slashCommands
-    .filter(command => {
-      if (!command.role || member.roles.cache.find((r) => r.name === command.role)) return true;
-      return member.roles.cache.find(role => role.name.includes(command.role));
-    });
-  if (!interaction.options.getString("command")) await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
-  else handleSingleCommand(interaction, member, commandsReadyToPrint);
+  const studentData = client.slashCommands.filter((command) => !command.roles && command.name !== "auth");
+  const commandsReadyToPrint = client.slashCommands.filter((command) => {
+    if (!command.role || member.roles.cache.find((r) => r.name === command.role)) return true;
+    return member.roles.cache.find((role) => role.name.includes(command.role));
+  });
+  if (!interaction.options.getString("command")) {
+    await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
+  } else {
+    handleSingleCommand(interaction, member, commandsReadyToPrint);
+  }
 };
 
 module.exports = {
@@ -112,11 +113,8 @@ module.exports = {
     .setName("help")
     .setDescription("Get info on how to use command(s).")
     .setDefaultPermission(true)
-    .addStringOption(option =>
-      option.setName("command")
-        .setDescription("command instructions")
-        .setRequired(false)),
+    .addStringOption((option) => option.setName("command").setDescription("command instructions").setRequired(false)),
   execute,
   usage: "/help <command name>",
-  description: "Get info on how to use command(s).",
+  description: "Get info on how to use command(s)."
 };

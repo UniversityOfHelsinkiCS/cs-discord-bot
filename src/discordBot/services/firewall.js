@@ -20,32 +20,32 @@ const SCAM_FINGERPRINT_SETS = [
     { width: 1920, height: 2560 },
     { width: 1920, height: 2560 },
     { width: 1920, height: 2560 },
-    { width: 828, height: 1012 },
+    { width: 828, height: 1012 }
   ],
   [
     { width: 2227, height: 2560 },
     { width: 2560, height: 2513 },
     { width: 1839, height: 2560 },
-    { width: 2560, height: 2377 },
+    { width: 2560, height: 2377 }
   ],
   [
     { width: 651, height: 1002 },
     { width: 634, height: 977 },
     { width: 699, height: 1078 },
-    { width: 2047, height: 2560 },
+    { width: 2047, height: 2560 }
   ],
   [
     { width: 1304, height: 1174 },
     { width: 1099, height: 636 },
     { width: 1082, height: 859 },
-    { width: 960, height: 1200 },
+    { width: 960, height: 1200 }
   ],
   [
     { width: 960, height: 1280 },
     { width: 960, height: 1280 },
     { width: 960, height: 1280 },
-    { width: 946, height: 1261 },
-  ],
+    { width: 946, height: 1261 }
+  ]
 ];
 
 const buildHoneypotRepeatMessage = () => `Hey!
@@ -99,20 +99,20 @@ const postedInHoneypotWithinTtl = (userId) => {
   return ts !== undefined && Date.now() - ts < MESSAGE_TTL_MS;
 };
 
-const startFirewallPruning = () => setInterval(() => {
-  pruneStore(honeypotMessages);
-  pruneStore(chatMessages);
-  pruneTimestampStore(honeypotPosters);
-  pruneTimestampStore(recentlyReported);
-}, PRUNE_INTERVAL_MS);
-
+const startFirewallPruning = () =>
+  setInterval(() => {
+    pruneStore(honeypotMessages);
+    pruneStore(chatMessages);
+    pruneTimestampStore(honeypotPosters);
+    pruneTimestampStore(recentlyReported);
+  }, PRUNE_INTERVAL_MS);
 
 const sortDims = (arr) => [...arr].sort((a, b) => a.width - b.width || a.height - b.height);
 
 const checkImageMessageFingerprints = (images) => {
-  const dims = images.map(att => ({ width: att.width, height: att.height }));
+  const dims = images.map((att) => ({ width: att.width, height: att.height }));
   const actual = sortDims(dims);
-  return SCAM_FINGERPRINT_SETS.some(set => {
+  return SCAM_FINGERPRINT_SETS.some((set) => {
     if (set.length !== actual.length) return false;
     const expected = sortDims(set);
     return actual.every((d, i) => d.width === expected[i].width && d.height === expected[i].height);
@@ -136,10 +136,10 @@ const sendScamReport = async (message, images, isConfirmedScam, client) => {
   const last = recentlyReported.get(message.author.id);
   if (last && now - last < COOLDOWN_MS) return;
   recentlyReported.set(message.author.id, now);
-  const imageDetails = images.map(att =>
-    `• ${att.name} | ${att.contentType} | ${att.size}B | ${att.width}x${att.height}`,
-  ).join("\n");
-  const files = images.map(att => att.url);
+  const imageDetails = images
+    .map((att) => `• ${att.name} | ${att.contentType} | ${att.size}B | ${att.width}x${att.height}`)
+    .join("\n");
+  const files = images.map((att) => att.url);
   const header = isConfirmedScam
     ? "**SCAM MESSAGE DETECTED AND REMOVED**"
     : "<@&758046962829361262>\n**POSSIBLE SCAM IMAGES DETECTED!**";
@@ -151,7 +151,7 @@ const sendScamReport = async (message, images, isConfirmedScam, client) => {
 const attachmentFingerprint = (attachments) => {
   if (!attachments || attachments.size === 0) return null;
   return [...attachments.values()]
-    .map(a => `${a.name}:${a.size}`)
+    .map((a) => `${a.name}:${a.size}`)
     .sort()
     .join("|");
 };
@@ -168,17 +168,16 @@ const buildMessageKeys = (message) => {
 const cleanHoneypotChannel = async (channel) => {
   const fetched = await channel.messages.fetch({ limit: 100 }).catch(logError);
   if (!fetched) return;
-  const toDelete = fetched.filter(m => !m.pinned);
+  const toDelete = fetched.filter((m) => !m.pinned);
   if (toDelete.size === 0) return;
 
   const now = Date.now();
-  const recent = toDelete.filter(m => now - m.createdTimestamp < TWO_WEEKS_MS);
-  const old = toDelete.filter(m => now - m.createdTimestamp >= TWO_WEEKS_MS);
+  const recent = toDelete.filter((m) => now - m.createdTimestamp < TWO_WEEKS_MS);
+  const old = toDelete.filter((m) => now - m.createdTimestamp >= TWO_WEEKS_MS);
 
   if (recent.size > 1) {
     await channel.bulkDelete(recent).catch(logError);
-  }
-  else if (recent.size === 1) {
+  } else if (recent.size === 1) {
     await recent.first().delete().catch(logError);
   }
 
@@ -189,7 +188,7 @@ const cleanHoneypotChannel = async (channel) => {
 
 const formatAttachments = (attachments) => {
   if (!attachments || attachments.size === 0) return null;
-  return [...attachments.values()].map(att => att.url).join("\n");
+  return [...attachments.values()].map((att) => att.url).join("\n");
 };
 
 const checkHoneypot = async (message, client) => {
@@ -209,7 +208,9 @@ const checkHoneypot = async (message, client) => {
     await sendReportToCommandsChannel(client, initialReport);
     if (postedInHoneypotWithinTtl(userId)) {
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
-      const banned = await message.guild.members.ban(userId, { days: 1, reason: "Sent multiple messages in honeypot channel" }).catch(logError);
+      const banned = await message.guild.members
+        .ban(userId, { days: 1, reason: "Sent multiple messages in honeypot channel" })
+        .catch(logError);
       if (banned) await message.guild.members.unban(userId).catch(logError);
       const report = `**HONEYPOT REPEAT MESSAGE KICK**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
       await sendReportToCommandsChannel(client, report);
@@ -222,21 +223,24 @@ const checkHoneypot = async (message, client) => {
   if (keys.length === 0) return;
 
   const userId = message.author.id;
-  const [ownStore, crossStore] = isHoneypot
-    ? [honeypotMessages, chatMessages]
-    : [chatMessages, honeypotMessages];
+  const [ownStore, crossStore] = isHoneypot ? [honeypotMessages, chatMessages] : [chatMessages, honeypotMessages];
 
   for (const key of keys) {
     addToStore(ownStore, userId, key);
   }
 
-  if (keys.some(key => hasInStore(crossStore, userId, key))) {
-    await banUnbanAndReport(message, client, "Honeypot triggered: message sent in both honeypot and chat channel", "posting a message in a honeypot channel");
+  if (keys.some((key) => hasInStore(crossStore, userId, key))) {
+    await banUnbanAndReport(
+      message,
+      client,
+      "Honeypot triggered: message sent in both honeypot and chat channel",
+      "posting a message in a honeypot channel"
+    );
   }
 };
 
 const checkAttachments = async (message, client) => {
-  const images = message.attachments.filter(att => att.contentType?.startsWith("image/"));
+  const images = message.attachments.filter((att) => att.contentType?.startsWith("image/"));
   // Filter for messages with 4 images as all the scams contain 4 images (this isn't true anymore probs need a honeypot)
   if (images.size !== 4) return;
   const isConfirmedScam = checkImageMessageFingerprints(images);

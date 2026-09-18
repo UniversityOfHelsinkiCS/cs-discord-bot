@@ -1,8 +1,16 @@
 const { execute } = require("../../../src/discordBot/commands/student/join");
-const { editEphemeral, editErrorEphemeral, sendEphemeral, sendReplyMessage } = require("../../../src/discordBot/services/message");
+const {
+  editEphemeral,
+  editErrorEphemeral,
+  sendEphemeral,
+  sendReplyMessage
+} = require("../../../src/discordBot/services/message");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { findUserByDiscordId } = require("../../../src/db/services/userService");
-const { createCourseMemberToDatabase, findAllCourseMembersByUser } = require("../../../src/db/services/courseMemberService");
+const {
+  createCourseMemberToDatabase,
+  findAllCourseMembersByUser
+} = require("../../../src/db/services/courseMemberService");
 const { messageInCommandsChannel, student } = require("../../mocks/mockMessages");
 const models = require("../../mocks/mockModels");
 
@@ -17,7 +25,7 @@ const roleString = "tester";
 const initialResponse = "Joining course...";
 
 const course = { id: 1, name: "tester", fullName: "test course", code: "101", private: false };
-findCourseFromDb.mockImplementation((role) => role === course.name ? course : undefined);
+findCourseFromDb.mockImplementation((role) => (role === course.name ? course : undefined));
 
 const user = { name: "test", id: 1 };
 findUserByDiscordId.mockImplementation(() => user);
@@ -40,7 +48,10 @@ describe("slash join command", () => {
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
-    expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, `You have been added to the ${roleString} course.`);
+    expect(editEphemeral).toHaveBeenCalledWith(
+      defaultTeacherInteraction,
+      `You have been added to the ${roleString} course.`
+    );
   });
 
   test("trying to join invalid course responds with correct ephemeral", async () => {
@@ -75,13 +86,16 @@ describe("slash join command", () => {
   });
 
   test("command responds with correct ephemeral when trying to join a course twice", async () => {
-    findAllCourseMembersByUser.mockImplementation(() => [ { courseId: 1, userId: 1 } ]);
+    findAllCourseMembersByUser.mockImplementation(() => [{ courseId: 1, userId: 1 }]);
     const client = defaultTeacherInteraction.client;
     await execute(defaultTeacherInteraction, client, models);
     expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(0);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, `You are already on the ${roleString} course.`);
+    expect(editErrorEphemeral).toHaveBeenCalledWith(
+      defaultTeacherInteraction,
+      `You are already on the ${roleString} course.`
+    );
   });
 });

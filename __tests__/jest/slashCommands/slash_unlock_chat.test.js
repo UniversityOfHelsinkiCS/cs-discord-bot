@@ -1,9 +1,12 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/unlock_chat");
-const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
-const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const {
-  msToMinutesAndSeconds,
-  checkCourseCooldown } = require("../../../src/discordBot/services/service");
+  sendEphemeral,
+  editErrorEphemeral,
+  sendErrorEphemeral,
+  editEphemeral
+} = require("../../../src/discordBot/services/message");
+const { confirmChoice } = require("../../../src/discordBot/services/confirm");
+const { msToMinutesAndSeconds, checkCourseCooldown } = require("../../../src/discordBot/services/service");
 const { setCourseToUnlocked, findCourseFromDb } = require("../../../src/db/services/courseService");
 
 jest.mock("../../../src/discordBot/services/message");
@@ -12,13 +15,10 @@ jest.mock("../../../src/discordBot/services/service");
 confirmChoice.mockImplementation(() => true);
 jest.mock("../../../src/db/services/courseService");
 
-
 const Course = {
   create: jest.fn(),
-  findOne: jest
-    .fn(() => true)
-    .mockImplementationOnce(() => false),
-  destroy: jest.fn(),
+  findOne: jest.fn(() => true).mockImplementationOnce(() => false),
+  destroy: jest.fn()
 };
 
 const time = "4:59";
@@ -46,7 +46,9 @@ describe("slash unlock_chat command", () => {
   });
 
   test("unlock_chat command with valid course name responds with correct ephemeral", async () => {
-    findCourseFromDb.mockImplementationOnce((name) => { return { name: name, locked: true }; });
+    findCourseFromDb.mockImplementationOnce((name) => {
+      return { name: name, locked: true };
+    });
     const client = defaultTeacherInteraction.client;
     const response = `This course ${courseName} is now unlocked.`;
     await execute(defaultTeacherInteraction, client, Course);
@@ -61,7 +63,9 @@ describe("slash unlock_chat command", () => {
   });
 
   test("unlock_chat command with cooldown", async () => {
-    findCourseFromDb.mockImplementation((name) => { return { name: name, locked: true }; });
+    findCourseFromDb.mockImplementation((name) => {
+      return { name: name, locked: true };
+    });
     checkCourseCooldown.mockImplementation(() => time);
     const client = defaultTeacherInteraction.client;
     await execute(defaultTeacherInteraction, client, Course);

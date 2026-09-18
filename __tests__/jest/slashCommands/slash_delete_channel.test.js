@@ -1,5 +1,10 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/delete_channel");
-const { sendEphemeral, editEphemeral, editErrorEphemeral, sendErrorEphemeral } = require("../../../src/discordBot/services/message");
+const {
+  sendEphemeral,
+  editEphemeral,
+  editErrorEphemeral,
+  sendErrorEphemeral
+} = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { removeChannelFromDb, findChannelFromDbByName } = require("../../../src/db/services/channelService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
@@ -18,7 +23,7 @@ defaultStudentInteraction.options = { getString: jest.fn((name) => name) };
 const initialResponse = "Deleting text channel...";
 
 const parentChannel = {
-  name: "test",
+  name: "test"
 };
 
 jest.mock("../../../src/discordBot/services/service");
@@ -28,7 +33,6 @@ findCourseFromDb.mockImplementationOnce(() => false);
 findCourseFromDb.mockImplementation(() => parentChannel);
 findChannelFromDbByName.mockImplementationOnce(() => false);
 findChannelFromDbByName.mockImplementation(() => true);
-
 
 afterEach(() => {
   jest.clearAllMocks();

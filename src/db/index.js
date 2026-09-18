@@ -15,7 +15,7 @@ const shutDown = async (error) => {
 const runMigrations = async () => {
   const migrations = await createMigrator(sequelize).up();
   console.log("Ran the following migrations: ", {
-    files: migrations.map((mig) => mig.name),
+    files: migrations.map((mig) => mig.name)
   });
 };
 
@@ -34,16 +34,15 @@ const encryptionMigrationProblem = async () => {
     `SELECT 1 FROM information_schema.columns
       WHERE table_schema = current_schema()
         AND table_name = 'joined_users' AND column_name = 'discordIdHash'`,
-    { type: sequelize.QueryTypes.SELECT },
+    { type: sequelize.QueryTypes.SELECT }
   );
   if (!hashColumn) {
     return "joined_users.discordIdHash missing - encryption migration did not apply";
   }
 
-  const [unhashedRow] = await sequelize.query(
-    "SELECT id FROM joined_users WHERE \"discordIdHash\" IS NULL LIMIT 1",
-    { type: sequelize.QueryTypes.SELECT },
-  );
+  const [unhashedRow] = await sequelize.query('SELECT id FROM joined_users WHERE "discordIdHash" IS NULL LIMIT 1', {
+    type: sequelize.QueryTypes.SELECT
+  });
   if (unhashedRow) {
     return `joined_users has rows without a discordIdHash (id ${unhashedRow.id}) - encryption backfill did not finish`;
   }
@@ -59,7 +58,7 @@ const encryptionMigrationProblem = async () => {
         AND idx.indisunique
         AND idx.indnatts = 1
         AND att.attname = 'discordIdHash'`,
-    { type: sequelize.QueryTypes.SELECT },
+    { type: sequelize.QueryTypes.SELECT }
   );
   if (!hashIndex) {
     return "joined_users.discordIdHash is not unique - encryption migration did not finish";
@@ -77,8 +76,7 @@ const connectToDatabase = async (attempt = 0) => {
   // retry loop below - retrying it ten times would only delay the same exit.
   try {
     assertEncryptionKey();
-  }
-  catch (err) {
+  } catch (err) {
     return shutDown(err);
   }
 
@@ -88,8 +86,7 @@ const connectToDatabase = async (attempt = 0) => {
     await sequelize.sync();
     try {
       await runMigrations();
-    }
-    catch (err) {
+    } catch (err) {
       logError(err);
       console.log("Failed to run migrations: \n " + err);
     }
@@ -97,16 +94,13 @@ const connectToDatabase = async (attempt = 0) => {
     if (migrationProblem) {
       return shutDown(new Error(migrationProblem));
     }
-  }
-  catch (err) {
+  } catch (err) {
     logError(err);
     if (attempt === DB_CONNECTION_RETRY_LIMIT) {
       console.log(`Connection to database failed after ${attempt} attempts`);
       return shutDown();
     }
-    console.log(
-      `Connection to database failed! Attempt ${attempt} of ${DB_CONNECTION_RETRY_LIMIT}`,
-    );
+    console.log(`Connection to database failed! Attempt ${attempt} of ${DB_CONNECTION_RETRY_LIMIT}`);
     await sleep(5000);
     return connectToDatabase(attempt + 1);
   }
@@ -115,5 +109,5 @@ const connectToDatabase = async (attempt = 0) => {
 
 module.exports = {
   sequelize,
-  connectToDatabase,
+  connectToDatabase
 };

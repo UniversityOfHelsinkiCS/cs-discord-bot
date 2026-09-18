@@ -21,9 +21,11 @@ describe("Initialize", () => {
   test("After initialization channels correct channels and roles found", async () => {
     client.guild.roles.create({ name: "admin" });
     await initializeApplicationContext(client, models);
-    const guide = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "guide");
-    const commands = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === "commands");
-    const honeypot = client.guild.channels.cache.find(c => c.type === "GUILD_TEXT" && c.name === HONEYPOT_CHANNEL_NAME);
+    const guide = client.guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === "guide");
+    const commands = client.guild.channels.cache.find((c) => c.type === "GUILD_TEXT" && c.name === "commands");
+    const honeypot = client.guild.channels.cache.find(
+      (c) => c.type === "GUILD_TEXT" && c.name === HONEYPOT_CHANNEL_NAME
+    );
     expect(initHooks).toHaveBeenCalledTimes(1);
     expect(client.guild.channels.create).toHaveBeenCalledTimes(3);
     expect(client.guild.channels.cache.length).toBe(3);

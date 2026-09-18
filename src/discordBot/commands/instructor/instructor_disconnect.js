@@ -22,15 +22,21 @@ const execute = async (interaction, client, models) => {
   const userToDcVoiceChannel = await getChannelByDiscordId(userToDc.voice.channelId, channelModel);
   console.log(userToDcVoiceChannel);
 
-
   // inside a course voice channel
   if (userToDcVoiceChannel?.courseId) {
-    const commandUserCourseMember = await findCourseMember(commandUser.id, userToDcVoiceChannel.courseId, courseMemberModel);
+    const commandUserCourseMember = await findCourseMember(
+      commandUser.id,
+      userToDcVoiceChannel.courseId,
+      courseMemberModel
+    );
     console.log(commandUserCourseMember);
     if (!commandUser.admin && !commandUser.faculty && !commandUserCourseMember.instructor) {
       return await editErrorEphemeral(interaction, "You don't have the permissions to do that.");
     }
-    const confirm = await confirmChoice(interaction, `Confirm command: Disconnect user ${parameter} from voice channel`);
+    const confirm = await confirmChoice(
+      interaction,
+      `Confirm command: Disconnect user ${parameter} from voice channel`
+    );
 
     if (!confirm) {
       return await editEphemeral(interaction, "Command declined");
@@ -57,11 +63,8 @@ module.exports = {
     .setName("instructor_disconnect")
     .setDescription("Disconnect user from voice channel.")
     .setDefaultPermission(true)
-    .addStringOption(option =>
-      option.setName("user")
-        .setDescription("User to disconnect.")
-        .setRequired(true)),
+    .addStringOption((option) => option.setName("user").setDescription("User to disconnect.").setRequired(true)),
   execute,
   usage: "/instructor_disconnect",
-  description: "Disconnect user from voice channel.*",
+  description: "Disconnect user from voice channel.*"
 };

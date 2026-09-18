@@ -3,37 +3,37 @@ const { client } = require("./mockSlashClient");
 const teacher = {
   nickname: "teacher",
   user: {
-    id: 1,
+    id: 1
   },
   permissions: {
-    has: jest.fn(() => true),
+    has: jest.fn(() => true)
   },
   roles: {
     cache: {
-      find: () => true,
+      find: () => true
     },
     add: jest.fn(),
-    fetch: jest.fn(),
+    fetch: jest.fn()
   },
-  fetch: jest.fn(),
+  fetch: jest.fn()
 };
 
 const student = {
   nickname: "student",
   user: {
-    id: 2,
+    id: 2
   },
   permissions: {
-    has: jest.fn(() => false),
+    has: jest.fn(() => false)
   },
   roles: {
     cache: {
-      find: () => false,
+      find: () => false
     },
     add: jest.fn(),
-    fetch: jest.fn(),
+    fetch: jest.fn()
   },
-  fetch: jest.fn(),
+  fetch: jest.fn()
 };
 
 const messageInGuideChannel = {
@@ -42,19 +42,19 @@ const messageInGuideChannel = {
   guild: {
     roles: {
       cache: [],
-      create: jest.fn(),
-    },
+      create: jest.fn()
+    }
   },
   channel: {
     name: "guide",
-    send: jest.fn(),
+    send: jest.fn()
   },
   content: "",
   author: teacher,
   member: teacher,
   react: jest.fn(),
   reply: jest.fn(),
-  attachments: { filter: jest.fn(() => ({ size: 0 })) },
+  attachments: { filter: jest.fn(() => ({ size: 0 })) }
 };
 
 const messageInCommandsChannel = {
@@ -63,43 +63,45 @@ const messageInCommandsChannel = {
   guild: {
     roles: {
       cache: [],
-      create: jest.fn(),
+      create: jest.fn()
     },
     channels: {
       cache: [
         {
           name: "test_announcement",
           messages: {
-            fetchPinned: jest.fn(() => { return [{ author: client.user, content: "Invitation link for", edit: jest.fn() }]; }),
+            fetchPinned: jest.fn(() => {
+              return [{ author: client.user, content: "Invitation link for", edit: jest.fn() }];
+            })
           },
           parent: {
             name: "📚 test",
-            type: "GUILD_CATEGORY",
-          },
+            type: "GUILD_CATEGORY"
+          }
         },
         {
           name: "📚 test",
           type: "GUILD_CATEGORY",
-          delete: jest.fn(),
-        },
-      ],
-    },
+          delete: jest.fn()
+        }
+      ]
+    }
   },
   channel: {
     name: "commands",
-    send: jest.fn(),
+    send: jest.fn()
   },
   content: "",
   author: teacher,
   member: teacher,
   react: jest.fn(),
   reply: jest.fn(),
-  attachments: { filter: jest.fn(() => ({ size: 0 })) },
+  attachments: { filter: jest.fn(() => ({ size: 0 })) }
 };
 
 module.exports = {
   messageInGuideChannel,
   messageInCommandsChannel,
   student,
-  teacher,
+  teacher
 };

@@ -5,7 +5,10 @@ const { facultyRole } = require("../../../../config.json");
 const { confirmChoice } = require("../../services/confirm");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
+  if (
+    !interaction.member.permissions.has("ADMINISTRATOR") &&
+    !interaction.member.roles.cache.some((r) => r.name === facultyRole)
+  ) {
     await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
     return;
   }
@@ -46,5 +49,5 @@ module.exports = {
   execute,
   usage: "/hide_channel",
   description: "Hide text channel the command was used in from regular users.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };
