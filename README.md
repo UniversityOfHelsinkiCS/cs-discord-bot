@@ -46,15 +46,20 @@ Invite: https://discord.gg/V5R9dZFCkD
   member logs in with Discord OAuth and the university single sign-on
   (employee-number check) to be granted the faculty role.
 
-### Admin tools (`!` prefix commands, run in the staff `#commands` channel)
+### Admin tools (slash commands, admin only)
 
-- `!add_admin_rights` / `!remove_admin_rights`, `!remove_faculty_rights`.
-- `!reload_commands` and slash-command registration / permission management.
-- `!fix_course_roles` — reconciles Discord course roles against the database in
-  both directions. `!update_instructors`, `!update_invitelinks`, `!sort_courses`.
-- `!update_database` + `!restore_server_from_database` — snapshot the server's
+Admin commands run only for users with the admin flag in the database, and are hidden from the command picker
+until the `admin` / `cs-admin` roles are granted access in Discord's Integrations settings. Their replies are
+visible only to the person who ran them.
+
+- `/add_admin_rights` / `/remove_admin_rights`, `/remove_faculty_rights`.
+- `/reload_commands` and `/delete_command` — slash-command registration.
+- `/fix_course_roles` — reconciles Discord course roles against the database in
+  both directions. `/update_instructors`, `/update_invitelinks`, `/sort_courses`, `/update_categorynames`.
+- `/update_database` + `/restore_server_from_database` — snapshot the server's
   courses, roles, and memberships to the database and rebuild them; used for
   recovery and migrations.
+- `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
 
 ### Membership sync
 
@@ -91,8 +96,8 @@ Invite: https://discord.gg/V5R9dZFCkD
 | Intent | Why |
 | --- | --- |
 | Guilds | Channel, role, and guild state. |
-| **Guild Members** (privileged) | Join/leave events drive database sync and role management; `!fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
-| **Message Content** (privileged) | Parse `!` prefix commands and copy-pasted `/join`; compare message text for spam/scam detection. |
+| **Guild Members** (privileged) | Join/leave events drive database sync and role management; `/fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
+| **Message Content** (privileged) | Read copy-pasted `/join` and compare message text for spam/scam detection. |
 | Guild Messages, Guild Message Reactions | Spam firewall and copy-pasted `/join` (messages); joining and leaving courses from the guide channel (reactions). |
 | Guild Voice States | Voice-channel state used by course channels. |
 
@@ -125,7 +130,6 @@ npm install
 Add a `.env` file to the repository root (same directory as `package.json`):
 
 ```
-PREFIX=!
 DISCORD_BOT_TOKEN=your-own-token
 GUILD_ID=your-discord-server-id
 BOT_ID=id-of-your-bot
@@ -181,7 +185,7 @@ only thing validated and a weak key still passes that check.
 The key lives only in the service environment; store it separately from any
 database backup. **Losing `FIELD_ENCRYPTION_KEY` makes `name` / `discordId`
 unrecoverable** — the only recovery is to truncate `joined_users` and rebuild
-from Discord with `!update_database` + `!restore_server_from_database`
+from Discord with `/update_database` + `/restore_server_from_database`
 (course-membership history is lost). To roll the migration back (key still
 present): `NODE_ENV=production node src/db/rollback.js`.
 

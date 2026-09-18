@@ -6,7 +6,6 @@ let id = 1;
 let roleId = 1;
 
 const client = {
-  commands: new Discord.Collection(),
   slashCommands: new Discord.Collection(),
   user: {
     id: 1
@@ -81,12 +80,7 @@ for (const folder of slashCommandFolders) {
   const slashCommandFiles = fs.readdirSync(`${slashCommandsPath}/${folder}`).filter((file) => file.endsWith(".js"));
   for (const file of slashCommandFiles) {
     const slashCommand = require(`${slashCommandsPath}/${folder}/${file}`);
-    if (slashCommand.devOnly && process.env.NODE_ENV !== "development") continue;
-    if (slashCommand.prefix) {
-      client.commands.set(slashCommand.name, slashCommand);
-    } else {
-      client.slashCommands.set(slashCommand.data.name, slashCommand);
-    }
+    client.slashCommands.set(slashCommand.data.name, slashCommand);
   }
 }
 

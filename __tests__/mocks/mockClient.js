@@ -1,12 +1,6 @@
 const { ChannelType } = require("discord.js");
-const Discord = require("discord.js");
-const fs = require("fs");
-const path = require("path");
-
-const commandsPath = path.resolve("src/discordBot/commands");
 
 const client = {
-  commands: new Discord.Collection(),
   user: {
     id: 1
   },
@@ -56,18 +50,6 @@ const client = {
   },
   emit: jest.fn()
 };
-
-const commandFolders = fs
-  .readdirSync(commandsPath, { withFileTypes: true })
-  .filter((dirent) => dirent.isDirectory())
-  .map((dirent) => dirent.name);
-for (const folder of commandFolders) {
-  const commandFiles = fs.readdirSync(`${commandsPath}/${folder}`).filter((file) => file.endsWith(".js"));
-  for (const file of commandFiles) {
-    const command = require(`${commandsPath}/${folder}/${file}`);
-    client.commands.set(command.name, command);
-  }
-}
 
 module.exports = {
   client

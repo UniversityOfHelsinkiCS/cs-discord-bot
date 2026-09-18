@@ -89,7 +89,6 @@ const deployCommands = async (commands) => {
 
 const loadCommands = (client) => {
   const commands = [];
-  client.commands = new Collection();
   const slashCommands = new Collection();
   const commandFolders = fs
     .readdirSync("./src/discordBot/commands/", { withFileTypes: true })
@@ -102,12 +101,8 @@ const loadCommands = (client) => {
       .filter((file) => file.endsWith(".js"));
     for (const file of slashCommandFiles) {
       const command = require(`../commands/${folder}/${file}`);
-      if (command.prefix) {
-        client.commands.set(command.name, command);
-      } else {
-        slashCommands.set(command.data.name, command);
-        commands.push(command.data.toJSON());
-      }
+      slashCommands.set(command.data.name, command);
+      commands.push(command.data.toJSON());
     }
     client.slashCommands = new Collection([...slashCommands.entries()].sort());
   }
