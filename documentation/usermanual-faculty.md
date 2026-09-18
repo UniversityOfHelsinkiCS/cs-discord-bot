@@ -135,4 +135,4 @@ Command | Explanation | Arguments
 
 ### Material
 
-[Source code for the Bot](https://github.com/Ohtuproju2021syksy/Discord-Bot-better)
+[Source code for the Bot](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)

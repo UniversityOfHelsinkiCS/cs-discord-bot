@@ -15,5 +15,5 @@ There is currently no automated test or lint workflow. The only workflow is [Pub
 
 Deployment requires a pull request from dev to main that is approved by one reviewer. After merging workflows run on main branch and a new version of production docker image is pushed to DockerHub.
 
-In case something unwanted gets deployed, the bot can be reverted to an older version by simply re-running [a publish workflow](https://github.com/Ohtuproju2021syksy/Discord-Bot-better/actions/workflows/publish.yml) of the desired version.
+In case something unwanted gets deployed, the bot can be reverted to an older version by simply re-running [a publish workflow](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/actions/workflows/publish.yml) of the desired version.
 

@@ -36,14 +36,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ohtuproju2021syksy/Discord-Bot-better"
+    "url": "git+https://github.com/UniversityOfHelsinkiCS/cs-discord-bot"
   },
   "author": "Jami Kousa, Kalle \"Sendouc\", Lari Löfman, Antti Kantola, Timo Reijonen, Teemu Närhi, Okko Kuisma, Eemeli Saari, Mikko Pelkonen, Miika Koskela",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Ohtuproju2021syksy/Discord-Bot-better"
+    "url": "https://github.com/UniversityOfHelsinkiCS/cs-discord-bot"
   },
-  "homepage": "https://github.com/Ohtuproju2021syksy/Discord-Bot-better#readme",
+  "homepage": "https://github.com/UniversityOfHelsinkiCS/cs-discord-bot#readme",
   "dependencies": {
     "@discordjs/builders": "^0.6.0",
     "@discordjs/rest": "^0.1.1-canary.0",
