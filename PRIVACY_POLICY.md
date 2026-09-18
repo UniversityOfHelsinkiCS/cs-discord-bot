@@ -1,6 +1,6 @@
 # Privacy Policy — CS Discord Bot
 
-*Last updated: 2 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
+*Last updated: 18 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
 
 This Privacy Policy describes what data the CS Discord Bot ("the Bot") collects, why, and how it is handled. The Bot is a private bot developed and operated for one specific Discord server, that of the Department of Computer Science, University of Helsinki ("the Server"). It is not offered to, or run in, any other server. Source code: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot
 
@@ -58,7 +58,7 @@ Logging in sets a session cookie, and your session is stored server-side in our 
 ### 2.4 Operational/diagnostic data
 
 - **Error monitoring (Sentry)**: when the Bot hits an error or unhandled exception anywhere in its operation - processing a command, handling a Discord event, or carrying out a moderation action - it sends diagnostic information to Sentry. This can include the acting or affected user's Discord ID and display name, the command or event name, and the error message and stack trace.
-- **Application logs**: the Bot writes operational logs to its own console/host (which may include Discord IDs and event details, but not full message content). These are additionally forwarded to the Papertrail (SolarWinds) log-management service only when a Papertrail endpoint is configured for the running deployment, which may not be the case at any given time.
+- **Application logs**: the Bot writes operational logs to its own console/host (which may include Discord IDs and event details, but not full message content).
 - **Usage metrics (Prometheus)**: the Bot's web component exposes a `/metrics` endpoint with aggregate counters (for example, the number of course joins per course) for external Prometheus-based monitoring infrastructure to scrape. These counters contain no usernames, user IDs, or message content.
 
 ### 2.5 Automated moderation decisions
@@ -102,7 +102,7 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 - **Database backups.** We keep automated database backups: one from the last day, one from the last week, one from the last month, and one from the last year. Backups are encrypted, and a deletion from the live database is not reflected in a backup until that backup is next rotated, so a deleted record can persist in a backup for up to a year before it ages out.
 - **In-memory spam-detection data**: the recent message and attachment fingerprints, the list of accounts that have posted in the honeypot channel, and the per-account report cooldowns are all held only in memory and discarded automatically about one hour after the event they relate to. All in-memory state is also cleared whenever the Bot restarts.
 - **Automated-moderation reports** in the administrator-only Discord channel: reports an administrator judges to be false positives are deleted within about 24 hours of that review. Reports for confirmed scam or spam activity are kept indefinitely as a security log and to improve the detection rules; these concern abusive or compromised accounts and the content they posted.
-- **Diagnostic data sent to Sentry or Papertrail** is retained according to those services' own retention settings, typically on the order of weeks to a few months.
+- **Diagnostic data sent to Sentry** is retained according to Sentry's own retention settings, typically on the order of weeks to a few months.
 
 ## 7. Third parties and international transfers
 
@@ -110,10 +110,9 @@ The Bot relies on the following external processors and platforms:
 
 - **Discord** - the platform the Bot operates on; all interactions necessarily pass through Discord's API.
 - **Sentry** - error monitoring; may receive user IDs, usernames, and error context.
-- **Papertrail (SolarWinds)** - log management; receives Discord IDs and event metadata only when log forwarding is enabled for the deployment (see section 2.4).
 - **Prometheus monitoring** - external monitoring infrastructure scrapes the Bot's `/metrics` endpoint (section 2.4). Only aggregate, non-identifying counters are exposed, so no personal data is shared this way.
 
-Some of these providers (Discord, Sentry, and Papertrail) are established outside the EU/EEA, primarily in the United States. Where data is transferred outside the EEA, the transfer relies on the European Commission's adequacy decision for the EU–US Data Privacy Framework where the provider is certified under it, and otherwise on the European Commission's Standard Contractual Clauses, as set out in each provider's own data-processing terms.
+Some of these providers (Discord and Sentry) are established outside the EU/EEA, primarily in the United States. Where data is transferred outside the EEA, the transfer relies on the European Commission's adequacy decision for the EU–US Data Privacy Framework where the provider is certified under it, and otherwise on the European Commission's Standard Contractual Clauses, as set out in each provider's own data-processing terms.
 
 We do not sell or use your data for advertising, and we do not share it with any party beyond what's listed above.
 

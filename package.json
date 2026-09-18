@@ -15,8 +15,7 @@
       "<rootDir>/__tests__/setup/env.js"
     ],
     "moduleNameMapper": {
-      "^@sentry/node$": "<rootDir>/__tests__/mocks/@sentry/node.js",
-      "^winston-papertrail$": "<rootDir>/__tests__/mocks/winston-papertrail.js"
+      "^@sentry/node$": "<rootDir>/__tests__/mocks/@sentry/node.js"
     },
     "coveragePathIgnorePatterns": [
       "/node_modules/",
@@ -62,8 +61,7 @@
     "prom-client": "^14.0.0",
     "sequelize": "^6.6.2",
     "umzug": "^2.3.0",
-    "winston": "^3.3.3",
-    "winston-papertrail": "github:kenperkins/winston-papertrail#v2"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

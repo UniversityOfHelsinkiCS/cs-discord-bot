@@ -143,7 +143,6 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 GRAFANA_TOKEN=your-grafana-authorization-token
 GRAFANA_URL=your-server-url/grafana/your-dashboard-specific-stuff
 GRAFANA_PANEL_ID=your-grafana-panel-id
-PAPERTRAIL_URL=papertrailapp-url
 WORKSHOPS_API=pajat-api-url
 ```
 
