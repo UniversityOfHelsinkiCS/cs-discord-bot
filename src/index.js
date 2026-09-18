@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 require("./sentry");
 const { sequelize, connectToDatabase } = require("./db/index");
 const startServer = require("./server/server");

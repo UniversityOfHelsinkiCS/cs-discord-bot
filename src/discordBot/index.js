@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const { Client, Intents } = require("discord.js");
 const fs = require("fs");
 const models = require("../db/dbInit");

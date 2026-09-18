@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const { execute } = require("../../src/discordBot/events/messageCreate");
 const { execute: joinCommand } = require("../../src/discordBot/commands/student/join");
 const { sendReplyMessage } = require("../../src/discordBot/services/message");

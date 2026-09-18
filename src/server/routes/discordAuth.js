@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const router = require("express").Router();
 const passport = require("passport");
 const { getRoles, addRole, getMember, addMember } = require("../api/api");

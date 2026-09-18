@@ -5,7 +5,7 @@ const { logError } = require("./logger");
 const { findAllCourseNames, findCourseFromDb } = require("../../db/services/courseService");
 const { courseAdminRole, facultyRole } = require("../../../config.json");
 
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
 
 let invite_url = "";

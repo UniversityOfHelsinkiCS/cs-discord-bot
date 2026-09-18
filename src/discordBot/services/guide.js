@@ -1,7 +1,7 @@
 const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
 
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
 
 let invite_url = "";
