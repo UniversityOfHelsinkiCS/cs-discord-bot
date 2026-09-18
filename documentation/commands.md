@@ -10,7 +10,6 @@ Command | Description | Example
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
-`/list_bridges` | List all courses with their telegram bridge id and whether it is in use. | `/list_bridges`
 `/list_courses` | List all courses and channels. | `/list_courses`
 `/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
 `/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`
@@ -31,18 +30,15 @@ Command | Description | Example
 `/create_channel` | Add a text channel for the course. Must be used inside a course. | `/create_channel questions`
 `/create_course ` | Create a given course channel | `/create_course ohpe ohjelmoinnin perusteet`
 `/create_poll ` | Create a poll | `/create_poll Question 10 answer1 | answer 2 | answer 3`
-`/delete_bridge` | Delete bridge from specified course | `/delete_bridge ohpe`
 `/delete_channel` | Delete a text channel from the course. Must be used inside a course. | `/delete_channel questions`
-`/disable_bridge` | Disable bridge in a Discord text channel. Must be used inside a course and in a non-default text channel. | `/disable_bridge`
 `/edit_course` | Edit course information, e.g. course code, fullname, or nickname. Must be used inside a course. | `/edit_course nickname ohpe`
 `/edit_topic` | Edit channel topic, replacing an already existing topic. | `/edit_topic perusteet`
-`/enable_bridge` | Enable bridge in a Discord text channel. Must be used inside a course and in a non-default text channel. | `/enable_bridge`
-`/hide_channel` | Make the channel hidden from regular users. Also disables the bridge in the channel. Must be used inside a course and in a non-default text channel. | `/hide_channel`
+`/hide_channel` | Make the channel hidden from regular users. Must be used inside a course and in a non-default text channel. | `/hide_channel`
 `/hide_course` | Make the given course private, disabling joining with `/join` | `/hide_course ohpe`
 `/lock_chat` | Lock the given course, disabling messaging by regular users | `/lock_chat ohpe`
 `/rename_channel` | Rename a Discord text channel. Must be used inside a course and in a non-default text channel. | `/rename_channel questions`
 `/status` | Get full status of course. Must be used inside a course. | `/status`
-`/unhide_channel` | Make the channel visible to regular users. Also enables the bridge in the channel. Must be used inside a course and in a non-default text channel. | `/unhide_channel`
+`/unhide_channel` | Make the channel visible to regular users. Must be used inside a course and in a non-default text channel. | `/unhide_channel`
 `/unhide_course` | Make the given course public, enabling joining with `/join`. | `/unhide_course ohpe`
 `/unlock_chat` | Unlock the given course, enabling messaging by regular users. | `/unlock_chat ohpe`
 

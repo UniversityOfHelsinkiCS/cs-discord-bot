@@ -6,20 +6,12 @@ const joinedUsersCounter = new client.Counter({
   labelNames: ["course"],
 });
 
-const bridgedMessagesCounter = new client.Counter({
-  name: "bridged_messages_total",
-  help: "Keeps track of bridged messages",
-  labelNames: ["origin", "course"],
-});
-
 const resetCounters = () => {
   joinedUsersCounter.reset();
-  bridgedMessagesCounter.reset();
 };
 
 module.exports = {
   joinedUsersCounter,
-  bridgedMessagesCounter,
   resetCounters,
 };
 

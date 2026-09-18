@@ -6,7 +6,6 @@ const {
   listCourseInstructors,
   isCourseCategory } = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
-const { findChannelsByCourse } = require("../../../src/db/services/channelService");
 const { findAllCourseMembers } = require("../../../src/db/services/courseMemberService");
 
 const models = require("../../mocks/mockModels");
@@ -14,18 +13,15 @@ const models = require("../../mocks/mockModels");
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
-jest.mock("../../../src/db/services/channelService");
 jest.mock("../../../src/db/services/courseMemberService");
 
 
 const course = { name: "test", fullName: "test course", code: "101", private: false };
-const channel = { courseId: 1, name: "test_channel", topic: "test", bridged: true };
 const url = "mockUrl";
 const initialResponse = "Fetching status...";
 
 listCourseInstructors.mockImplementation(() => "");
 findCourseFromDb.mockImplementation(() => course);
-findChannelsByCourse.mockImplementation(() => [channel]);
 
 createCourseInvitationLink.mockImplementation(() => url);
 
@@ -41,7 +37,6 @@ Fullname: ${course.fullName}
 Code: ${course.code}
 Hidden: ${course.private}
 Invitation Link: ${url}
-Bridge blocked on channels: No blocked channels
 
 Instructors: No instructors for undefined
 Members: undefined

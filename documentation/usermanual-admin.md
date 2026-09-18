@@ -137,19 +137,16 @@ Command | Explanation | Arguments
 [/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | :heavy_check_mark:
 [/create_course](./commands/faculty/create_course.md) | Create a new course | :heavy_check_mark:
 [/create_poll](./commands/faculty/create_poll.md) | Create a new poll | :heavy_check_mark:
-[/delete_bridge](./commands/faculty/delete_bridge.md) | Delete the bridge from specified Course, e.g., /delete_bridge ohpe | :heavy_check_mark:
 [/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | :heavy_check_mark:
-[/disable_bridge](./commands/faculty/disable_bridge.md) | Disable the bridge between Telegram and the (non-default) course channel it is used in. | :x:
 [/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | :heavy_check_mark:
 [/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | :heavy_check_mark:
-[/enable_bridge](./commands/faculty/enable_bridge.md) | Enable the bridge between Telegram and the (non-default) course channel it is used in. | :x:
-[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. Also disables the bridge in the channel. | :x:
+[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | :x:
 [/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course weba. | :heavy_check_mark:
 [/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors and faculty can post messages) of a given course | :heavy_check_mark:
 [/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | :heavy_check_mark:
 [/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | :heavy_check_mark:
 [/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | :heavy_check_mark:
-[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. Also enables the bridge in the channel. | :x:
+[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | :x:
 [/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course weba. | :heavy_check_mark:
 [/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | :heavy_check_mark:
 

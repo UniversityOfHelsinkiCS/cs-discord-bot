@@ -44,43 +44,11 @@ If your course is an open university course, use the abbreviation **MOOC** in th
 
 After the course is created there is an invitation link for the course on the course´s guide channel. Share this on the needed platforms, so the students can join this channel. Another option for joining is using the `/join` command.
 
-### Create Telegram bridge
-
-Today, many courses use Telegram discussion channels. At the moment there are students that might use only one of these platforms (Discord or Telegram). Therefore, we want to connect Discord and Telegram chat channels so everyone can see all the conversations. The following steps are made in Telegram.
-
-#### Add our Telegram bot to your Telegram channel
-
-Invite the **@cs-discord-bot** bot to your Telegram channel. First go to your channel. From the right top corner choose three dots and from the drop-down menu choose _Add members_.
-
-Give the bot admin role (choose channel member and give the bot admin rights). You need to have an admin role to do this change. Under _What can this admin do?_ you must keep the **"Delete messages"** and **"Change group info"** settings on, but you can turn off all others.
-
-#### Make the bridge
-
-Create the connection between Discord and Telegram channels. Use command `/bridge <your Discord course name>` on your Telegram group. For example, to bridge the Telegram group `tkt-tito` to discord course `tito` use the command `/bridge tito` in the Telegram group.
-
-Bot answers
-```
-Bridge created: Discord course <courseName> <--> Telegram course <telegramGroup>
-```
-if the bridge is created successfully.
-
-If `course name` is invalid bot answers with message
-```
-Bridge not created: Invalid discord channel <courseName>
-```
-Note that only one Telegram group can be connected to only one Discord course.
-
-### Delete the bridge
-
-To delete existing bridge to a Telegram channel, use the command `/delete_bridge <your Discord course name>` on Discord. This will remove the bridge completely between the channels.
-
 ## How to create more text channels
 
 The `/create_course` command automatically creates three sub-channels for the course. The sub-channels are: announcements (text channel), general (text channel) and one voice channel. To create more text channels for a course go inside the wanted course. Inside this course use `/create_channel` command followed by the desired text channel name to create new text channel.
 
 Note that the channel name you give is the end part of the name. For example, in the picture new channel will be created with name _wepa_feedback_.
-
-**Note also that if the course is bridged to telegram, messages from every channel will be bridged to telegram but messages from telegram are bridged only to general. If you want to disable bridge on a non-default text channel, use the command `/disable_bridge` on that channel.**
 
 To remove added text channel use `/delete_channel` command followed by the name of the text channel to be removed e.g., `/delete_channel feedback` removes _wepa_feedback_ when run inside _wepa_ course. This command must also be used inside the course you want the channel to be removed. Note that announcements or general channels can not be removed.
 
@@ -114,17 +82,11 @@ The `/edit_topic` command allows you to create or edit the information in the to
 
 The `/create_poll` command allows you to create a poll that is placed in the same channel that you use the command in. It has 3 required arguments _title_, _duration_ and _answers_. Duration is given in minutes (14 minutes at most), for example "3" means 3 minutes. After the duration the poll closes automatically. _answers_ is the list of all possible answers to the poll, separated by " | ". For example "Java | Python" creates 2 answer options "Java" and "Python". Optional argument _description_ let's you create additional description for the poll, like additional instructions. You can close the poll manually by clicking the **Close Poll** -button that appears to the original `/create_poll` message. After the poll closes it shows the results, including how much each option was voted and which option/options got the most amount of votes.
 
-## Disabling the bridge on a text channel
-
-Users with faculty rights can disable the bridge between a certain course channel and Telegram. This can be used e.g. on off-topic course channels where there's a lot of discussion that could flood the Telegram chat with messages not directly related to the course. Note that the bridge can be disabled only on non-default channels, that is channels which were created individually with `/create_channel` after the course was created. To disable the bridge on a channel, write the command `/disable_bridge` on that channel. You can check in which channels the bridge is disabled with the command `/status`. 
-
-To enable the bridge on a channel, write the command `/enable_bridge` on that channel.
-
 ## Hiding a text channel from regular users
 
-Users with faculty rights can hide a text channel from regular users inside a course. This can be used to e.g. make a private chat for course instructors. Note that the bridge can be disabled only on non-default channels, that is channels which were created individually with `/create_channel` after the course was created. To hide a text channel, write the command `/hide_channel` on that channel. Note that the command also disables the bridge on that channel, so that instructor specific conversations won't accidentally leak to Telegram.
+Users with faculty rights can hide a text channel from regular users inside a course. This can be used to e.g. make a private chat for course instructors. Note that a channel can be hidden only if it is a non-default channel, that is a channel which was created individually with `/create_channel` after the course was created. To hide a text channel, write the command `/hide_channel` on that channel.
 
-To reveal the channel to regular users, write the command `/unhide_channel` on that channel. Note that the command also enables the bridge on that channel.
+To reveal the channel to regular users, write the command `/unhide_channel` on that channel.
 
 ### Disconnecting users from voice chat
 
@@ -138,19 +100,16 @@ Command | Explanation | Arguments
 [/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | :heavy_check_mark:
 [/create_course](./commands/faculty/create_course.md) | Create a new course | :heavy_check_mark:
 [/create_poll](./commands/faculty/create_poll.md) | Create a new poll | :heavy_check_mark:
-[/delete_bridge](./commands/faculty/delete_bridge.md) | Delete the bridge from specified course, e.g., /delete_bridge ohpe | :heavy_check_mark:
 [/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | :heavy_check_mark:
-[/disable_bridge](./commands/faculty/disable_bridge.md) | Disable the bridge between Telegram and the (non-default) course channel it is used in. | :x:
 [/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | :heavy_check_mark:
 [/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | :heavy_check_mark:
-[/enable_bridge](./commands/faculty/enable_bridge.md) | Enable the bridge between Telegram and the (non-default) course channel it is used in. | :x:
-[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. Also disables the bridge in the channel. | :x:
+[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | :x:
 [/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course weba. | :heavy_check_mark:
 [/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors and faculty can post messages) of a given course | :heavy_check_mark:
 [/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | :heavy_check_mark:
 [/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | :heavy_check_mark:
 [/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | :heavy_check_mark:
-[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. Also enables the bridge in the channel. | :x:
+[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | :x:
 [/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course weba. | :heavy_check_mark:
 [/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | :heavy_check_mark:
 

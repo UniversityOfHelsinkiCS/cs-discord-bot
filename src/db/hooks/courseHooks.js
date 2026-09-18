@@ -13,7 +13,6 @@ const {
   setEmojisUnhide,
   setCoursePositionABC } = require("../../discordBot/services/service");
 const { updateGuide } = require("../../discordBot/services/guide");
-const { lockTelegramCourse, unlockTelegramCourse } = require("../../telegramBot/bridge/service");
 const { courseAdminRole } = require("../../../config.json");
 const { Op } = require("sequelize");
 const { editChannelNames, createDefaultChannelsToDatabase } = require("../../db/services/channelService");
@@ -70,14 +69,12 @@ const initCourseHooks = (guild, models) => {
 
       if (changedValue.has("locked")) {
         if (locked) {
-          await lockTelegramCourse(models.Course, courseName);
           await setEmojisLock(category, hidden, courseName, models);
           category.permissionOverwrites.create(guild.roles.cache.find(r => r.name === course.name), { VIEW_CHANNEL: true, SEND_MESSAGES: false });
           category.permissionOverwrites.create(guild.roles.cache.find(r => r.name === "faculty"), { SEND_MESSAGES: true });
           category.permissionOverwrites.create(guild.roles.cache.find(r => r.name === "admin"), { SEND_MESSAGES: true });
         }
         else {
-          await unlockTelegramCourse(models.Course, courseName);
           await setEmojisUnlock(category, hidden, courseName, models);
           category.permissionOverwrites.create(guild.roles.cache.find(r => r.name === course.name), { VIEW_CHANNEL: true, SEND_MESSAGES: true });
         }

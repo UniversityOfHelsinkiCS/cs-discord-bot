@@ -2,9 +2,7 @@ require("dotenv").config();
 require("./sentry");
 const { sequelize, connectToDatabase } = require("./db/index");
 const startServer = require("./server/server");
-const { client, startDiscordBot } = require("./discordBot/index");
-const { telegramClient, startTelegramBot } = require("./telegramBot/index");
-const { startBridge } = require("./telegramBot/bridge/index");
+const { startDiscordBot } = require("./discordBot/index");
 const { resetCounters } = require("./promMetrics/promCounters");
 
 const start = async () => {
@@ -12,10 +10,6 @@ const start = async () => {
   startServer(sequelize);
   resetCounters();
   await startDiscordBot();
-  if (process.env.TG_BRIDGE_ENABLED) {
-    await startTelegramBot();
-    startBridge(client, telegramClient);
-  }
 };
 
 start().catch(async (err) => {

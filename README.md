@@ -75,12 +75,6 @@ Invite: https://discord.gg/V5R9dZFCkD
   deleted, the account is kicked, and the user is DM'd recovery instructions.
   Staff receive a report in `#commands` either way.
 
-### Telegram bridge (opt-in per channel)
-
-- Faculty link a course text channel to a Telegram group with `/enable_bridge` /
-  `/disable_bridge`. Messages (text and media) are then relayed both directions,
-  with Discord mentions and emoji rendered to plain text.
-
 ### Metrics
 
 - Join/leave counts and per-course trends are exposed for a Grafana dashboard and
@@ -90,8 +84,7 @@ Invite: https://discord.gg/V5R9dZFCkD
 
 - PostgreSQL tables only for `User`, `Course`, `Channel`, and `CourseMember`.
 - **No message content is persisted.** Chat text is used transiently for command
-  parsing, spam detection (in memory, 1-hour TTL), staff reports, and Telegram
-  relay.
+  parsing, spam detection (in memory, 1-hour TTL), and staff reports.
 
 ## Gateway intents
 
@@ -99,7 +92,7 @@ Invite: https://discord.gg/V5R9dZFCkD
 | --- | --- |
 | Guilds | Channel, role, and guild state. |
 | **Guild Members** (privileged) | Join/leave events drive database sync and role management; `!fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
-| **Message Content** (privileged) | Parse `!` prefix commands and copy-pasted `/join`; compare message text for spam/scam detection; relay text over the Telegram bridge. |
+| **Message Content** (privileged) | Parse `!` prefix commands and copy-pasted `/join`; compare message text for spam/scam detection. |
 | Guild Webhooks, Guild Invites | Course invite-link management and channel webhooks. |
 | Guild Messages, Guild Message Reactions | Command handling, polls, confirmations. |
 | Guild Voice States | Voice-channel state used by course channels. |
@@ -120,7 +113,6 @@ The Guild Presences intent is **not** used.
 - [Create the Discord server](./documentation/discordserver.md)
 - [Create and configure the bot](./documentation/setupmainbot.md)
 - [Companion website OAuth2 backend](./documentation/OAuth2.md)
-- [Telegram bridge setup](./documentation/telegram.md) (The bridge is getting removed soon)
 - [CI/CD pipeline](./documentation/ci-cd-pipeline.md)
 
 ## Running locally
@@ -153,10 +145,6 @@ GRAFANA_URL=your-server-url/grafana/your-dashboard-specific-stuff
 GRAFANA_PANEL_ID=your-grafana-panel-id
 PAPERTRAIL_URL=papertrailapp-url
 WORKSHOPS_API=pajat-api-url
-
-# Bridge
-TELEGRAM_BOT_TOKEN=telegram-bridge-bot-token
-TG_BRIDGE_ENABLED=true
 ```
 
 Add a `config.json` file:
