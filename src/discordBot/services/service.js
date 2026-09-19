@@ -123,8 +123,12 @@ const findOrCreateChannel = async (channelObject, guild) => {
   return await guild.channels.create({ name, ...options });
 };
 
+const fetchRegisteredCommands = async (client) => {
+  return await client.guilds.cache.get(process.env.GUILD_ID).commands.fetch();
+};
+
 const deletecommand = async (client, commandToDeleteName) => {
-  const commands = await client.guilds.cache.get(process.env.GUILD_ID).commands.fetch();
+  const commands = await fetchRegisteredCommands(client);
   const command = commands.find((c) => c.name === commandToDeleteName);
   if (command) {
     await command.delete();
@@ -409,6 +413,7 @@ module.exports = {
   handleCooldown,
   createCourseInvitationLink,
   findOrCreateChannel,
+  fetchRegisteredCommands,
   deletecommand,
   getCourseNameFromCategory,
   findAndUpdateInstructorRole,
