@@ -38,7 +38,7 @@ const autocomplete = async (interaction, client, models) => {
   const user = await findUserByDiscordId(interaction.user.id, models.User);
   const memberships = user ? await findAllCourseMembersByUser(user.id, models.CourseMember) : [];
   const joinedCourseIds = memberships.map((membership) => membership.courseId);
-  const courses = await findCoursesFromDb("code", models.Course);
+  const courses = await findCoursesFromDb("fullName", models.Course);
   await respondWithCourses(
     interaction,
     courses.filter((course) => joinedCourseIds.includes(course.id))

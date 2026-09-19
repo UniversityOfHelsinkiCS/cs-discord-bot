@@ -18,7 +18,7 @@ const uppercaseLeadingLetters = (code) => {
 };
 
 const courseToChoice = (course) => ({
-  name: `${uppercaseLeadingLetters(course.code)} - ${capitalizeFirstLetter(course.fullName)} - ${course.name}`,
+  name: `${capitalizeFirstLetter(course.fullName)} - ${course.name} - ${uppercaseLeadingLetters(course.code)}`,
   value: course.name
 });
 

@@ -45,7 +45,7 @@ describe.each([
   test(`offers the courses from ${finder}`, async () => {
     courseService[finder].mockResolvedValueOnce(courses);
     await command.autocomplete(interaction, client, models);
-    expect(courseService[finder]).toHaveBeenCalledWith("code", models.Course);
+    expect(courseService[finder]).toHaveBeenCalledWith("fullName", models.Course);
     expect(respondWithCourses).toHaveBeenCalledWith(interaction, courses);
   });
 });

@@ -37,7 +37,7 @@ const execute = async (interaction, client, models) => {
 };
 
 const autocomplete = async (interaction, client, models) => {
-  const courses = await findUnlockedCoursesFromDb("code", models.Course);
+  const courses = await findUnlockedCoursesFromDb("fullName", models.Course);
   await respondWithCourses(interaction, courses);
 };
 

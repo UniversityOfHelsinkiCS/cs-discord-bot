@@ -65,18 +65,18 @@ describe("respondWithChoices", () => {
 });
 
 describe("respondWithCourses", () => {
-  test("shows the course code in capitals, the capitalized full name and the course name, and returns the name as value", async () => {
+  test("shows the capitalized full name, the course name and the course code in capitals, and returns the name as value", async () => {
     const interaction = buildAutocomplete("");
     await respondWithCourses(interaction, [{ code: "tkt10002", fullName: "ohjelmoinnin perusteet", name: "ohpe" }]);
     expect(interaction.respond).toHaveBeenCalledWith([
-      { name: "TKT10002 - Ohjelmoinnin perusteet - ohpe", value: "ohpe" }
+      { name: "Ohjelmoinnin perusteet - ohpe - TKT10002", value: "ohpe" }
     ]);
   });
 
   test("keeps a code without letters as it is", async () => {
     const interaction = buildAutocomplete("");
     await respondWithCourses(interaction, [{ code: "101", fullName: "Basics", name: "basics" }]);
-    expect(interaction.respond).toHaveBeenCalledWith([{ name: "101 - Basics - basics", value: "basics" }]);
+    expect(interaction.respond).toHaveBeenCalledWith([{ name: "Basics - basics - 101", value: "basics" }]);
   });
 
   test("filters by the typed text", async () => {
@@ -86,7 +86,7 @@ describe("respondWithCourses", () => {
       { code: "tkt2", fullName: "Web-palvelinohjelmointi", name: "weba" }
     ]);
     expect(interaction.respond).toHaveBeenCalledWith([
-      { name: "TKT2 - Web-palvelinohjelmointi - weba", value: "weba" }
+      { name: "Web-palvelinohjelmointi - weba - TKT2", value: "weba" }
     ]);
   });
 });

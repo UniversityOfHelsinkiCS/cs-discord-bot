@@ -36,7 +36,7 @@ const execute = async (interaction, client, models) => {
 };
 
 const autocomplete = async (interaction, client, models) => {
-  const courses = await findPrivateCoursesFromDb("code", models.Course);
+  const courses = await findPrivateCoursesFromDb("fullName", models.Course);
   await respondWithCourses(interaction, courses);
 };
 
