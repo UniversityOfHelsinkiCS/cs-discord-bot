@@ -63,7 +63,7 @@
     "prom-client": "^14.0.0",
     "sequelize": "^6.6.2",
     "telegraf": "^4.4.0",
-    "umzug": "^2.3.0",
+    "umzug": "^3.0.0",
     "winston": "^3.3.3",
     "winston-papertrail": "github:kenperkins/winston-papertrail#v2"
   },
