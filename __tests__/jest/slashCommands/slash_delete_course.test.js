@@ -1,5 +1,5 @@
-const { execute } = require("../../../src/discordBot/commands/admin/delete_course");
-const { findCourseFromDb, removeCourseFromDb } = require("../../../src/db/services/courseService");
+const { execute, autocomplete, data } = require("../../../src/discordBot/commands/admin/delete_course");
+const { findCourseFromDb, findCoursesFromDb, removeCourseFromDb } = require("../../../src/db/services/courseService");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
@@ -7,6 +7,8 @@ const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../s
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/confirm");
 jest.mock("../../../src/discordBot/services/permissions");
+jest.mock("../../../src/discordBot/services/autocomplete");
+const { respondWithCourses } = require("../../../src/discordBot/services/autocomplete");
 jest.mock("../../../src/db/services/courseService");
 
 const { defaultAdminInteraction } = require("../../mocks/mockInteraction");
@@ -56,5 +58,19 @@ describe("slash delete_course", () => {
     expect(removeCourseFromDb).toHaveBeenCalledTimes(1);
     expect(removeCourseFromDb).toHaveBeenCalledWith(courseName, models.Course);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, `Deleted course ${courseName}.`);
+  });
+});
+
+describe("slash delete_course autocomplete", () => {
+  test("the course option is autocompleted", () => {
+    expect(data.toJSON().options[0].autocomplete).toBe(true);
+  });
+
+  test("offers every course ordered by full name", async () => {
+    const courses = [{ id: 1, code: "a", fullName: "A", name: "a" }];
+    findCoursesFromDb.mockResolvedValueOnce(courses);
+    await autocomplete(defaultAdminInteraction, defaultAdminInteraction.client, models);
+    expect(findCoursesFromDb).toHaveBeenCalledWith("fullName", models.Course);
+    expect(respondWithCourses).toHaveBeenCalledWith(defaultAdminInteraction, courses);
   });
 });

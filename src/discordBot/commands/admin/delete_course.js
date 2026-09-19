@@ -1,6 +1,7 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
-const { removeCourseFromDb, findCourseFromDb } = require("../../../db/services/courseService");
+const { removeCourseFromDb, findCourseFromDb, findCoursesFromDb } = require("../../../db/services/courseService");
 const { confirmChoice } = require("../../services/confirm");
+const { respondWithCourses } = require("../../services/autocomplete");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
@@ -24,15 +25,25 @@ const execute = async (interaction, client, models) => {
   return await editEphemeral(interaction, `Deleted course ${courseName}.`);
 };
 
+const autocomplete = async (interaction, client, models) => {
+  const courses = await findCoursesFromDb("fullName", models.Course);
+  await respondWithCourses(interaction, courses);
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("delete_course")
     .setDescription("Delete course.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
-      option.setName("course_name").setDescription("The name of the course to delete").setRequired(true)
+      option
+        .setName("course_name")
+        .setDescription("The name of the course to delete")
+        .setRequired(true)
+        .setAutocomplete(true)
     ),
   execute,
+  autocomplete,
   usage: "/delete_course [course name]",
   description: "Delete course.",
   roles: ["admin"]
