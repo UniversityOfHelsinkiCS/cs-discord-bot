@@ -56,7 +56,6 @@ const initChannelHooks = (guild, models) => {
 
     await setCoursePositionABC(guild, categoryObject.name, courseModel);
     await createInvitation(guild, course.name);
-    await guild.client.emit("COURSES_CHANGED", courseModel);
     await updateGuide(guild, models);
   });
 

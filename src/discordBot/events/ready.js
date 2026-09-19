@@ -18,7 +18,7 @@ const fetchAllMembers = async (guild, attempts = 3) => {
 const execute = async (client, models) => {
   client.guild = await client.guilds.fetch(process.env.GUILD_ID);
   await initializeApplicationContext(client, models);
-  await setUpCommands(client, models.Course);
+  await setUpCommands(client);
 
   const members = await fetchAllMembers(client.guild);
   if (members) {

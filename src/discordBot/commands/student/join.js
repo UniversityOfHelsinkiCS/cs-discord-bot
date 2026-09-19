@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { editEphemeral, editErrorEphemeral, sendEphemeral, sendReplyMessage } = require("../../services/message");
-const { findCourseFromDb } = require("../../../db/services/courseService");
+const { respondWithCourses } = require("../../services/autocomplete");
+const { findCourseFromDb, findPublicCoursesFromDb } = require("../../../db/services/courseService");
 const { findUserByDiscordId, createUserToDatabase } = require("../../../db/services/userService");
 const {
   createCourseMemberToDatabase,
@@ -90,12 +91,20 @@ const execute = async (interaction, client, models) => {
   }
 };
 
+const autocomplete = async (interaction, client, models) => {
+  const courses = await findPublicCoursesFromDb("code", models.Course);
+  await respondWithCourses(interaction, courses);
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("join")
     .setDescription("Join a course.")
-    .addStringOption((option) => option.setName("course").setDescription("Course to join.").setRequired(true)),
+    .addStringOption((option) =>
+      option.setName("course").setDescription("Course to join.").setRequired(true).setAutocomplete(true)
+    ),
   execute,
+  autocomplete,
   usage: "/join",
   description: "Join a course. After writing '/join', the bot will give you a list of courses to choose from"
 };

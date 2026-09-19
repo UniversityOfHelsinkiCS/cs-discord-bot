@@ -20,7 +20,6 @@ const execute = async (interaction, client, models) => {
   if (!course) return await editErrorEphemeral(interaction, `Invalid course name: ${courseName}.`);
 
   await removeCourseFromDb(courseName, models.Course);
-  await client.emit("COURSES_CHANGED", models);
 
   return await editEphemeral(interaction, `Deleted course ${courseName}.`);
 };

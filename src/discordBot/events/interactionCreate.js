@@ -1,7 +1,18 @@
 const { sendErrorReport, sendErrorEphemeral } = require("../services/message");
-const { logInteractionError } = require("../services/logger");
+const { logError, logInteractionError } = require("../services/logger");
+
+const handleAutocomplete = async (interaction, client, models) => {
+  const command = client.slashCommands.get(interaction.commandName);
+  if (!command?.autocomplete) return;
+  try {
+    await command.autocomplete(interaction, client, models);
+  } catch (error) {
+    logError(error);
+  }
+};
 
 const execute = async (interaction, client, models) => {
+  if (interaction.isAutocomplete()) return await handleAutocomplete(interaction, client, models);
   if (!interaction.isChatInputCommand()) return;
   const command = client.slashCommands.get(interaction.commandName);
   if (!command) return;

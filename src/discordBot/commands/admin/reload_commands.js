@@ -8,7 +8,7 @@ const execute = async (interaction, client, models) => {
 
   await sendEphemeral(interaction, "Reloading commands...");
 
-  await setUpCommands(client, models.Course);
+  await setUpCommands(client);
 
   return await editEphemeral(interaction, "Reloaded slash commands.");
 };

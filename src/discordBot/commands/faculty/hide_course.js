@@ -1,8 +1,9 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { requireFaculty } = require("../../services/permissions");
 const { msToMinutesAndSeconds, handleCooldown, checkCourseCooldown } = require("../../services/service");
-const { setCourseToPrivate, findCourseFromDb } = require("../../../db/services/courseService");
+const { setCourseToPrivate, findCourseFromDb, findPublicCoursesFromDb } = require("../../../db/services/courseService");
 const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../services/message");
+const { respondWithCourses } = require("../../services/autocomplete");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
@@ -33,9 +34,13 @@ const execute = async (interaction, client, models) => {
   } else {
     await setCourseToPrivate(courseName, models.Course);
     await editEphemeral(interaction, `This course ${courseName} is now private.`);
-    await client.emit("COURSES_CHANGED", models.Course);
     handleCooldown(courseName);
   }
+};
+
+const autocomplete = async (interaction, client, models) => {
+  const courses = await findPublicCoursesFromDb("code", models.Course);
+  await respondWithCourses(interaction, courses);
 };
 
 module.exports = {
@@ -43,8 +48,11 @@ module.exports = {
     .setName("hide_course")
     .setDescription("Hide given course")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addStringOption((option) => option.setName("course").setDescription("Hide given course").setRequired(true)),
+    .addStringOption((option) =>
+      option.setName("course").setDescription("Hide given course").setRequired(true).setAutocomplete(true)
+    ),
   execute,
+  autocomplete,
   usage: "/hide_course [course name]",
   description: "Hide given course.",
   roles: ["admin", facultyRole]

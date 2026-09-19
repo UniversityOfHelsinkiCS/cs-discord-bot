@@ -1,9 +1,10 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { requireFaculty } = require("../../services/permissions");
 const { msToMinutesAndSeconds, handleCooldown, checkCourseCooldown } = require("../../services/service");
-const { findCourseFromDb } = require("../../../db/services/courseService");
+const { findCourseFromDb, findUnlockedCoursesFromDb } = require("../../../db/services/courseService");
 const { setCourseToLocked } = require("../../../db/services/courseService");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+const { respondWithCourses } = require("../../services/autocomplete");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
@@ -30,10 +31,14 @@ const execute = async (interaction, client, models) => {
     return await editErrorEphemeral(interaction, `Command cooldown [mm:ss]: you need to wait ${time}!`);
   } else {
     await setCourseToLocked(courseName, models.Course, guild);
-    await client.emit("COURSES_CHANGED", models.Course);
     await editEphemeral(interaction, `This course ${courseName} is now locked.`);
     handleCooldown(courseName);
   }
+};
+
+const autocomplete = async (interaction, client, models) => {
+  const courses = await findUnlockedCoursesFromDb("code", models.Course);
+  await respondWithCourses(interaction, courses);
 };
 
 module.exports = {
@@ -42,9 +47,10 @@ module.exports = {
     .setDescription("Lock chat in given course")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
-      option.setName("course").setDescription("Lock chat in given course").setRequired(true)
+      option.setName("course").setDescription("Lock chat in given course").setRequired(true).setAutocomplete(true)
     ),
   execute,
+  autocomplete,
   usage: "/lock_chat [course name]",
   description: "Lock given course.",
   roles: ["admin", facultyRole]

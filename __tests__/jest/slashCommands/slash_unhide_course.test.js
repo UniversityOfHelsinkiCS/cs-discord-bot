@@ -57,7 +57,6 @@ describe("slash unhide command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
-    expect(client.emit).toHaveBeenCalledTimes(1);
   });
 
   test("unhide command with cooldown", async () => {
@@ -73,7 +72,6 @@ describe("slash unhide command", () => {
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(client.emit).toHaveBeenCalledTimes(0);
   });
 
   test("a user without faculty access cannot use the command", async () => {

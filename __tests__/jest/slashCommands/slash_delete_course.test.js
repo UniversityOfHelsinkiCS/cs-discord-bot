@@ -49,13 +49,12 @@ describe("slash delete_course", () => {
     expect(removeCourseFromDb).toHaveBeenCalledTimes(0);
   });
 
-  test("valid course name removes the course and emits COURSES_CHANGED", async () => {
+  test("valid course name removes the course", async () => {
     const client = defaultAdminInteraction.client;
     await execute(defaultAdminInteraction, client, models);
     expect(confirmChoice).toHaveBeenCalledTimes(1);
     expect(removeCourseFromDb).toHaveBeenCalledTimes(1);
     expect(removeCourseFromDb).toHaveBeenCalledWith(courseName, models.Course);
-    expect(client.emit).toHaveBeenCalledWith("COURSES_CHANGED", models);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, `Deleted course ${courseName}.`);
   });
 });
