@@ -173,6 +173,17 @@ npm start       # staging
 npm test        # run all tests
 ```
 
+### Running with Docker
+
+`docker-compose.yml` starts the bot together with its own PostgreSQL 17 (user, password and database `postgres`,
+default `public` schema) on the `cs-discord-bot-net` network. The Docker image runs in the Europe/Helsinki time zone
+(`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; only `DATABASE_URL` is overridden to
+point at the database container.
+
+```
+docker compose up --build
+```
+
 ## Field encryption
 
 `joined_users.name` / `discordId` and the website session store are encrypted at

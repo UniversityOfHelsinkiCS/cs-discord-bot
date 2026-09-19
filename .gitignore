@@ -108,6 +108,5 @@ dist
 
 /src/promMetrics/graph/
 
-docker-compose.yml
 pg_dump.sql
 pg_data
