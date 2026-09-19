@@ -1,4 +1,6 @@
-FROM registry.access.redhat.com/ubi8/nodejs-16-minimal
+FROM registry.access.redhat.com/ubi9/nodejs-24-minimal
+
+ENV TZ=Europe/Helsinki
 
 WORKDIR /opt/app-root/src
 
@@ -8,4 +10,4 @@ RUN npm ci
 
 COPY . .
 
-CMD npm start
+CMD ["npm", "start"]

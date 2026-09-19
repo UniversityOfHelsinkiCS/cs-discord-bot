@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Discord bot for UH CS Dept.",
   "main": "index.js",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "cross-env NODE_ENV=production node src/index.js",
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",

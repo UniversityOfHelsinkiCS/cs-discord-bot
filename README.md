@@ -124,6 +124,8 @@ The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
 
 ## Running locally
 
+Node.js 24 or newer is required (the Docker image uses `ubi9/nodejs-24-minimal`).
+
 Clone the repository and install dependencies:
 
 ```
