@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/edit_course");
-const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const {
   findCategoryWithCourseName,
@@ -7,13 +7,17 @@ const {
   getCourseNameFromCategory,
   checkCourseCooldown,
   findChannelWithNameAndType,
-  isCourseCategory } = require("../../../src/discordBot/services/service");
+  isCourseCategory
+} = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { editChannelNames } = require("../../../src/db/services/channelService");
 
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
+jest.mock("../../../src/discordBot/services/permissions");
+const { requireFaculty } = require("../../../src/discordBot/services/permissions");
+requireFaculty.mockImplementation(() => true);
 jest.mock("../../../src/discordBot/services/confirm");
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
@@ -25,8 +29,8 @@ msToMinutesAndSeconds.mockImplementation(() => time);
 findCategoryWithCourseName.mockImplementation((name) => ({ name: `📚 ${name}` }));
 getCourseNameFromCategory.mockImplementation(() => "test");
 
-isCourseCategory.mockImplementationOnce(() => (false));
-isCourseCategory.mockImplementation(() => (true));
+isCourseCategory.mockImplementationOnce(() => false);
+isCourseCategory.mockImplementation(() => true);
 
 editChannelNames.mockImplementation(() => null);
 
@@ -34,7 +38,7 @@ findChannelWithNameAndType.mockImplementation(() => {
   return {
     code: "test",
     name: "test2",
-    save: jest.fn(),
+    save: jest.fn()
   };
 });
 
@@ -44,34 +48,34 @@ defaultTeacherInteraction.options = {
     .fn((option) => {
       const options = {
         options: "code",
-        new_value: "testing",
+        new_value: "testing"
       };
       return options[option];
     })
     .mockImplementationOnce((option) => {
       const options = {
         options: "code",
-        new_value: "test",
+        new_value: "test"
       };
       return options[option];
     })
     .mockImplementationOnce((option) => {
       const options = {
         options: "code",
-        new_value: "test",
+        new_value: "test"
       };
       return options[option];
-    }),
+    })
 };
 
 defaultStudentInteraction.options = {
   getString: jest.fn((name) => {
     const names = {
       coursecode: "test",
-      full_name: "Long course name",
+      full_name: "Long course name"
     };
     return names[name];
-  }),
+  })
 };
 
 afterEach(() => {
@@ -93,7 +97,7 @@ describe("slash edit command", () => {
     findCourseFromDb.mockImplementationOnce(() => {
       return {
         code: "test2",
-        name: "test2",
+        name: "test2"
       };
     });
     const client = defaultTeacherInteraction.client;
@@ -108,14 +112,13 @@ describe("slash edit command", () => {
   });
 
   test("edit with valid args responds with correct ephemeral", async () => {
-    findCourseFromDb
-      .mockImplementationOnce(() => {
-        return {
-          code: "tkt",
-          name: "test",
-          save: jest.fn(),
-        };
-      });
+    findCourseFromDb.mockImplementationOnce(() => {
+      return {
+        code: "tkt",
+        name: "test",
+        save: jest.fn()
+      };
+    });
     const client = defaultTeacherInteraction.client;
     defaultTeacherInteraction.channelId = 2;
     const response = "Course information has been changed";
@@ -140,11 +143,11 @@ describe("slash edit command", () => {
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
-  test("a student cannot use faculty command", async () => {
+  test("a user without faculty access cannot use the command", async () => {
     const client = defaultStudentInteraction.client;
-    const response = "You do not have permission to use this command.";
+    requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
-    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
+    expect(sendEphemeral).not.toHaveBeenCalled();
   });
 });

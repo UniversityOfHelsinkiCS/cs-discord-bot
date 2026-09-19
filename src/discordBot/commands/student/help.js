@@ -1,7 +1,7 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const { editEphemeral, editErrorEphemeral, sendEphemeral, sendFollowUpEphemeral } = require("../../services/message");
+const { respondWithChoices } = require("../../services/autocomplete");
 const { facultyRole, courseAdminRole, githubRepo } = require("../../../../config.json");
-const prefix = "/";
 
 const getBestRole = (member) => {
   let highestRole = member.roles.highest.name;
@@ -43,21 +43,19 @@ const handleAllCommands = async (interaction, member, adminData, facultyData, co
 
   if (data2.length > 0) {
     data2.push("*Commands can be used only in course channels");
-    data2.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
+    data2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
     await editEphemeral(interaction, data.join("\n"));
     return await sendFollowUpEphemeral(interaction, data2.join("\n"));
-  }
-  else {
+  } else {
     data.push("*Commands can be used only in course channels");
-    data.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
+    data.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
     return await editEphemeral(interaction, data.join("\n"));
   }
-
 };
 
 const handleSingleCommand = async (interaction, member, commandsReadyToPrint) => {
   const name = interaction.options.getString("command");
-  const command = commandsReadyToPrint.find(c => c.data.name.replace("/", "") === name);
+  const command = commandsReadyToPrint.find((c) => c.data.name.replace("/", "") === name);
 
   if (!command) {
     return await editErrorEphemeral(interaction, "that's not a valid command!");
@@ -71,52 +69,59 @@ const handleSingleCommand = async (interaction, member, commandsReadyToPrint) =>
   return await editEphemeral(interaction, data.join(" \n"));
 };
 
-const isAdminOnly = (command) => command.roles
-  && command.roles.includes("admin")
-  && !command.roles.includes(facultyRole)
-  && !command.roles.includes(courseAdminRole);
+const isAdminOnly = (command) =>
+  command.roles &&
+  command.roles.includes("admin") &&
+  !command.roles.includes(facultyRole) &&
+  !command.roles.includes(courseAdminRole);
+
+const getCommandsByCategory = (client, member) => {
+  const highestRole = getBestRole(member);
+  const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && highestRole === "admin");
+  const seesStaffCommands = highestRole === "admin" || highestRole === facultyRole;
+  const facultyData = client.slashCommands.filter(
+    (command) => seesStaffCommands && command.roles && !isAdminOnly(command) && !command.roles.includes(courseAdminRole)
+  );
+  const courseAdminData = client.slashCommands.filter(
+    (command) => seesStaffCommands && command.roles && command.roles.includes(courseAdminRole)
+  );
+  const studentData = client.slashCommands.filter((command) => !command.roles && command.data.name !== "auth");
+  return { adminData, facultyData, courseAdminData, studentData };
+};
 
 const execute = async (interaction, client) => {
   await sendEphemeral(interaction, "Hold on...");
   const guild = client.guild;
   const member = guild.members.cache.get(interaction.member.user.id);
-  const highestRole = getBestRole(member);
-  const adminData = client.slashCommands.filter(command => isAdminOnly(command) && highestRole === "admin");
-  const facultyData = client.slashCommands
-    .filter(command => command.roles)
-    .filter(command => !isAdminOnly(command))
-    .filter(command => !command.roles.includes(courseAdminRole))
-    .filter(command => {
-      if (highestRole === "admin" || highestRole === facultyRole) return true;
-      return member.roles.cache.find(role => role.name.includes(command.role));
-    });
-  const courseAdminData = client.slashCommands
-    .filter(command => command.roles)
-    .filter(command => command.roles.includes(courseAdminRole))
-    .filter(command => {
-      if (highestRole === "admin" || highestRole === facultyRole) return true;
-      return member.roles.cache.find(role => role.name.includes(command.role));
-    });
-  const studentData = client.slashCommands.filter(command => !command.roles && command.name !== "auth");
-  const commandsReadyToPrint = client.slashCommands
-    .filter(command => {
-      if (!command.role || member.roles.cache.find((r) => r.name === command.role)) return true;
-      return member.roles.cache.find(role => role.name.includes(command.role));
-    });
-  if (!interaction.options.getString("command")) await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
-  else handleSingleCommand(interaction, member, commandsReadyToPrint);
+  const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, member);
+  if (!interaction.options.getString("command")) {
+    await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
+  } else {
+    handleSingleCommand(interaction, member, client.slashCommands);
+  }
+};
+
+const autocomplete = async (interaction, client) => {
+  const member = client.guild.members.cache.get(interaction.member.user.id);
+  const categories = getCommandsByCategory(client, member);
+  const names = Object.values(categories)
+    .flatMap((commands) => [...commands.keys()])
+    .sort((a, b) => a.localeCompare(b));
+  await respondWithChoices(
+    interaction,
+    names.map((name) => ({ name, value: name }))
+  );
 };
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
     .setDescription("Get info on how to use command(s).")
-    .setDefaultPermission(true)
-    .addStringOption(option =>
-      option.setName("command")
-        .setDescription("command instructions")
-        .setRequired(false)),
+    .addStringOption((option) =>
+      option.setName("command").setDescription("command instructions").setRequired(false).setAutocomplete(true)
+    ),
   execute,
+  autocomplete,
   usage: "/help <command name>",
-  description: "Get info on how to use command(s).",
+  description: "Get info on how to use command(s)."
 };

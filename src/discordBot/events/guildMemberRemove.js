@@ -8,5 +8,5 @@ const execute = async (member, client, models) => {
 
 module.exports = {
   name: "guildMemberRemove",
-  execute,
+  execute
 };

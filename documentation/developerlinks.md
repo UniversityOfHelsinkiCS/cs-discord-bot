@@ -7,8 +7,6 @@
 
 [Setup for the backend](./OAuth2.md)
 
-[Setup for the Telegram bridge](./telegram.md)
-
 ## Charts
 [Program structure](./charts.md)
 

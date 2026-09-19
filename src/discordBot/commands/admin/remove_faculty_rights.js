@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { confirmChoice } = require("../../services/confirm");
 const { requireAdmin } = require("../../services/permissions");
@@ -31,13 +31,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("remove_faculty_rights")
     .setDescription("Remove faculty rights from a user.")
-    .setDefaultPermission(false)
-    .addUserOption(option =>
-      option.setName("user")
-        .setDescription("The user to remove faculty rights from")
-        .setRequired(true)),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addUserOption((option) =>
+      option.setName("user").setDescription("The user to remove faculty rights from").setRequired(true)
+    ),
   execute,
   usage: "/remove_faculty_rights [user]",
   description: "Remove faculty rights from a user.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

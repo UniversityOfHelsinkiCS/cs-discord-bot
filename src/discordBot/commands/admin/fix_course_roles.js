@@ -1,11 +1,12 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getAllCourses } = require("../../../db/services/courseService");
 const { findUserByDiscordId, findUserByDbId, createUserToDatabase } = require("../../../db/services/userService");
 const {
   findCourseMember,
   findAllCourseMembers,
   createCourseMemberToDatabase,
-  removeCourseMemberFromDb } = require("../../../db/services/courseMemberService");
+  removeCourseMemberFromDb
+} = require("../../../db/services/courseMemberService");
 const { courseAdminRole } = require("../../../../config.json");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../services/message");
@@ -23,9 +24,9 @@ const execute = async (interaction, client, models) => {
   const fixes = [];
 
   for (const course of courses) {
-    const courseRole = guild.roles.cache.find(r => r.name === course.name);
+    const courseRole = guild.roles.cache.find((r) => r.name === course.name);
     if (!courseRole) continue;
-    const instructorRole = guild.roles.cache.find(r => r.name === `${course.name} ${courseAdminRole}`);
+    const instructorRole = guild.roles.cache.find((r) => r.name === `${course.name} ${courseAdminRole}`);
 
     const hasInstructorRole = (member) => Boolean(instructorRole) && member.roles.cache.has(instructorRole.id);
 
@@ -80,9 +81,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("fix_course_roles")
     .setDescription("Add missing course roles and sync course memberships from Discord to the database")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/fix_course_roles",
   description: "Add missing course roles and sync course memberships from Discord to the database",
-  roles: ["admin"],
+  roles: ["admin"]
 };

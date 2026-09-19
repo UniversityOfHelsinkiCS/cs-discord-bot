@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["oxc", "jest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "env": {
+    "builtin": true,
+    "es2021": true,
+    "node": true,
+    "jest": true
+  },
+  "ignorePatterns": ["node_modules", "coverage", "documentation"],
+  "rules": {
+    "curly": ["error", "multi-line", "consistent"],
+    "max-nested-callbacks": ["error", { "max": 4 }],
+    "no-console": "off",
+    "no-empty-function": "error",
+    "no-inline-comments": "error",
+    "no-lonely-if": "error",
+    "no-shadow": ["error", { "allow": ["err", "resolve", "reject"] }],
+    "no-var": "error",
+    "prefer-const": "error",
+    "yoda": "error",
+    "no-unused-vars": "warn",
+    "no-undef": "error",
+    "no-async-endpoint-handlers": "off",
+    "no-underscore-dangle": "off"
+  },
+  "overrides": [
+    {
+      "files": ["__tests__/jest/server.test.js"],
+      "rules": {
+        "jest/expect-expect": "off"
+      }
+    }
+  ]
+}

@@ -1,8 +1,29 @@
 ### cs-discord-bot
 
+### Autocomplete
+
+Some arguments offer a list as you type. The list narrows down as you type any part of the name, and courses are shown as `Full name - nickname - CODE` in alphabetical order by full name. Discord shows at most 25 entries, so type a few letters to find the rest.
+
+Command | The argument offers
+--- | ---
+`/join`, `/hide_course` | Public courses
+`/leave` | The courses you have joined
+`/unhide_course` | Private courses
+`/lock_chat` | Courses that are not locked
+`/unlock_chat` | Locked courses
+`/delete_course` | All courses
+`/delete_channel` | Channels added to the course the command is used in
+`/delete_command` | Commands registered in Discord
+`/help` | The commands you can use
+
 ### Admin commands
 
-Admin commands are registered with `.setDefaultPermission(false)`, but Discord's Integrations page does not reliably reflect that as a "hidden by default" state (this repo is on the old, deprecated command-permissions v1 field; Discord's current permissions v2 system may not honor it). After adding or redeploying an admin command, a server admin must go to **Server Settings → Integrations → [bot name]** and, for that command, explicitly add `@everyone` and set it to **disabled**, then add the `admin` and `cs-admin` roles and set them to **enabled**. Don't rely on the command being hidden without the explicit `@everyone` deny — otherwise the command won't be reliably restricted. This is a one-time step per command; running `/reload_commands` does not re-apply it automatically. Execution is additionally gated in code by the invoking user's `admin` flag in the database.
+Admin and faculty commands are restricted by default: Discord shows them only to members with the Administrator permission. **A server admin must allow the right roles once per command**, otherwise nobody else sees them. Open **Server Settings → Integrations → [bot name] → Commands**, select the command and add the roles below. The bot cannot do this itself.
+
+- **Admin commands:** allow the `admin` and `cs-admin` roles.
+- **Faculty commands:** allow the `faculty`, `admin` and `cs-admin` roles.
+
+This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag.
 
 Command | Description | Example
 --- |--- | ---
@@ -10,7 +31,6 @@ Command | Description | Example
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
-`/list_bridges` | List all courses with their telegram bridge id and whether it is in use. | `/list_bridges`
 `/list_courses` | List all courses and channels. | `/list_courses`
 `/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
 `/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`
@@ -25,24 +45,23 @@ Command | Description | Example
 
 ### Faculty commands
 
+Faculty commands are hidden until a server admin has allowed the `faculty`, `admin` and `cs-admin` roles for them in Discord's Integrations settings (see the note under Admin commands above). Running a command also requires the `faculty` or `admin` flag in the bot's database, which `/auth` sets.
+
 Command | Description | Example
 --- |--- | ---
 `/add_instructors` | Give instructor role to (multiple) users. | `/add_instructors @user1 @user2`
 `/create_channel` | Add a text channel for the course. Must be used inside a course. | `/create_channel questions`
 `/create_course ` | Create a given course channel | `/create_course ohpe ohjelmoinnin perusteet`
 `/create_poll ` | Create a poll | `/create_poll Question 10 answer1 | answer 2 | answer 3`
-`/delete_bridge` | Delete bridge from specified course | `/delete_bridge ohpe`
 `/delete_channel` | Delete a text channel from the course. Must be used inside a course. | `/delete_channel questions`
-`/disable_bridge` | Disable bridge in a Discord text channel. Must be used inside a course and in a non-default text channel. | `/disable_bridge`
 `/edit_course` | Edit course information, e.g. course code, fullname, or nickname. Must be used inside a course. | `/edit_course nickname ohpe`
 `/edit_topic` | Edit channel topic, replacing an already existing topic. | `/edit_topic perusteet`
-`/enable_bridge` | Enable bridge in a Discord text channel. Must be used inside a course and in a non-default text channel. | `/enable_bridge`
-`/hide_channel` | Make the channel hidden from regular users. Also disables the bridge in the channel. Must be used inside a course and in a non-default text channel. | `/hide_channel`
+`/hide_channel` | Make the channel hidden from regular users. Must be used inside a course and in a non-default text channel. | `/hide_channel`
 `/hide_course` | Make the given course private, disabling joining with `/join` | `/hide_course ohpe`
 `/lock_chat` | Lock the given course, disabling messaging by regular users | `/lock_chat ohpe`
 `/rename_channel` | Rename a Discord text channel. Must be used inside a course and in a non-default text channel. | `/rename_channel questions`
 `/status` | Get full status of course. Must be used inside a course. | `/status`
-`/unhide_channel` | Make the channel visible to regular users. Also enables the bridge in the channel. Must be used inside a course and in a non-default text channel. | `/unhide_channel`
+`/unhide_channel` | Make the channel visible to regular users. Must be used inside a course and in a non-default text channel. | `/unhide_channel`
 `/unhide_course` | Make the given course public, enabling joining with `/join`. | `/unhide_course ohpe`
 `/unlock_chat` | Unlock the given course, enabling messaging by regular users. | `/unlock_chat ohpe`
 
@@ -55,5 +74,5 @@ Command | Description | Example
 `/help` |  Lists available commands for your role. | `help`
 `/help "command name"` | Shows information on the given command. | `/help courses`
 `/intructors` | Lists the instructors of the course. Must be used inside a course. | `/instructors`
-`/join` | Join the given course. After writing `/join`, the bot will give you a list of courses to choose from. | `/join`
-`/leave` | Leave the given course. After writing `/leave`, the bot will give you a list of courses to choose from. | `/leave`
+`/join` | Join the given course. After writing `/join`, the bot will give you a list of public courses to choose from. | `/join`
+`/leave` | Leave the given course. After writing `/leave`, the bot will give you a list of the courses you have joined to choose from. | `/leave`

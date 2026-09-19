@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getCourseNameFromCategory } = require("../../services/service");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
@@ -8,8 +8,10 @@ const execute = async (interaction, client, models) => {
 
   await sendEphemeral(interaction, "Updating category names...");
 
-  const channels = client.guild.channels.cache.filter(c => c.type === "GUILD_CATEGORY" && c.name.includes("🔒"));
-  channels.forEach(async channel => {
+  const channels = client.guild.channels.cache.filter(
+    (c) => c.type === ChannelType.GuildCategory && c.name.includes("🔒")
+  );
+  channels.forEach(async (channel) => {
     await channel.setName(`👻 ${getCourseNameFromCategory(channel)}`);
   });
 
@@ -20,9 +22,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("update_categorynames")
     .setDescription("Updates category names to the new format")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/update_categorynames",
   description: "Updates category names to the new format",
-  roles: ["admin"],
+  roles: ["admin"]
 };

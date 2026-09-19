@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getAllCourses, findCourseFromDbById, getCourseByDiscordId } = require("../../../db/services/courseService");
 const { getChannelByDiscordId, findChannelsByCourse } = require("../../../db/services/channelService");
 const { getAllUsers, findUserByDbId } = require("../../../db/services/userService");
@@ -16,7 +16,7 @@ const execute = async (interaction, client, models) => {
   const channelCache = guild.channels.cache;
   let report = "";
 
-  if (!guild.roles.cache.find(r => r.name === "faculty")) {
+  if (!guild.roles.cache.find((r) => r.name === "faculty")) {
     report += "Faculty role is missing from server\n";
   }
 
@@ -25,8 +25,8 @@ const execute = async (interaction, client, models) => {
     const currentCourse = allCourses[course];
     const locked = currentCourse.locked;
     let statusMessage = "";
-    const courseRole = guild.roles.cache.find(r => r.name === `${currentCourse.name}`);
-    const courseInstructorRole = guild.roles.cache.find(r => r.name === `${currentCourse.name} ${courseAdminRole}`);
+    const courseRole = guild.roles.cache.find((r) => r.name === `${currentCourse.name}`);
+    const courseInstructorRole = guild.roles.cache.find((r) => r.name === `${currentCourse.name} ${courseAdminRole}`);
 
     if (!courseRole) {
       statusMessage += "Course role is missing\n";
@@ -39,8 +39,7 @@ const execute = async (interaction, client, models) => {
 
     if (!categoryFound) {
       statusMessage += "Course category is missing\n";
-    }
-    else {
+    } else {
       const emojiCourseName = emojiName(currentCourse);
 
       if (categoryFound.name !== emojiCourseName) {
@@ -48,18 +47,15 @@ const execute = async (interaction, client, models) => {
       }
       if (courseRole && courseInstructorRole) {
         if (locked) {
-          if (courseRole.permissionsIn(categoryFound).has("SEND_MESSAGES")) {
+          if (courseRole.permissionsIn(categoryFound).has(PermissionFlagsBits.SendMessages)) {
             statusMessage += "Course members can speak in locked course\n";
           }
-        }
-        else if (!courseRole.permissionsIn(categoryFound).has("SEND_MESSAGES")) {
+        } else if (!courseRole.permissionsIn(categoryFound).has(PermissionFlagsBits.SendMessages)) {
           statusMessage += "Course members can't talk in unlocked course\n";
         }
-      }
-      else {
+      } else {
         statusMessage += "Can't check permissions because role(s) are missing\n";
       }
-
     }
 
     const courseChannels = await findChannelsByCourse(currentCourse.id, models.Channel);
@@ -69,8 +65,7 @@ const execute = async (interaction, client, models) => {
       const channelFound = await channelCache.get(currentChannel.discordId);
       if (!channelFound) {
         statusMessage += "Channel: " + currentChannel.name + " missing\n";
-      }
-      else {
+      } else {
         if (channelFound.name !== currentChannel.name) {
           statusMessage += "Channel: " + currentChannel.name + " wrong name\n";
         }
@@ -78,21 +73,25 @@ const execute = async (interaction, client, models) => {
           statusMessage += "Channel: " + currentChannel.name + " placed in wrong category\n";
         }
         if (locked && !currentChannel.name.includes("announcement")) {
-          if (courseRole.permissionsIn(channelFound).has("SEND_MESSAGES")) {
+          if (courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages)) {
             statusMessage += "Channel: " + currentChannel.name + " Course members can speak in locked channel\n";
           }
-        }
-        else if (!courseRole.permissionsIn(channelFound).has("SEND_MESSAGES") && !currentChannel.name.includes("announcement")) {
+        } else if (
+          !courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages) &&
+          !currentChannel.name.includes("announcement")
+        ) {
           statusMessage += "Channel: " + currentChannel.name + " Course members can't talk in unlocked channel\n";
         }
         if (currentChannel.hidden) {
-          if (courseRole.permissionsIn(channelFound).has("SEND_MESSAGES") && courseRole.permissionsIn(channelFound).has("VIEW_CHANNEL")) {
-            statusMessage += "Channel: " + currentChannel.name + " Regular course members can see and talk in hidden channel\n";
-          }
-          else if (courseRole.permissionsIn(channelFound).has("SEND_MESSAGES")) {
+          if (
+            courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages) &&
+            courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.ViewChannel)
+          ) {
+            statusMessage +=
+              "Channel: " + currentChannel.name + " Regular course members can see and talk in hidden channel\n";
+          } else if (courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.SendMessages)) {
             statusMessage += "Channel: " + currentChannel.name + " Regular course members can talk in hidden channel\n";
-          }
-          else if (courseRole.permissionsIn(channelFound).has("VIEW_CHANNEL")) {
+          } else if (courseRole.permissionsIn(channelFound).has(PermissionFlagsBits.ViewChannel)) {
             statusMessage += "Channel: " + currentChannel.name + " Regular course members can see a hidden channel\n";
           }
         }
@@ -105,8 +104,8 @@ const execute = async (interaction, client, models) => {
   }
 
   const allUsers = await getAllUsers(models.User);
-  const adminRoleObject = await guild.roles.cache.find(r => r.name === "admin");
-  const facultyRoleObject = await guild.roles.cache.find(r => r.name === facultyRole);
+  const adminRoleObject = await guild.roles.cache.find((r) => r.name === "admin");
+  const facultyRoleObject = await guild.roles.cache.find((r) => r.name === facultyRole);
 
   let roleStatusMessage = "";
   for (const user in allUsers) {
@@ -115,12 +114,12 @@ const execute = async (interaction, client, models) => {
 
     if (foundUser) {
       if (currentUser.admin) {
-        if (!foundUser.roles.cache.some(r => r.id === adminRoleObject.id)) {
+        if (!foundUser.roles.cache.some((r) => r.id === adminRoleObject.id)) {
           roleStatusMessage += foundUser.nickname + ": missing admin role\n";
         }
       }
       if (currentUser.faculty) {
-        if (!foundUser.roles.cache.some(r => r.id === facultyRoleObject.id)) {
+        if (!foundUser.roles.cache.some((r) => r.id === facultyRoleObject.id)) {
           roleStatusMessage += foundUser.nickname + ": missing faculty role\n";
         }
       }
@@ -139,15 +138,15 @@ const execute = async (interaction, client, models) => {
     const user = await findUserByDbId(currentMember.userId, models.User);
     const foundUser = await guild.members.cache.get(user.discordId);
     const course = await findCourseFromDbById(currentMember.courseId, models.Course);
-    const instructorRoleObject = await guild.roles.cache.find(r => r.name === `${course.name} instructor`);
-    const courseMemberObject = await guild.roles.cache.find(r => r.name === `${course.name}`);
+    const instructorRoleObject = await guild.roles.cache.find((r) => r.name === `${course.name} instructor`);
+    const courseMemberObject = await guild.roles.cache.find((r) => r.name === `${course.name}`);
     if (foundUser) {
       if (currentMember.instructor) {
-        if (!foundUser.roles.cache.some(r => r.id === instructorRoleObject.id)) {
+        if (!foundUser.roles.cache.some((r) => r.id === instructorRoleObject.id)) {
           memberStatusMessage += foundUser.nickname + `: missing instructor role on ${course.name}\n`;
         }
       }
-      if (!foundUser.roles.cache.some(r => r.id === courseMemberObject.id)) {
+      if (!foundUser.roles.cache.some((r) => r.id === courseMemberObject.id)) {
         memberStatusMessage += foundUser.nickname + `: not joined on ${course.name}\n`;
       }
     }
@@ -159,20 +158,22 @@ const execute = async (interaction, client, models) => {
   report += "Course member/instructor roles:\n" + memberStatusMessage + "\n";
 
   let orphanChannelsMessage = "";
-  await Promise.all(guild.channels.cache.map(async aChannel => {
-    if (aChannel.type !== "GUILD_CATEGORY") {
-      const channelToRemove = await getChannelByDiscordId(aChannel.id, models.Channel);
-      if (!channelToRemove) {
-        if (aChannel.parent) {
-          const parentId = aChannel.parent.id;
-          const parent = await getCourseByDiscordId(parentId, models.Course);
-          if (parent) {
-            orphanChannelsMessage += `${aChannel.name}\n`;
+  await Promise.all(
+    guild.channels.cache.map(async (aChannel) => {
+      if (aChannel.type !== ChannelType.GuildCategory) {
+        const channelToRemove = await getChannelByDiscordId(aChannel.id, models.Channel);
+        if (!channelToRemove) {
+          if (aChannel.parent) {
+            const parentId = aChannel.parent.id;
+            const parent = await getCourseByDiscordId(parentId, models.Course);
+            if (parent) {
+              orphanChannelsMessage += `${aChannel.name}\n`;
+            }
           }
         }
       }
-    }
-  }));
+    })
+  );
   if (orphanChannelsMessage === "") {
     orphanChannelsMessage = "Every course channel in database";
   }
@@ -184,14 +185,11 @@ const execute = async (interaction, client, models) => {
 const emojiName = (currentCourse) => {
   if (!currentCourse.locked && !currentCourse.private) {
     return "📚 " + currentCourse.name;
-  }
-  else if (!currentCourse.locked && currentCourse.private) {
+  } else if (!currentCourse.locked && currentCourse.private) {
     return "👻 " + currentCourse.name;
-  }
-  else if (currentCourse.locked && !currentCourse.private) {
+  } else if (currentCourse.locked && !currentCourse.private) {
     return "📚🔐 " + currentCourse.name;
-  }
-  else if (currentCourse.locked && currentCourse.private) {
+  } else if (currentCourse.locked && currentCourse.private) {
     return "👻🔐 " + currentCourse.name;
   }
 };
@@ -200,9 +198,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("server_status")
     .setDescription("Check if Discord server and database are in sync")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/server_status",
   description: "Check if Discord server and database are in sync",
-  roles: ["admin"],
+  roles: ["admin"]
 };

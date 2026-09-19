@@ -1,9 +1,5 @@
 const Sentry = require("@sentry/node");
 const { createLogger, format, transports } = require("winston");
-const {
-  PapertrailConnection,
-  PapertrailTransport,
-} = require("winston-papertrail");
 
 let logger;
 
@@ -23,35 +19,16 @@ const setupLogger = () => {
       format.splat(),
       format.colorize(),
       errorStackTracerFormat(),
-      format.simple(),
+      format.simple()
     ),
-    transports: [],
+    transports: []
   });
 
   logger.add(
     new transports.Console({
-      format: format.simple(),
-    }),
+      format: format.simple()
+    })
   );
-
-  if (!process.env.PAPERTRAIL_URL) return;
-
-  const winstonPapertrail = new PapertrailConnection({
-    host: process.env.PAPERTRAIL_URL,
-    port: 10737,
-  });
-
-  const paperTrailTransport = new PapertrailTransport(winstonPapertrail);
-
-  logger.add(paperTrailTransport);
-
-  logger.rejections.handle(paperTrailTransport);
-
-  logger.exceptions.handle(paperTrailTransport);
-
-  winstonPapertrail.on("connect", function() {
-    logger.info("Logger connected to Papertrail");
-  });
 };
 
 setupLogger();
@@ -83,22 +60,8 @@ const logInteractionError = (error, client, interaction) => {
   });
 };
 
-const logNoInteractionError = async (
-  telegramId,
-  member,
-  channel,
-  client,
-  error,
-) => {
-  const msg = `ERROR DETECTED!\nMember: ${member}\nChannel: ${channel}`;
-  logger.error(msg);
-  logger.error(error);
-  Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
-};
-
 module.exports = {
   logError,
   logInteractionError,
-  logNoInteractionError,
-  logInfo,
+  logInfo
 };

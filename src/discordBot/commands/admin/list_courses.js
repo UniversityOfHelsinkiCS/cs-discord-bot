@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getAllCourses } = require("../../../db/services/courseService");
 const { findChannelsByCourse } = require("../../../db/services/channelService");
 const { requireAdmin } = require("../../services/permissions");
@@ -32,9 +32,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("list_courses")
     .setDescription("List all courses and channels")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/list_courses",
   description: "List all courses and channels",
-  roles: ["admin"],
+  roles: ["admin"]
 };

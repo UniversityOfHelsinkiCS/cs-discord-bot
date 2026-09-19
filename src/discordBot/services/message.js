@@ -1,11 +1,11 @@
-const { MessageEmbed, MessageAttachment } = require("discord.js");
+const { AttachmentBuilder, ChannelType, EmbedBuilder, MessageFlags } = require("discord.js");
 const path = require("path");
 const { logError } = require("./logger");
 
 const validateChannel = (channel) => {
   if (channel.parent) return false;
   else if (channel.name !== "commands") return false;
-  else if (channel.type !== "GUILD_TEXT") return false;
+  else if (channel.type !== ChannelType.GuildText) return false;
   else return true;
 };
 
@@ -32,38 +32,35 @@ const sendErrorReportNoInteraction = async (telegramId, member, channel, client,
 
 const sendErrorEphemeral = async (interaction, msg) => {
   if (interaction.deferred || interaction.replied) {
-    await interaction.editReply({ content: `Error: ${msg}`, ephemeral: true });
-  }
-  else {
-    await interaction.reply({ content: `Error: ${msg}`, ephemeral: true });
+    await interaction.editReply({ content: `Error: ${msg}` });
+  } else {
+    await interaction.reply({ content: `Error: ${msg}`, flags: MessageFlags.Ephemeral });
   }
 };
 
 const sendEphemeral = async (interaction, msg) => {
-  await interaction.reply({ content: `${msg}`, ephemeral: true });
+  await interaction.reply({ content: `${msg}`, flags: MessageFlags.Ephemeral });
 };
 
 const editEphemeral = async (interaction, msg) => {
-  await interaction.editReply({ content: `${msg}`, ephemeral: true });
+  await interaction.editReply({ content: `${msg}` });
 };
 
 const editEphemeralForStatus = async (interaction, msg) => {
-  const img = new MessageAttachment(path.resolve(__dirname, "../../promMetrics/graph/", "graph.png"));
-  const msgEmbed = new MessageEmbed()
-    .setTitle("Trends")
-    .setImage("attachment://graph.png");
-  await interaction.editReply({ content: `${msg}`, ephemeral: true, embeds: [msgEmbed], files: [img] });
+  const img = new AttachmentBuilder(path.resolve(__dirname, "../../promMetrics/graph/", "graph.png"));
+  const msgEmbed = new EmbedBuilder().setTitle("Trends").setImage("attachment://graph.png");
+  await interaction.editReply({ content: `${msg}`, embeds: [msgEmbed], files: [img] });
 };
 
 const editEphemeralWithComponents = async (interaction, msg, components) => {
-  return await interaction.editReply({ content: `${msg}`, components: [components], ephemeral: true });
+  return await interaction.editReply({ content: `${msg}`, components: [components] });
 };
 
 const editEphemeralClearComponents = async (interaction, msg) => {
-  await interaction.editReply({ content: `${msg}`, components: [], ephemeral: true });
+  await interaction.editReply({ content: `${msg}`, components: [] });
 };
 const editErrorEphemeral = async (interaction, msg) => {
-  await interaction.editReply({ content: `Error: ${msg}`, ephemeral: true });
+  await interaction.editReply({ content: `Error: ${msg}` });
 };
 
 const sendReplyMessage = async (message, channel, replyText) => {
@@ -73,16 +70,14 @@ const sendReplyMessage = async (message, channel, replyText) => {
     try {
       const fetchedReply = await channel.messages.fetch(reply.id);
       fetchedReply.delete();
-    }
-    catch (e) {
+    } catch (e) {
       logError(e);
       // console.log(error);
     }
     try {
       const fetchedInteraction = await channel.messages.fetch(interactionId);
       fetchedInteraction.delete();
-    }
-    catch (e) {
+    } catch (e) {
       logError(e);
       // console.log(error);
     }
@@ -95,7 +90,7 @@ const sendReportToCommandsChannel = async (client, content, files = []) => {
 };
 
 const sendFollowUpEphemeral = async (interaction, msg) => {
-  await interaction.followUp({ content: `${msg}`, ephemeral: true });
+  await interaction.followUp({ content: `${msg}`, flags: MessageFlags.Ephemeral });
 };
 
 const replyInChunks = async (interaction, text, chunkSize = 1000) => {
@@ -119,5 +114,5 @@ module.exports = {
   editErrorEphemeral,
   sendReplyMessage,
   sendFollowUpEphemeral,
-  replyInChunks,
+  replyInChunks
 };

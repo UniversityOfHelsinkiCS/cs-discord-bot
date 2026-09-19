@@ -24,7 +24,7 @@ describe("slash reload command", () => {
     const client = defaultAdminInteraction.client;
     await execute(defaultAdminInteraction, client, models);
     expect(setUpCommands).toHaveBeenCalledTimes(1);
-    expect(setUpCommands).toHaveBeenCalledWith(client, Course);
+    expect(setUpCommands).toHaveBeenCalledWith(client);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, "Reloaded slash commands.");
   });
 

@@ -5,4 +5,4 @@
 - :heavy_check_mark: Response includes the interaction status.
 - :heavy_check_mark: Needs argument: what course parameter to edit and the new value.
 
-- :x: All members can use this command.
+- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.

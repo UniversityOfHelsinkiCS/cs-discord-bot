@@ -1,14 +1,12 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 const { getChannelByDiscordId, editChannelHiddenStatus } = require("../../../db/services/channelService");
-const { sendEphemeral, sendErrorEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 const { facultyRole } = require("../../../../config.json");
 const { confirmChoice } = require("../../services/confirm");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Hiding text channel...");
 
@@ -42,9 +40,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("hide_channel")
     .setDescription("Hide text channel the command was used in from regular users.")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/hide_channel",
   description: "Hide text channel the command was used in from regular users.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

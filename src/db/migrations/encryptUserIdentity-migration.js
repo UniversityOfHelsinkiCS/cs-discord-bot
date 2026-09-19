@@ -11,7 +11,7 @@ const TABLE = "joined_users";
 const currentSchema = async (queryInterface, transaction) => {
   const rows = await queryInterface.sequelize.query("SELECT current_schema() AS schema", {
     type: QueryTypes.SELECT,
-    transaction,
+    transaction
   });
   return rows[0].schema;
 };
@@ -21,7 +21,7 @@ const columnInfo = async (queryInterface, schema, column) => {
     `SELECT data_type, is_nullable
        FROM information_schema.columns
       WHERE table_schema = :schema AND table_name = :table AND column_name = :column`,
-    { type: QueryTypes.SELECT, replacements: { schema, table: TABLE, column } },
+    { type: QueryTypes.SELECT, replacements: { schema, table: TABLE, column } }
   );
   return rows[0] || null;
 };
@@ -41,7 +41,7 @@ const singleColumnUniqueConstraints = async (queryInterface, schema, column) => 
         AND con.contype = 'u'
         AND array_length(con.conkey, 1) = 1
         AND att.attname = :column`,
-    { type: QueryTypes.SELECT, replacements: { schema, table: TABLE, column } },
+    { type: QueryTypes.SELECT, replacements: { schema, table: TABLE, column } }
   );
   return rows.map((r) => r.conname);
 };
@@ -65,7 +65,7 @@ module.exports = {
     if (!(await columnInfo(queryInterface, schema, "discordIdHash"))) {
       await queryInterface.addColumn(table, "discordIdHash", {
         type: DataTypes.CHAR(64),
-        allowNull: true,
+        allowNull: true
       });
     }
 
@@ -76,7 +76,7 @@ module.exports = {
         `SELECT id, name, "discordId" AS "discordId"
            FROM ${TABLE}
           WHERE "discordIdHash" IS NULL OR "discordId" NOT LIKE 'v1:%'`,
-        { type: QueryTypes.SELECT, transaction },
+        { type: QueryTypes.SELECT, transaction }
       );
       for (const row of rows) {
         const plainName = isEncrypted(row.name) ? decrypt(row.name) : row.name;
@@ -92,9 +92,9 @@ module.exports = {
               name: encrypt(plainName),
               discordId: encrypt(plainId),
               hash: blindIndex(String(plainId)),
-              id: row.id,
-            },
-          },
+              id: row.id
+            }
+          }
         );
       }
     });
@@ -104,7 +104,7 @@ module.exports = {
     if (hashCol && hashCol.is_nullable === "YES") {
       await queryInterface.changeColumn(table, "discordIdHash", {
         type: DataTypes.CHAR(64),
-        allowNull: false,
+        allowNull: false
       });
     }
 
@@ -113,7 +113,7 @@ module.exports = {
       await queryInterface.addConstraint(table, {
         fields: ["discordIdHash"],
         type: "unique",
-        name: "joined_users_discordIdHash_key",
+        name: "joined_users_discordIdHash_key"
       });
     }
 
@@ -129,10 +129,10 @@ module.exports = {
 
     // Requires FIELD_ENCRYPTION_KEY to still be present.
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const rows = await queryInterface.sequelize.query(
-        `SELECT id, name, "discordId" AS "discordId" FROM ${TABLE}`,
-        { type: QueryTypes.SELECT, transaction },
-      );
+      const rows = await queryInterface.sequelize.query(`SELECT id, name, "discordId" AS "discordId" FROM ${TABLE}`, {
+        type: QueryTypes.SELECT,
+        transaction
+      });
       for (const row of rows) {
         await queryInterface.sequelize.query(
           `UPDATE ${TABLE} SET name = :name, "discordId" = :discordId WHERE id = :id`,
@@ -142,9 +142,9 @@ module.exports = {
             replacements: {
               name: isEncrypted(row.name) ? decrypt(row.name) : row.name,
               discordId: isEncrypted(row.discordId) ? decrypt(row.discordId) : row.discordId,
-              id: row.id,
-            },
-          },
+              id: row.id
+            }
+          }
         );
       }
     });
@@ -161,11 +161,11 @@ module.exports = {
       await queryInterface.addConstraint(table, {
         fields: ["discordId"],
         type: "unique",
-        name: "joined_users_discordId_key",
+        name: "joined_users_discordId_key"
       });
     }
 
     await queryInterface.changeColumn(table, "discordId", { type: DataTypes.STRING, allowNull: false });
     await queryInterface.changeColumn(table, "name", { type: DataTypes.STRING, allowNull: false });
-  },
+  }
 };

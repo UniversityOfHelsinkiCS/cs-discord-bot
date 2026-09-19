@@ -1,18 +1,14 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const {
-  msToMinutesAndSeconds,
-  handleCooldown,
-  checkCourseCooldown } = require("../../services/service");
-const { setCourseToPrivate, findCourseFromDb } = require("../../../db/services/courseService");
-const { sendEphemeral, sendErrorEphemeral, editErrorEphemeral, editEphemeral } = require("../../services/message");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
+const { msToMinutesAndSeconds, handleCooldown, checkCourseCooldown } = require("../../services/service");
+const { setCourseToPrivate, findCourseFromDb, findPublicCoursesFromDb } = require("../../../db/services/courseService");
+const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../services/message");
+const { respondWithCourses } = require("../../services/autocomplete");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Hiding course...");
   const courseName = interaction.options.getString("course").trim();
@@ -24,7 +20,10 @@ const execute = async (interaction, client, models) => {
 
   const categoryInstance = await findCourseFromDb(courseName, models.Course);
   if (!categoryInstance || categoryInstance.private) {
-    return await editErrorEphemeral(interaction, `Invalid course name: ${courseName} or the course is private already!`);
+    return await editErrorEphemeral(
+      interaction,
+      `Invalid course name: ${courseName} or the course is private already!`
+    );
   }
 
   const cooldown = checkCourseCooldown(courseName);
@@ -32,26 +31,29 @@ const execute = async (interaction, client, models) => {
     const timeRemaining = Math.floor(cooldown - Date.now());
     const time = msToMinutesAndSeconds(timeRemaining);
     return await editErrorEphemeral(interaction, `Command cooldown [mm:ss]: you need to wait ${time}!`);
-  }
-  else {
+  } else {
     await setCourseToPrivate(courseName, models.Course);
     await editEphemeral(interaction, `This course ${courseName} is now private.`);
-    await client.emit("COURSES_CHANGED", models.Course);
     handleCooldown(courseName);
   }
+};
+
+const autocomplete = async (interaction, client, models) => {
+  const courses = await findPublicCoursesFromDb("fullName", models.Course);
+  await respondWithCourses(interaction, courses);
 };
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("hide_course")
     .setDescription("Hide given course")
-    .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("course")
-        .setDescription("Hide given course")
-        .setRequired(true)),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addStringOption((option) =>
+      option.setName("course").setDescription("Hide given course").setRequired(true).setAutocomplete(true)
+    ),
   execute,
+  autocomplete,
   usage: "/hide_course [course name]",
   description: "Hide given course.",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

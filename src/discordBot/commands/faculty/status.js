@@ -1,29 +1,25 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
   downloadImage,
   listCourseInstructors,
-  isCourseCategory,
+  isCourseCategory
 } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
-const { findChannelsByCourse } = require("../../../db/services/channelService");
-const { editErrorEphemeral, sendErrorEphemeral, sendEphemeral, editEphemeralForStatus } = require("../../services/message");
+const { editErrorEphemeral, sendEphemeral, editEphemeralForStatus } = require("../../services/message");
 const { facultyRole, courseAdminRole } = require("../../../../config.json");
 const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
 
-
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Fetching status...");
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 
-  if (!await isCourseCategory(channel?.parent, models.Course)) {
+  if (!(await isCourseCategory(channel?.parent, models.Course))) {
     return await editErrorEphemeral(interaction, "This is not a course category, can not execute the command!");
   }
 
@@ -37,38 +33,30 @@ const execute = async (interaction, client, models) => {
   if (instructors === "") {
     instructors = `No instructors for ${courseRole}`;
   }
-  const channels = await findChannelsByCourse(course.id, models.Channel);
-
-  const blockedChannels = channels
-    .filter(c => !c.bridged)
-    .map(c => c.name);
-
-  const blockedChannelMessage = (blockedChannels && blockedChannels.length) ?
-    `${blockedChannels.join(", ")}` :
-    "No blocked channels";
-
   await downloadImage(course.name);
 
-  return await editEphemeralForStatus(interaction, `
+  return await editEphemeralForStatus(
+    interaction,
+    `
 Course: ${course.name}
 Fullname: ${course.fullName}
 Code: ${course.code}
 Hidden: ${course.private}
 Invitation Link: ${createCourseInvitationLink(course.name)}
-Bridge blocked on channels: ${blockedChannelMessage}
 
 Instructors: ${instructors}
 Members: ${count}
-  `);
+  `
+  );
 };
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("status")
     .setDescription("Get full status of course.*")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/status",
   description: "Get full status of course.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

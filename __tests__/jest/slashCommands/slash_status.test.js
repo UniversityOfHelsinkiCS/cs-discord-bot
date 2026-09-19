@@ -1,31 +1,34 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/status");
-const { sendEphemeral, editErrorEphemeral, sendErrorEphemeral, editEphemeralForStatus } = require("../../../src/discordBot/services/message");
+const {
+  sendEphemeral,
+  editErrorEphemeral,
+  editEphemeralForStatus
+} = require("../../../src/discordBot/services/message");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
   listCourseInstructors,
-  isCourseCategory } = require("../../../src/discordBot/services/service");
+  isCourseCategory
+} = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
-const { findChannelsByCourse } = require("../../../src/db/services/channelService");
 const { findAllCourseMembers } = require("../../../src/db/services/courseMemberService");
 
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
+jest.mock("../../../src/discordBot/services/permissions");
+const { requireFaculty } = require("../../../src/discordBot/services/permissions");
+requireFaculty.mockImplementation(() => true);
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/courseService");
-jest.mock("../../../src/db/services/channelService");
 jest.mock("../../../src/db/services/courseMemberService");
 
-
 const course = { name: "test", fullName: "test course", code: "101", private: false };
-const channel = { courseId: 1, name: "test_channel", topic: "test", bridged: true };
 const url = "mockUrl";
 const initialResponse = "Fetching status...";
 
 listCourseInstructors.mockImplementation(() => "");
 findCourseFromDb.mockImplementation(() => course);
-findChannelsByCourse.mockImplementation(() => [channel]);
 
 createCourseInvitationLink.mockImplementation(() => url);
 
@@ -41,7 +44,6 @@ Fullname: ${course.fullName}
 Code: ${course.code}
 Hidden: ${course.private}
 Invitation Link: ${url}
-Bridge blocked on channels: No blocked channels
 
 Instructors: No instructors for undefined
 Members: undefined
@@ -64,7 +66,7 @@ describe("slash status command", () => {
   });
 
   test("used in course channels", async () => {
-    isCourseCategory.mockImplementationOnce(() => (true));
+    isCourseCategory.mockImplementationOnce(() => true);
     const client = defaultTeacherInteraction.client;
     defaultTeacherInteraction.channelId = 2;
     const response = createResponse();
@@ -78,11 +80,11 @@ describe("slash status command", () => {
     expect(editEphemeralForStatus).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
-  test("a student cannot use faculty command", async () => {
+  test("a user without faculty access cannot use the command", async () => {
     const client = defaultStudentInteraction.client;
-    const response = "You do not have permission to use this command.";
+    requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
-    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
+    expect(sendEphemeral).not.toHaveBeenCalled();
   });
 });

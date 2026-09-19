@@ -5,7 +5,8 @@ const {
   findCourseMember,
   findAllCourseMembers,
   createCourseMemberToDatabase,
-  removeCourseMemberFromDb } = require("../../../src/db/services/courseMemberService");
+  removeCourseMemberFromDb
+} = require("../../../src/db/services/courseMemberService");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../../src/discordBot/services/message");
 const models = require("../../mocks/mockModels");
@@ -23,14 +24,14 @@ const interaction = {};
 const buildClient = (member) => ({
   guild: {
     roles: { cache: { find: (fn) => [courseRole, instructorRole].find(fn) }, fetch: jest.fn() },
-    members: { fetch: jest.fn(() => new Map([[member.id, member]])) },
-  },
+    members: { fetch: jest.fn(() => new Map([[member.id, member]])) }
+  }
 });
 
 const buildMember = (roleIds) => ({
   id: "discord-1",
   user: { id: "discord-1", username: "alice", bot: false },
-  roles: { cache: new Set(roleIds), add: jest.fn() },
+  roles: { cache: new Set(roleIds), add: jest.fn() }
 });
 
 beforeEach(() => {

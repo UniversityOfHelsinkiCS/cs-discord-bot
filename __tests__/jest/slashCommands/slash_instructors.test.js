@@ -4,23 +4,19 @@ const { courseAdminRole } = require("../../../config.json");
 
 jest.mock("../../../src/discordBot/services/message");
 
-const {
-  studentInteractionWithoutOptions,
-  defaultStudentInteraction } = require("../../mocks/mockInteraction");
+const { studentInteractionWithoutOptions, defaultStudentInteraction } = require("../../mocks/mockInteraction");
 
 const roleString = "test";
 const initialResponse = "Fetching instructors...";
 
 const Course = {
   create: jest.fn(),
-  findOne: jest
-    .fn(() => true)
-    .mockImplementationOnce(() => false),
-  destroy: jest.fn(),
+  findOne: jest.fn(() => true).mockImplementationOnce(() => false),
+  destroy: jest.fn()
 };
 
 const models = {
-  Course,
+  Course
 };
 
 afterEach(() => {
@@ -41,7 +37,11 @@ describe("slash instructors command", () => {
   test("instructors command used in course channels", async () => {
     const client = studentInteractionWithoutOptions.client;
     studentInteractionWithoutOptions.channelId = 2;
-    client.guild.roles.create({ id: 5, name: `${roleString} ${courseAdminRole}`, members: [{ displayName: "teacher", user: { id: 1 } }] });
+    client.guild.roles.create({
+      id: 5,
+      name: `${roleString} ${courseAdminRole}`,
+      members: [{ displayName: "teacher", user: { id: 1 } }]
+    });
     client.guild.roles.create({ id: 1, name: "faculty", members: [{ displayName: "teacher", user: { id: 1 } }] });
     const response = `No instructors for ${roleString}`;
     await execute(studentInteractionWithoutOptions, client, models);
@@ -53,7 +53,11 @@ describe("slash instructors command", () => {
 
   test("instructors command used without course admins", async () => {
     const client = defaultStudentInteraction.client;
-    client.guild.roles.create({ id: 5, name: `${roleString} ${courseAdminRole}`, members: [{ displayName: "teacher", user: { id: 1 } }] });
+    client.guild.roles.create({
+      id: 5,
+      name: `${roleString} ${courseAdminRole}`,
+      members: [{ displayName: "teacher", user: { id: 1 } }]
+    });
     client.guild.roles.create({ id: 1, name: "faculty", members: [{ displayName: "teacher", user: { id: 1 } }] });
     const response = `No instructors for ${roleString}`;
     await execute(defaultStudentInteraction, client, models);
@@ -62,5 +66,4 @@ describe("slash instructors command", () => {
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
-
 });

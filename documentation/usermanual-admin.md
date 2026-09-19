@@ -30,7 +30,7 @@ The Discord server has a bot that can help you with many things. Interaction wit
 
 Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to manually type the commands; the bot rarely understands copy-pasted commands!**
 
-**Admin commands are only visible in the `/` command picker to members with the `admin` or `cs-admin` role. Their replies are ephemeral (only visible to you), and unlike other commands there is no green check mark/red cross reaction — success or failure is reported directly in the reply.**
+**Admin commands are only visible in the `/` command picker to members with the `admin` or `cs-admin` role. Their replies are ephemeral (only visible to you), and success or failure is reported directly in the reply.**
 
 ### Getting admin rights/adding admin rights
 
@@ -54,7 +54,7 @@ To delete a course, use `/delete_course course_name:<course name>`. You can eith
 
 ### Reloading commands ###
 
-If you need to reload a deleted slash command or register a new command, use `/reload_commands`. Note that this does not grant newly added admin commands visibility to the `admin`/`cs-admin` roles — see [Adding a new admin command](#adding-a-new-admin-command) below.
+If you need to reload a deleted slash command or register a new command, use `/reload_commands`. Note that this does not grant newly added admin commands visibility to the `admin`/`cs-admin` roles — see [Making new commands visible](#making-new-commands-visible) below.
 
 ### Sort courses ###
 
@@ -101,13 +101,15 @@ If someone has manually modified the Discord server in a way that can't be easil
 - Restore course member and instructor roles
 - Delete all extra channels that do not exist in database (only the channels that are placed in valid Course categories, so does not delete default chat/commands/voice/etc.)
 
-### Adding a new admin command ###
+### Making new commands visible ###
 
-New admin commands are registered with `.setDefaultPermission(false)`, but Discord's current Integrations UI doesn't reliably show or enforce that as "hidden by default" (this repo uses the old, deprecated command-permissions v1 field, and Discord's current permissions v2 system may not honor it). So after deploying a new or updated admin command (e.g. via `/reload_commands` or a bot restart), a server admin must manually go to Discord's **Server Settings → Integrations → [bot name]** page and, for that command:
-- Add `@everyone` and set it to **disabled**.
-- Add `admin` and `cs-admin` and set both to **enabled**.
+Admin and faculty commands are registered as restricted: by default Discord shows them only to members with the Administrator permission. Whenever a new admin or faculty command is added (it appears after a bot restart or `/reload_commands`), a server admin has to allow the right roles for it once. Open Discord's **Server Settings → Integrations → [bot name] → Commands**, select the command and add these roles:
+- **Admin commands:** `admin` and `cs-admin`.
+- **Faculty commands:** `faculty`, `admin` and `cs-admin`.
 
-This is a one-time, per-command action that only Discord itself can perform; it cannot be automated by the bot. Until it's done, the command may be visible/usable by everyone rather than just admins, regardless of what the code declares.
+Only Discord itself can do this, the bot cannot. Until it is done, the command stays invisible to everyone except Administrators, so a new command that "doesn't show up" almost always means this step was missed.
+
+Being able to see a command is separate from being allowed to run it. When a command runs, the bot checks the database: admin commands need the `admin` flag, and faculty commands need the `faculty` or `admin` flag. If someone holds the Discord role but not the database flag, run `/update_database` to copy Discord roles into the database (check the flags first, since it overwrites them from the current Discord roles).
 
 ### List of commands
 
@@ -137,19 +139,16 @@ Command | Explanation | Arguments
 [/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | :heavy_check_mark:
 [/create_course](./commands/faculty/create_course.md) | Create a new course | :heavy_check_mark:
 [/create_poll](./commands/faculty/create_poll.md) | Create a new poll | :heavy_check_mark:
-[/delete_bridge](./commands/faculty/delete_bridge.md) | Delete the bridge from specified Course, e.g., /delete_bridge ohpe | :heavy_check_mark:
 [/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | :heavy_check_mark:
-[/disable_bridge](./commands/faculty/disable_bridge.md) | Disable the bridge between Telegram and the (non-default) course channel it is used in. | :x:
 [/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | :heavy_check_mark:
 [/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | :heavy_check_mark:
-[/enable_bridge](./commands/faculty/enable_bridge.md) | Enable the bridge between Telegram and the (non-default) course channel it is used in. | :x:
-[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. Also disables the bridge in the channel. | :x:
+[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | :x:
 [/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course weba. | :heavy_check_mark:
 [/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors and faculty can post messages) of a given course | :heavy_check_mark:
 [/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | :heavy_check_mark:
 [/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | :heavy_check_mark:
 [/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | :heavy_check_mark:
-[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. Also enables the bridge in the channel. | :x:
+[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | :x:
 [/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course weba. | :heavy_check_mark:
 [/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | :heavy_check_mark:
 
@@ -175,4 +174,4 @@ Command | Explanation | Arguments
 
 ### Material
 
-[Source code for the Bot](https://github.com/Ohtuproju2021syksy/Discord-Bot-better)
+[Source code for the Bot](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)

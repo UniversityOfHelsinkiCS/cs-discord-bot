@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const Sentry = require("@sentry/node");
 const express = require("express");
 const session = require("express-session");
@@ -19,7 +19,7 @@ const SequelizeStore = require("connect-session-sequelize")(session.Store);
 module.exports = (sequelize) => {
   const app = express();
   const store = new SequelizeStore({
-    db: sequelize,
+    db: sequelize
   });
   require("./encryptSessionStore")(store);
 
@@ -28,8 +28,9 @@ module.exports = (sequelize) => {
       secret: process.env.SESSION_SECRET,
       store: store,
       saveUninitialized: false,
-      resave: false,
-    }));
+      resave: false
+    })
+  );
 
   store.sync();
 
@@ -49,7 +50,7 @@ module.exports = (sequelize) => {
 
   app.use(Sentry.expressErrorHandler());
 
-  app.use("*", defaultRouteErrorHandler);
+  app.use(defaultRouteErrorHandler);
 
   return app;
 };

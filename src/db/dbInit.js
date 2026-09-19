@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const Sequelize = require("sequelize");
 
 const dbUrl = process.env.DATABASE_URL;
@@ -11,15 +11,18 @@ const User = require("./models/User")(sequelize, Sequelize.DataTypes);
 const CourseMember = require("./models/CourseMember")(sequelize, Sequelize.DataTypes);
 
 Channel.belongsTo(Course, {
-  foreignKeyConstraint: true, onDelete: "cascade",
+  foreignKeyConstraint: true,
+  onDelete: "cascade"
 });
 
 CourseMember.belongsTo(User, {
-  foreignKeyConstraint: true, onDelete: "cascade",
+  foreignKeyConstraint: true,
+  onDelete: "cascade"
 });
 
 CourseMember.belongsTo(Course, {
-  foreignKeyConstraint: true, onDelete: "cascade",
+  foreignKeyConstraint: true,
+  onDelete: "cascade"
 });
 
 module.exports = {
@@ -27,4 +30,5 @@ module.exports = {
   Channel,
   User,
   CourseMember,
-  sequelize };
+  sequelize
+};

@@ -10,9 +10,7 @@ jest.mock("../../../src/db/services/courseService");
 const course = [{ code: "tkt test", fullName: "test course", name: "test" }];
 const initialResponse = "Fetching courses...";
 
-findCoursesFromDb
-  .mockImplementation(() => course)
-  .mockImplementationOnce(() => []);
+findCoursesFromDb.mockImplementation(() => course).mockImplementationOnce(() => []);
 
 const { defaultTeacherInteraction } = require("../../mocks/mockInteraction");
 

@@ -4,7 +4,8 @@ const {
   removeUserFromDb,
   saveFacultyRoleToDb,
   findUserByDbId,
-  pruneUsersNotInGuild } = require("../../../src/db/services/userService");
+  pruneUsersNotInGuild
+} = require("../../../src/db/services/userService");
 const { blindIndex } = require("../../../src/db/crypto");
 
 // The User model getters/setters (field encryption + discordIdHash) have no
@@ -18,7 +19,7 @@ const userModelInstanceMock = {
   admin: false,
   faculty: false,
   discordId: 10,
-  update: jest.fn(),
+  update: jest.fn()
 };
 
 const userModelMock = {
@@ -26,7 +27,7 @@ const userModelMock = {
   create: jest.fn().mockResolvedValue(userModelInstanceMock),
   destroy: jest.fn().mockResolvedValue(userModelInstanceMock),
   update: jest.fn().mockResolvedValue(userModelInstanceMock),
-  findAll: jest.fn(),
+  findAll: jest.fn()
 };
 
 afterEach(() => {
@@ -34,13 +35,11 @@ afterEach(() => {
 });
 
 describe("userService", () => {
-
   test("find course member with discord id", async () => {
     await findUserByDiscordId(10, userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(10) },
+      where: { discordIdHash: blindIndex(10) }
     });
   });
 
@@ -48,8 +47,7 @@ describe("userService", () => {
     await findUserByDbId(1, userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { id: 1 },
+      where: { id: 1 }
     });
   });
 
@@ -58,13 +56,12 @@ describe("userService", () => {
     await createUserToDatabase(12, "JaneDoe", userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(12) },
+      where: { discordIdHash: blindIndex(12) }
     });
     expect(userModelMock.create).toHaveBeenCalledTimes(1);
     expect(userModelMock.create).toHaveBeenCalledWith({
       name: "JaneDoe",
-      discordId: 12,
+      discordId: 12
     });
   });
 
@@ -73,24 +70,20 @@ describe("userService", () => {
     expect(result).toBe(userModelInstanceMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(10) },
+      where: { discordIdHash: blindIndex(10) }
     });
     expect(userModelMock.create).toHaveBeenCalledTimes(0);
-
   });
 
   test("remove user from database", async () => {
     await removeUserFromDb(10, userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(10) },
+      where: { discordIdHash: blindIndex(10) }
     });
     expect(userModelMock.destroy).toHaveBeenCalledTimes(1);
     expect(userModelMock.destroy).toHaveBeenCalledWith({
-      where:
-        { id: 1 },
+      where: { id: 1 }
     });
   });
 
@@ -99,8 +92,7 @@ describe("userService", () => {
     await removeUserFromDb(10, userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(10) },
+      where: { discordIdHash: blindIndex(10) }
     });
     expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
   });
@@ -109,12 +101,11 @@ describe("userService", () => {
     await saveFacultyRoleToDb(10, userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(10) },
+      where: { discordIdHash: blindIndex(10) }
     });
     expect(userModelInstanceMock.update).toHaveBeenCalledTimes(1);
     expect(userModelInstanceMock.update).toHaveBeenCalledWith({
-      faculty: true,
+      faculty: true
     });
   });
 
@@ -123,18 +114,13 @@ describe("userService", () => {
     await saveFacultyRoleToDb(10, userModelMock);
     expect(userModelMock.findOne).toHaveBeenCalledTimes(1);
     expect(userModelMock.findOne).toHaveBeenCalledWith({
-      where:
-        { discordIdHash: blindIndex(10) },
+      where: { discordIdHash: blindIndex(10) }
     });
     expect(userModelInstanceMock.update).toHaveBeenCalledTimes(0);
   });
 
   test("prune removes users no longer in the guild", async () => {
-    userModelMock.findAll.mockResolvedValueOnce([
-      { discordId: 10 },
-      { discordId: 20 },
-      { discordId: 30 },
-    ]);
+    userModelMock.findAll.mockResolvedValueOnce([{ discordId: 10 }, { discordId: 20 }, { discordId: 30 }]);
     userModelMock.findOne
       .mockResolvedValueOnce({ id: 2, discordId: 20 })
       .mockResolvedValueOnce({ id: 3, discordId: 30 });
@@ -148,14 +134,11 @@ describe("userService", () => {
   });
 
   test("prune removes nobody if everyone is still in the guild", async () => {
-    userModelMock.findAll.mockResolvedValueOnce([
-      { discordId: 10 },
-    ]);
+    userModelMock.findAll.mockResolvedValueOnce([{ discordId: 10 }]);
     const guild = { members: { cache: new Map([[10, {}]]) } };
 
     await pruneUsersNotInGuild(guild, userModelMock);
 
     expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
   });
-
 });
