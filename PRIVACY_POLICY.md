@@ -1,6 +1,6 @@
 # Privacy Policy — CS Discord Bot
 
-*Last updated: 18 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
+*Last updated: 19 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
 
 This Privacy Policy describes what data the CS Discord Bot ("the Bot") collects, why, and how it is handled. The Bot is a private bot developed and operated for one specific Discord server, that of the Department of Computer Science, University of Helsinki ("the Server"). It is not offered to, or run in, any other server. Source code: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot
 
@@ -99,7 +99,7 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 - **Course-membership records** for a user are deleted together with that user's record; the database removes them automatically when the user record is deleted.
 - **Course and channel records** are retained for as long as the course exists on the Server, and are removed by administrators when the course or channel is deleted or no longer needed. They contain no personal data about individual members.
 - **Website sessions** are removed when they expire or when you log out.
-- **Database backups.** We keep automated database backups: one from the last day, one from the last week, one from the last month, and one from the last year. Backups are encrypted, and a deletion from the live database is not reflected in a backup until that backup is next rotated, so a deleted record can persist in a backup for up to a year before it ages out.
+- **Database backups.** We keep automated database backups: one per day for the last week, one per week for the last month, and one per month for the last year. Backups are encrypted, and a deletion from the live database is not reflected in a backup until that backup is next rotated, so a deleted record can persist in a backup for up to a year before it ages out.
 - **In-memory spam-detection data**: the recent message and attachment fingerprints, the list of accounts that have posted in the honeypot channel, and the per-account report cooldowns are all held only in memory and discarded automatically about one hour after the event they relate to. All in-memory state is also cleared whenever the Bot restarts.
 - **Automated-moderation reports** in the administrator-only Discord channel: reports an administrator judges to be false positives are deleted within about 24 hours of that review. Reports for confirmed scam or spam activity are kept indefinitely as a security log and to improve the detection rules; these concern abusive or compromised accounts and the content they posted.
 - **Diagnostic data sent to Sentry** is retained according to Sentry's own retention settings, typically on the order of weeks to a few months.
