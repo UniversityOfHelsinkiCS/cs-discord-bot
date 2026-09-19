@@ -1,5 +1,21 @@
 ### cs-discord-bot
 
+### Autocomplete
+
+Some arguments offer a list as you type. The list narrows down as you type any part of the name, and courses are shown as `Full name - nickname - CODE` in alphabetical order by full name. Discord shows at most 25 entries, so type a few letters to find the rest.
+
+Command | The argument offers
+--- | ---
+`/join`, `/hide_course` | Public courses
+`/leave` | The courses you have joined
+`/unhide_course` | Private courses
+`/lock_chat` | Courses that are not locked
+`/unlock_chat` | Locked courses
+`/delete_course` | All courses
+`/delete_channel` | Channels added to the course the command is used in
+`/delete_command` | Commands registered in Discord
+`/help` | The commands you can use
+
 ### Admin commands
 
 Admin and faculty commands are restricted by default: Discord shows them only to members with the Administrator permission. **A server admin must allow the right roles once per command**, otherwise nobody else sees them. Open **Server Settings → Integrations → [bot name] → Commands**, select the command and add the roles below. The bot cannot do this itself.
@@ -58,5 +74,5 @@ Command | Description | Example
 `/help` |  Lists available commands for your role. | `help`
 `/help "command name"` | Shows information on the given command. | `/help courses`
 `/intructors` | Lists the instructors of the course. Must be used inside a course. | `/instructors`
-`/join` | Join the given course. After writing `/join`, the bot will give you a list of courses to choose from. | `/join`
-`/leave` | Leave the given course. After writing `/leave`, the bot will give you a list of courses to choose from. | `/leave`
+`/join` | Join the given course. After writing `/join`, the bot will give you a list of public courses to choose from. | `/join`
+`/leave` | Leave the given course. After writing `/leave`, the bot will give you a list of the courses you have joined to choose from. | `/leave`

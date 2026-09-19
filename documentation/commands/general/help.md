@@ -7,6 +7,7 @@
 - :x: The user sees commands that user cannot use.
 - :x: The user can use commands that are not visible.
 - :o: Argument command_name is optional.
+- :heavy_check_mark: The argument autocompletes with the commands you can use.
 
 Example | Explanation 
 --- | ---
