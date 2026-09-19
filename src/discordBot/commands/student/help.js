@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { editEphemeral, editErrorEphemeral, sendEphemeral, sendFollowUpEphemeral } = require("../../services/message");
+const { respondWithChoices } = require("../../services/autocomplete");
 const { facultyRole, courseAdminRole, githubRepo } = require("../../../../config.json");
 
 const getBestRole = (member) => {
@@ -74,10 +75,7 @@ const isAdminOnly = (command) =>
   !command.roles.includes(facultyRole) &&
   !command.roles.includes(courseAdminRole);
 
-const execute = async (interaction, client) => {
-  await sendEphemeral(interaction, "Hold on...");
-  const guild = client.guild;
-  const member = guild.members.cache.get(interaction.member.user.id);
+const getCommandsByCategory = (client, member) => {
   const highestRole = getBestRole(member);
   const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && highestRole === "admin");
   const seesStaffCommands = highestRole === "admin" || highestRole === facultyRole;
@@ -88,6 +86,14 @@ const execute = async (interaction, client) => {
     (command) => seesStaffCommands && command.roles && command.roles.includes(courseAdminRole)
   );
   const studentData = client.slashCommands.filter((command) => !command.roles && command.data.name !== "auth");
+  return { adminData, facultyData, courseAdminData, studentData };
+};
+
+const execute = async (interaction, client) => {
+  await sendEphemeral(interaction, "Hold on...");
+  const guild = client.guild;
+  const member = guild.members.cache.get(interaction.member.user.id);
+  const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, member);
   if (!interaction.options.getString("command")) {
     await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
   } else {
@@ -95,12 +101,27 @@ const execute = async (interaction, client) => {
   }
 };
 
+const autocomplete = async (interaction, client) => {
+  const member = client.guild.members.cache.get(interaction.member.user.id);
+  const categories = getCommandsByCategory(client, member);
+  const names = Object.values(categories)
+    .flatMap((commands) => [...commands.keys()])
+    .sort((a, b) => a.localeCompare(b));
+  await respondWithChoices(
+    interaction,
+    names.map((name) => ({ name, value: name }))
+  );
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
     .setDescription("Get info on how to use command(s).")
-    .addStringOption((option) => option.setName("command").setDescription("command instructions").setRequired(false)),
+    .addStringOption((option) =>
+      option.setName("command").setDescription("command instructions").setRequired(false).setAutocomplete(true)
+    ),
   execute,
+  autocomplete,
   usage: "/help <command name>",
   description: "Get info on how to use command(s)."
 };

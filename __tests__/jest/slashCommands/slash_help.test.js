@@ -1,4 +1,4 @@
-const { execute } = require("../../../src/discordBot/commands/student/help");
+const { execute, autocomplete, data } = require("../../../src/discordBot/commands/student/help");
 
 const {
   adminData,
@@ -33,6 +33,8 @@ const initialResponse = "Hold on...";
 
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/service");
+jest.mock("../../../src/discordBot/services/autocomplete");
+const { respondWithChoices } = require("../../../src/discordBot/services/autocomplete");
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -97,5 +99,52 @@ describe("slash help command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
     expect(editEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, studentJoinData.join(" \n"));
+  });
+});
+
+describe("slash help autocomplete", () => {
+  const offeredNames = async (interaction) => {
+    await autocomplete(interaction, interaction.client);
+    return respondWithChoices.mock.calls[0][1].map((choice) => choice.value);
+  };
+  const namesOf = (client, predicate) => client.slashCommands.filter(predicate).map((command) => command.data.name);
+  const isRestricted = (command) => Boolean(command.roles);
+
+  test("the command option is autocompleted", () => {
+    expect(data.toJSON().options[0].autocomplete).toBe(true);
+  });
+
+  test("a student is offered only commands without roles, and never auth", async () => {
+    const offered = await offeredNames(defaultStudentInteraction);
+    const client = defaultStudentInteraction.client;
+    expect(offered.length).toBeGreaterThan(0);
+    expect(offered).toEqual(
+      namesOf(client, (command) => !isRestricted(command) && command.data.name !== "auth").sort((a, b) =>
+        a.localeCompare(b)
+      )
+    );
+    expect(offered).not.toContain("auth");
+  });
+
+  test("a teacher is offered the student and faculty commands but not the admin only ones", async () => {
+    const offered = await offeredNames(defaultTeacherInteraction);
+    const client = defaultTeacherInteraction.client;
+    const adminOnly = namesOf(client, (command) => command.roles?.length === 1 && command.roles[0] === "admin");
+    expect(offered).toContain("join");
+    expect(offered).toContain("create_channel");
+    adminOnly.forEach((name) => expect(offered).not.toContain(name));
+  });
+
+  test("an admin is offered every command except auth", async () => {
+    const offered = await offeredNames(defaultAdminInteraction);
+    const client = defaultAdminInteraction.client;
+    expect(offered).toEqual(
+      namesOf(client, (command) => command.data.name !== "auth").sort((a, b) => a.localeCompare(b))
+    );
+  });
+
+  test("the commands are offered in alphabetical order", async () => {
+    const offered = await offeredNames(defaultAdminInteraction);
+    expect(offered).toEqual([...offered].sort((a, b) => a.localeCompare(b)));
   });
 });
