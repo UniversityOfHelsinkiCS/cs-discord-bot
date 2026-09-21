@@ -3,12 +3,11 @@ const { requireFaculty } = require("../../services/permissions");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
-  downloadImage,
   listCourseInstructors,
   isCourseCategory
 } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
-const { editErrorEphemeral, sendEphemeral, editEphemeralForStatus } = require("../../services/message");
+const { editErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
 const { facultyRole, courseAdminRole } = require("../../../../config.json");
 const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
 
@@ -33,9 +32,8 @@ const execute = async (interaction, client, models) => {
   if (instructors === "") {
     instructors = `No instructors for ${courseRole}`;
   }
-  await downloadImage(course.name);
 
-  return await editEphemeralForStatus(
+  return await editEphemeral(
     interaction,
     `
 Course: ${course.name}

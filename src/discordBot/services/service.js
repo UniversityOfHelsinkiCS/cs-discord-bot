@@ -1,7 +1,5 @@
 const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
 const { logError } = require("./logger");
 const { findAllCourseNames, findCourseFromDb } = require("../../db/services/courseService");
 const { courseAdminRole, facultyRole } = require("../../../config.json");
@@ -159,35 +157,6 @@ const findAndUpdateInstructorRole = async (name, guild, adminRole) => {
   const oldInstructorRole = guild.roles.cache.find((role) => role.name !== name && role.name.includes(name));
   if (oldInstructorRole) {
     oldInstructorRole.setName(`${name} ${adminRole}`);
-  }
-};
-
-const downloadImage = async (course) => {
-  const panel = process.env.GRAFANA_PANEL_ID;
-  const url = `${process.env.GRAFANA_URL}&var-course=${course}&panelId=${panel}&width=1000&height=500&tz=Europe%2FHelsinki`;
-  const directory = path.resolve(__dirname, "../../promMetrics/graph/");
-
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory);
-  }
-
-  const filepath = path.resolve(__dirname, directory, "graph.png");
-  const writer = fs.createWriteStream(filepath);
-
-  try {
-    const response = await axios.get(url, {
-      responseType: "stream",
-      headers: { Authorization: `Bearer ${process.env.GRAFANA_TOKEN}` }
-    });
-    response.data.pipe(writer);
-
-    return new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
-    });
-  } catch (error) {
-    logError(error);
-    return;
   }
 };
 
@@ -419,7 +388,6 @@ module.exports = {
   findAndUpdateInstructorRole,
   listCourseInstructors,
   updateInviteLinks,
-  downloadImage,
   containsEmojis,
   getUserWithUserId,
   getChannelObject,

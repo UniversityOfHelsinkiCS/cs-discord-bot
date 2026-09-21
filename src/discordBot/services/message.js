@@ -1,5 +1,4 @@
-const { AttachmentBuilder, ChannelType, EmbedBuilder, MessageFlags } = require("discord.js");
-const path = require("path");
+const { ChannelType, MessageFlags } = require("discord.js");
 const { logError } = require("./logger");
 
 const validateChannel = (channel) => {
@@ -44,12 +43,6 @@ const sendEphemeral = async (interaction, msg) => {
 
 const editEphemeral = async (interaction, msg) => {
   await interaction.editReply({ content: `${msg}` });
-};
-
-const editEphemeralForStatus = async (interaction, msg) => {
-  const img = new AttachmentBuilder(path.resolve(__dirname, "../../promMetrics/graph/", "graph.png"));
-  const msgEmbed = new EmbedBuilder().setTitle("Trends").setImage("attachment://graph.png");
-  await interaction.editReply({ content: `${msg}`, embeds: [msgEmbed], files: [img] });
 };
 
 const editEphemeralWithComponents = async (interaction, msg, components) => {
@@ -110,7 +103,6 @@ module.exports = {
   editEphemeral,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
-  editEphemeralForStatus,
   editErrorEphemeral,
   sendReplyMessage,
   sendFollowUpEphemeral,

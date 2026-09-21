@@ -1,9 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/status");
-const {
-  sendEphemeral,
-  editErrorEphemeral,
-  editEphemeralForStatus
-} = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
 const {
   getCourseNameFromCategory,
   createCourseInvitationLink,
@@ -76,8 +72,8 @@ describe("slash status command", () => {
     expect(createCourseInvitationLink).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
-    expect(editEphemeralForStatus).toHaveBeenCalledTimes(1);
-    expect(editEphemeralForStatus).toHaveBeenCalledWith(defaultTeacherInteraction, response);
+    expect(editEphemeral).toHaveBeenCalledTimes(1);
+    expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 
   test("a user without faculty access cannot use the command", async () => {

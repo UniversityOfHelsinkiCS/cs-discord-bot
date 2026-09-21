@@ -106,7 +106,5 @@ dist
 
 *.swp
 
-/src/promMetrics/graph/
-
 pg_dump.sql
 pg_data

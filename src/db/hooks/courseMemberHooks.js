@@ -2,7 +2,6 @@ const { updateAnnouncementChannelMessage } = require("../../discordBot/services/
 const { findCourseFromDbById } = require("../services/courseService");
 const { findUserByDbId } = require("../services/userService");
 const { courseAdminRole } = require("../../../config.json");
-const { joinedUsersCounter } = require("../../promMetrics/promCounters");
 const { logInfo, logError } = require("../../discordBot/services/logger");
 
 const initCourseMemberHooks = (guild, models) => {
@@ -23,7 +22,6 @@ const initCourseMemberHooks = (guild, models) => {
       );
     }
     await member.roles.add(courseRole);
-    joinedUsersCounter.inc({ course: course.name });
   });
 
   models.CourseMember.addHook("afterBulkDestroy", async (courseMember) => {

@@ -60,7 +60,6 @@ Logging in sets a session cookie, and your session is stored server-side in our 
 
 - **Error monitoring (Sentry)**: when the Bot hits an error or unhandled exception anywhere in its operation - processing a command, handling a Discord event, or carrying out a moderation action - it sends diagnostic information to our own Sentry instance, which we host on our infrastructure in Finland. This can include the acting or affected user's Discord ID and display name, the command or event name, and the error message and stack trace.
 - **Application logs**: the Bot writes operational logs to its own console/host (which may include Discord IDs and event details, but not full message content).
-- **Usage metrics (Prometheus)**: the Bot's web component exposes a `/metrics` endpoint with aggregate counters (for example, the number of course joins per course) for our own Prometheus and Grafana monitoring, hosted on our infrastructure in Finland, to scrape. These counters contain no usernames, user IDs, or message content.
 
 ### 2.5 Automated moderation decisions
 
@@ -93,7 +92,7 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 - Our database is hosted on our infrastructure and accessed only by the Bot service and designated administrators.
 - **Encryption of identity data.** In the `joined_users` table your Discord user ID and username are encrypted with AES-256-GCM at the application level before they are written, and a keyed HMAC-SHA256 index of the user ID is stored alongside so the Bot can still look you up by exact ID and enforce uniqueness without holding the ID in the clear. Website login sessions are encrypted the same way. The encryption key is held only in the running service's environment, separately from the database and its backups. Data in transit to Discord and to our database uses TLS/HTTPS.
 - **What this protects, and what it does not.** We hold this data as a persistent, queryable compilation; who is on the Server, under what username, in which courses, since when, and with what privileges. We treat that compilation as carrying more risk than the same facts glanced at in the Discord client, which is why the identity fields are encrypted. Application-level encryption does not hide everything: the number of rows still approximates the Server's member count and row timestamps still show roughly when each person joined and in what order. The shape of the course-membership graph is still visible to someone with database access, and copies of data in transaction logs, temporary files, and database statistics aren't protected. The `admin` and `faculty` flags, internal row IDs, join timestamps, and the course-membership links themselves are stored without application-level encryption.
-- Access to the database, hosting platform, and monitoring dashboards (Sentry, Grafana) is restricted to Bot and infrastructure maintainers.
+- Access to the database, hosting platform, and monitoring dashboards (Sentry) is restricted to Bot and infrastructure maintainers.
 
 ## 6. Data retention
 
@@ -112,7 +111,7 @@ The Bot relies on one external platform:
 
 - **Discord** - the platform the Bot operates on; all interactions necessarily pass through Discord's API.
 
-Error monitoring (Sentry) and metrics monitoring (Prometheus and Grafana) are run by us on our own infrastructure in Finland, so diagnostic data and metrics are not sent to any other party. Only aggregate, non-identifying counters are exposed to the metrics monitoring (section 2.4).
+Error monitoring (Sentry) is run by us on our own infrastructure in Finland, so diagnostic data is not sent to any other party.
 
 Discord is established outside the EU/EEA, primarily in the United States. Where data is transferred outside the EEA, the transfer relies on the European Commission's adequacy decision for the EU–US Data Privacy Framework where Discord is certified under it, and otherwise on the European Commission's Standard Contractual Clauses, as set out in Discord's own data-processing terms.
 

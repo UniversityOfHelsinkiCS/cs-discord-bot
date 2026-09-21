@@ -44,7 +44,7 @@ roles are allowed for them in Discord's Integrations settings.
 - Roles: `/add_instructors`, `/remove_instructors` for per-course instructor
   (volunteer TA) roles.
 - `/status` — course summary (code, full name, invite link, instructors, member
-  count, join trends). `/create_poll` — reaction poll.
+  count). `/create_poll` — reaction poll.
 - `/auth` — issues a one-time link to the companion website, where a faculty
   member logs in with Discord OAuth and the university single sign-on
   (employee-number check) to be granted the faculty role.
@@ -82,11 +82,6 @@ visible only to the person who ran them.
   against known scam image-dimension fingerprints; on a match the message is
   deleted, the account is kicked, and the user is DM'd recovery instructions.
   Staff receive a report in `#commands` either way.
-
-### Metrics
-
-- Join/leave counts and per-course trends are exposed for a Grafana dashboard and
-  surfaced in `/status`.
 
 ## Data storage
 
@@ -148,9 +143,6 @@ SESSION_SECRET=server-session-secret
 FIELD_ENCRYPTION_KEY=32-random-bytes-base64
 BACKEND_SERVER_URL=backend-server-url-without-port
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
-GRAFANA_TOKEN=your-grafana-authorization-token
-GRAFANA_URL=your-server-url/grafana/your-dashboard-specific-stuff
-GRAFANA_PANEL_ID=your-grafana-panel-id
 WORKSHOPS_API=pajat-api-url
 ```
 

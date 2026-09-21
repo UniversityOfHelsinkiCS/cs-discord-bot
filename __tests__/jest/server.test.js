@@ -42,9 +42,4 @@ describe("Endpoint urls", () => {
     fetch.mockResolvedValueOnce(new Response(JSON.stringify(expectedResponse)));
     await api.get("/authenticate_faculty").set({ employeenumber: 1 }).expect(400);
   });
-
-  test("prometheus endpoint exists", async () => {
-    const res = await api.get("/metrics").expect(200);
-    expect(res.text).toContain("joined_users_total");
-  });
 });
