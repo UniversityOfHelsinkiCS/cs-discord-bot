@@ -1,4 +1,11 @@
-const { isDbAdmin, isDbFaculty, requireAdmin, requireFaculty } = require("../../src/discordBot/services/permissions");
+const { PermissionFlagsBits } = require("discord.js");
+const {
+  isDbAdmin,
+  isDbFaculty,
+  requireAdmin,
+  requireFaculty,
+  requireDiscordAdministrator
+} = require("../../src/discordBot/services/permissions");
 const { findUserByDiscordId } = require("../../src/db/services/userService");
 const { sendErrorEphemeral } = require("../../src/discordBot/services/message");
 
@@ -90,5 +97,33 @@ describe("requireFaculty", () => {
     findUserByDiscordId.mockImplementationOnce(() => ({ faculty: true }));
     await requireFaculty({ user: { id: "7" }, member: { user: { id: "8" } } }, models);
     expect(findUserByDiscordId).toHaveBeenCalledWith("7", models.User);
+  });
+});
+
+describe("requireDiscordAdministrator", () => {
+  test("returns true without replying when the member has the Administrator permission", async () => {
+    const has = jest.fn(() => true);
+    expect(await requireDiscordAdministrator({ memberPermissions: { has } })).toBe(true);
+    expect(has).toHaveBeenCalledWith(PermissionFlagsBits.Administrator);
+    expect(sendErrorEphemeral).not.toHaveBeenCalled();
+  });
+
+  test("replies with an error and returns false without the Administrator permission", async () => {
+    const denied = { memberPermissions: { has: jest.fn(() => false) } };
+    expect(await requireDiscordAdministrator(denied)).toBe(false);
+    expect(sendErrorEphemeral).toHaveBeenCalledWith(denied, "You do not have permission to use this command.");
+  });
+
+  test("denies when there are no member permissions, such as in a DM", async () => {
+    expect(await requireDiscordAdministrator({})).toBe(false);
+  });
+
+  test("does not consult the database admin flag", async () => {
+    findUserByDiscordId.mockImplementation(() => ({ admin: true }));
+    expect(await requireDiscordAdministrator({ user: { id: "42" }, memberPermissions: { has: () => false } })).toBe(
+      false
+    );
+    expect(findUserByDiscordId).not.toHaveBeenCalled();
+    findUserByDiscordId.mockReset();
   });
 });

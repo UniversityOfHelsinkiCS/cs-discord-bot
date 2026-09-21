@@ -1,11 +1,11 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { confirmChoice } = require("../../services/confirm");
-const { requireAdmin } = require("../../services/permissions");
+const { requireDiscordAdministrator } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
+  if (!(await requireDiscordAdministrator(interaction))) return;
 
   await sendEphemeral(interaction, "Adding admin rights...");
 

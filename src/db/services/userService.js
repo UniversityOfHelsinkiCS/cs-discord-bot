@@ -51,6 +51,11 @@ const getAllUsers = async (User) => {
   return rows.map((r) => ({ ...r, name: decrypt(r.name), discordId: decrypt(r.discordId) }));
 };
 
+const getAdminUsers = async (User) => {
+  const users = await getAllUsers(User);
+  return users.filter((u) => u.admin);
+};
+
 const pruneUsersNotInGuild = async (guild, User) => {
   const users = await getAllUsers(User);
   const staleUsers = users.filter((u) => !guild.members.cache.has(u.discordId));
@@ -64,5 +69,6 @@ module.exports = {
   saveFacultyRoleToDb,
   findUserByDbId,
   getAllUsers,
+  getAdminUsers,
   pruneUsersNotInGuild
 };

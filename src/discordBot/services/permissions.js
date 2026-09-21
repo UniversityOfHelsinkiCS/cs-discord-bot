@@ -1,3 +1,4 @@
+const { PermissionFlagsBits } = require("discord.js");
 const { findUserByDiscordId } = require("../../db/services/userService");
 const { sendErrorEphemeral } = require("./message");
 
@@ -24,4 +25,7 @@ const requireAdmin = async (interaction, models) =>
 const requireFaculty = async (interaction, models) =>
   allowOrDeny(interaction, await isDbFaculty(interaction.user.id, models));
 
-module.exports = { isDbAdmin, isDbFaculty, requireAdmin, requireFaculty };
+const requireDiscordAdministrator = async (interaction) =>
+  allowOrDeny(interaction, Boolean(interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)));
+
+module.exports = { isDbAdmin, isDbFaculty, requireAdmin, requireFaculty, requireDiscordAdministrator };

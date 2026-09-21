@@ -23,7 +23,7 @@ Admin and faculty commands are restricted by default: Discord shows them only to
 - **Admin commands:** allow the `admin` and `cs-admin` roles.
 - **Faculty commands:** allow the `faculty`, `admin` and `cs-admin` roles.
 
-This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag.
+This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag. The exceptions are `/add_admin_rights`, `/remove_admin_rights` and `/list_admins`, which need Discord's Administrator permission instead of the database flag.
 
 Command | Description | Example
 --- |--- | ---
@@ -31,6 +31,7 @@ Command | Description | Example
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
+`/list_admins` | List all users with the admin flag in the database. | `/list_admins`
 `/list_courses` | List all courses and channels. | `/list_courses`
 `/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
 `/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`

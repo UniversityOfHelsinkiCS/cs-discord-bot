@@ -34,11 +34,11 @@ Commands can be used by typing `/<command_name>` into the message area at the bo
 
 ### Getting admin rights/adding admin rights
 
-Only other admins can grant admin rights. To grant admin rights, use `/add_admin_rights user:<user>`, picking the user from Discord's built-in user picker.
+Only members with Discord's Administrator permission can grant admin rights, whether or not they have the `admin` flag in the bot's database. To grant admin rights, use `/add_admin_rights user:<user>`, picking the user from Discord's built-in user picker. The user must already be in the bot's database; run `/update_database` if they are not.
 
 ### Removing admin rights
 
-To remove admin rights from a user, use `/remove_admin_rights user:<user>`, picking the user from Discord's built-in user picker.
+Also limited to members with Discord's Administrator permission. To remove admin rights from a user, use `/remove_admin_rights user:<user>`, picking the user from Discord's built-in user picker.
 
 ### Removing faculty rights
 
@@ -121,6 +121,7 @@ Command | Explanation | Arguments
 [/delete_command](./commands/admin/delete_command.md) | Delete the given slash command. | :heavy_check_mark:
 [/delete_course](./commands/admin/delete_course.md) | Delete the given course channel. | :heavy_check_mark:
 [/fix_course_roles](./commands/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:
+[/list_admins](./commands/admin/list_admins.md) | List all users with the admin flag in the database. | :x:
 [/list_courses](./commands/admin/list_courses.md) | List all courses and channels in them | :x:
 [/reload_commands](./commands/admin/reload_commands.md) | Reload all slash commands, returning deleted commands and registering new commands. | :x:
 [/remove_admin_rights](./commands/admin/remove_admin_rights.md) | Remove admin rights from a user. | :heavy_check_mark:
