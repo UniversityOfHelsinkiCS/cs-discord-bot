@@ -1,7 +1,7 @@
 const { execute } = require("../../../src/discordBot/commands/admin/add_admin_rights");
 const { findUserByDiscordId } = require("../../../src/db/services/userService");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
-const { requireDiscordAdministrator } = require("../../../src/discordBot/services/permissions");
+const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
 
 jest.mock("../../../src/discordBot/services/message");
@@ -24,7 +24,7 @@ const userModelInstanceMock = {
   save: jest.fn()
 };
 
-requireDiscordAdministrator.mockImplementation(() => true);
+requireAdmin.mockImplementation(() => true);
 confirmChoice.mockImplementation(() => true);
 findUserByDiscordId.mockImplementation(() => userModelInstanceMock);
 
@@ -34,8 +34,8 @@ afterEach(() => {
 });
 
 describe("slash add_admin_rights", () => {
-  test("Only Discord administrators can use the command", async () => {
-    requireDiscordAdministrator.mockImplementationOnce(() => false);
+  test("Only admins can use the command", async () => {
+    requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(0);
     expect(findUserByDiscordId).toHaveBeenCalledTimes(0);

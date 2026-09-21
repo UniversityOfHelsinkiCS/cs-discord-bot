@@ -4,9 +4,10 @@ const {
   removeUserFromDb,
   saveFacultyRoleToDb,
   findUserByDbId,
+  getAdminUsers,
   pruneUsersNotInGuild
 } = require("../../../src/db/services/userService");
-const { blindIndex } = require("../../../src/db/crypto");
+const { blindIndex, encrypt } = require("../../../src/db/crypto");
 
 // The User model getters/setters (field encryption + discordIdHash) have no
 // test-DB harness here; they are covered directly by db/crypto.test.js. These
@@ -117,6 +118,22 @@ describe("userService", () => {
       where: { discordIdHash: blindIndex(10) }
     });
     expect(userModelInstanceMock.update).toHaveBeenCalledTimes(0);
+  });
+
+  test("get admin users filters in the query and decrypts the identity fields", async () => {
+    userModelMock.findAll.mockResolvedValueOnce([
+      { name: encrypt("JonDoe"), discordId: encrypt("10"), admin: true, faculty: false }
+    ]);
+
+    const admins = await getAdminUsers(userModelMock);
+
+    expect(userModelMock.findAll).toHaveBeenCalledTimes(1);
+    expect(userModelMock.findAll).toHaveBeenCalledWith({
+      attributes: ["name", "admin", "faculty", "discordId"],
+      where: { admin: true },
+      raw: true
+    });
+    expect(admins).toEqual([{ name: "JonDoe", discordId: "10", admin: true, faculty: false }]);
   });
 
   test("prune removes users no longer in the guild", async () => {

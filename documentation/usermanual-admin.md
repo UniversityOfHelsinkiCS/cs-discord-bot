@@ -34,11 +34,11 @@ Commands can be used by typing `/<command_name>` into the message area at the bo
 
 ### Getting admin rights/adding admin rights
 
-Only members with Discord's Administrator permission can grant admin rights, whether or not they have the `admin` flag in the bot's database. To grant admin rights, use `/add_admin_rights user:<user>`, picking the user from Discord's built-in user picker. The user must already be in the bot's database; run `/update_database` if they are not.
+Only other admins can grant admin rights. To grant admin rights, use `/add_admin_rights user:<user>`, picking the user from Discord's built-in user picker.
 
 ### Removing admin rights
 
-Also limited to members with Discord's Administrator permission. To remove admin rights from a user, use `/remove_admin_rights user:<user>`, picking the user from Discord's built-in user picker.
+To remove admin rights from a user, use `/remove_admin_rights user:<user>`, picking the user from Discord's built-in user picker.
 
 ### Removing faculty rights
 

@@ -42,19 +42,19 @@ const saveFacultyRoleToDb = async (discordId, User) => {
   }
 };
 
-const getAllUsers = async (User) => {
+const findDecryptedUsers = async (User, where) => {
   // raw: true bypasses the model getters, so decrypt the identity fields here.
   const rows = await User.findAll({
     attributes: ["name", "admin", "faculty", "discordId"],
+    where,
     raw: true
   });
   return rows.map((r) => ({ ...r, name: decrypt(r.name), discordId: decrypt(r.discordId) }));
 };
 
-const getAdminUsers = async (User) => {
-  const users = await getAllUsers(User);
-  return users.filter((u) => u.admin);
-};
+const getAllUsers = async (User) => findDecryptedUsers(User);
+
+const getAdminUsers = async (User) => findDecryptedUsers(User, { admin: true });
 
 const pruneUsersNotInGuild = async (guild, User) => {
   const users = await getAllUsers(User);

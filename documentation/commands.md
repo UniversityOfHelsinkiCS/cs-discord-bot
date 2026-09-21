@@ -23,8 +23,7 @@ Admin and faculty commands are restricted by default: Discord shows them only to
 - **Admin commands:** allow the `admin` and `cs-admin` roles.
 - **Faculty commands:** allow the `faculty`, `admin` and `cs-admin` roles.
 
-This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag. The exceptions are `/add_admin_rights`, `/remove_admin_rights` and `/list_admins`, which need Discord's Administrator permission instead of the database flag.
-
+This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag.
 Command | Description | Example
 --- |--- | ---
 `/add_admin_rights` | Add admin rights to given user. | `/add_admin_rights user:@someone`

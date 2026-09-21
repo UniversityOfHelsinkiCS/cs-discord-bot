@@ -1,6 +1,6 @@
 const { execute } = require("../../../src/discordBot/commands/admin/list_admins");
 const { getAdminUsers } = require("../../../src/db/services/userService");
-const { requireDiscordAdministrator } = require("../../../src/discordBot/services/permissions");
+const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../../src/discordBot/services/message");
 
 jest.mock("../../../src/discordBot/services/message");
@@ -10,15 +10,15 @@ jest.mock("../../../src/db/services/userService");
 const { defaultAdminInteraction } = require("../../mocks/mockInteraction");
 const models = require("../../mocks/mockModels");
 
-requireDiscordAdministrator.mockImplementation(() => true);
+requireAdmin.mockImplementation(() => true);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
 describe("slash list_admins", () => {
-  test("Only Discord administrators can use the command", async () => {
-    requireDiscordAdministrator.mockImplementationOnce(() => false);
+  test("Only admins can use the command", async () => {
+    requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(0);
     expect(getAdminUsers).toHaveBeenCalledTimes(0);
