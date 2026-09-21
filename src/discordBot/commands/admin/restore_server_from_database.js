@@ -1,5 +1,10 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { getAllCourses, saveCourseIdWithName, findCourseFromDbById, getCourseByDiscordId } = require("../../../db/services/courseService");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const {
+  getAllCourses,
+  saveCourseIdWithName,
+  findCourseFromDbById,
+  getCourseByDiscordId
+} = require("../../../db/services/courseService");
 const { getAllChannels, saveChannelIdWithName, getChannelByDiscordId } = require("../../../db/services/channelService");
 const { getAllUsers, findUserByDbId } = require("../../../db/services/userService");
 const { getAllMembers } = require("../../../db/services/courseMemberService");
@@ -13,7 +18,8 @@ const {
   getCategoryChannelPermissionOverwrites,
   createInvitation,
   updateAnnouncementChannelMessage,
-  setCoursePositionABC } = require("../../services/service");
+  setCoursePositionABC
+} = require("../../services/service");
 const { updateGuide } = require("../../services/guide");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
@@ -58,10 +64,11 @@ const restoreCategories = async (guild, models) => {
       emojiName(currentCourse, currentCourse);
       await categoryFound.setName(currentCourse.name);
       await setCoursePositionABC(guild, currentCourse.name, models.Course);
-    }
-    else {
-
-      let categoryObject = getCategoryObject(currentCourse.name, getCategoryChannelPermissionOverwrites(guild, admin, student));
+    } else {
+      let categoryObject = getCategoryObject(
+        currentCourse.name,
+        getCategoryChannelPermissionOverwrites(guild, admin, student)
+      );
       categoryObject = emojiName(categoryObject, currentCourse);
       const category = await findOrCreateChannel(categoryObject, guild);
       await saveCourseIdWithName(category.id, currentCourse.name, models.Course);
@@ -83,9 +90,7 @@ const restoreChannels = async (guild, models) => {
       channelFound.name = currentChannel.name;
       const parentChannel = await findCourseFromDbById(currentChannel.courseId, models.Course);
       await channelFound.setParent(parentChannel.categoryId);
-
-    }
-    else {
+    } else {
       const parentId = await findCourseFromDbById(currentChannel.courseId, models.Course);
       const parentChannel = await channelCache.get(parentId.dataValues.categoryId);
       const student = await findOrCreateRoleWithName(parentId.name, guild);
@@ -97,48 +102,61 @@ const restoreChannels = async (guild, models) => {
           channelObject = {
             name: currentChannel.name,
             parent: parentChannel,
-            options: { type: "GUILD_TEXT", parent: parentChannel, permissionOverwrites: [
-              {
-                id: guild.id,
-                deny: ["VIEW_CHANNEL"],
-              },
-              {
-                id: student,
-                deny: ["SEND_MESSAGES"],
-                allow: ["VIEW_CHANNEL"],
-              },
-              {
-                id: admin,
-                allow: ["VIEW_CHANNEL", "SEND_MESSAGES"],
-              },
-            ], topic: currentChannel.topic },
+            options: {
+              type: ChannelType.GuildText,
+              parent: parentChannel,
+              permissionOverwrites: [
+                {
+                  id: guild.id,
+                  deny: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                  id: student,
+                  deny: [PermissionFlagsBits.SendMessages],
+                  allow: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                  id: admin,
+                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+                }
+              ],
+              topic: currentChannel.topic
+            }
           };
-        }
-        else if (currentChannel.hidden) {
+        } else if (currentChannel.hidden) {
           channelObject = {
             name: currentChannel.name,
             parent: parentChannel,
-            options: { type: "GUILD_TEXT", parent: parentChannel, permissionOverwrites: [
-              {
-                id: guild.id,
-                deny: ["VIEW_CHANNEL"],
-              },
-              {
-                id: student,
-                deny: ["SEND_MESSAGES", "VIEW_CHANNEL"],
-              },
-              {
-                id: admin,
-                allow: ["VIEW_CHANNEL", "SEND_MESSAGES"],
-              },
-            ], topic: currentChannel.topic },
+            options: {
+              type: ChannelType.GuildText,
+              parent: parentChannel,
+              permissionOverwrites: [
+                {
+                  id: guild.id,
+                  deny: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                  id: student,
+                  deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel]
+                },
+                {
+                  id: admin,
+                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+                }
+              ],
+              topic: currentChannel.topic
+            }
           };
-        }
-        else {
+        } else {
           channelObject = {
             name: currentChannel.name,
             parent: parentChannel,
-            options: { type: "GUILD_TEXT", parent: parentChannel, permissionOverwrites: [], topic: currentChannel.topic },
+            options: {
+              type: ChannelType.GuildText,
+              parent: parentChannel,
+              permissionOverwrites: [],
+              topic: currentChannel.topic
+            }
           };
         }
 
@@ -149,19 +167,20 @@ const restoreChannels = async (guild, models) => {
           await createInvitation(guild, parentId.dataValues.name);
           await updateAnnouncementChannelMessage(guild, newChannel);
         }
-
-      }
-      else if (currentChannel.voiceChannel) {
-
+      } else if (currentChannel.voiceChannel) {
         const channelObject = {
           name: currentChannel.name,
           parent: parentChannel,
-          options: { type: "GUILD_VOICE", parent: parentChannel, permissionOverwrites: [], topic: currentChannel.topic },
+          options: {
+            type: ChannelType.GuildVoice,
+            parent: parentChannel,
+            permissionOverwrites: [],
+            topic: currentChannel.topic
+          }
         };
 
         const newChannel = await findOrCreateChannel(channelObject, guild);
         await saveChannelIdWithName(newChannel.id, currentChannel.name, models.Channel);
-
       }
     }
   }
@@ -175,21 +194,35 @@ const restorePermissions = async (guild, models) => {
     const currentCourse = allCourses[course];
     const discordCategory = await channelCache.get(currentCourse.categoryId);
     if (currentCourse.locked) {
-      discordCategory.permissionOverwrites.create(guild.roles.cache.find(r => r.name.toLowerCase() === `${currentCourse.name}`), { VIEW_CHANNEL: true, SEND_MESSAGES: false });
-      discordCategory.permissionOverwrites.create(guild.roles.cache.find(r => r.name.toLowerCase() === `${currentCourse.name} ${courseAdminRole}`), { VIEW_CHANNEL: true, SEND_MESSAGES: true });
-      discordCategory.permissionOverwrites.create(guild.roles.cache.find(r => r.name === "faculty"), { SEND_MESSAGES: true });
-      discordCategory.permissionOverwrites.create(guild.roles.cache.find(r => r.name === "admin"), { SEND_MESSAGES: true });
-    }
-    else {
-      discordCategory.permissionOverwrites.create(guild.roles.cache.find(r => r.name.toLowerCase() === `${currentCourse.name}`), { VIEW_CHANNEL: true, SEND_MESSAGES: true });
+      discordCategory.permissionOverwrites.create(
+        guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name}`),
+        { ViewChannel: true, SendMessages: false }
+      );
+      discordCategory.permissionOverwrites.create(
+        guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name} ${courseAdminRole}`),
+        { ViewChannel: true, SendMessages: true }
+      );
+      discordCategory.permissionOverwrites.create(
+        guild.roles.cache.find((r) => r.name === "faculty"),
+        { SendMessages: true }
+      );
+      discordCategory.permissionOverwrites.create(
+        guild.roles.cache.find((r) => r.name === "admin"),
+        { SendMessages: true }
+      );
+    } else {
+      discordCategory.permissionOverwrites.create(
+        guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name}`),
+        { ViewChannel: true, SendMessages: true }
+      );
     }
   }
 };
 
 const restoreUsers = async (guild, models) => {
   const users = await getAllUsers(models.User);
-  const adminRoleObject = await guild.roles.cache.find(r => r.name === "admin");
-  const facultyRoleObject = await guild.roles.cache.find(r => r.name === facultyRole);
+  const adminRoleObject = await guild.roles.cache.find((r) => r.name === "admin");
+  const facultyRoleObject = await guild.roles.cache.find((r) => r.name === facultyRole);
 
   for (const user in users) {
     const currentUser = users[user];
@@ -216,10 +249,10 @@ const restoreCourseMembers = async (guild, models) => {
     if (user) {
       const foundUser = await guild.members.cache.get(user.discordId);
       if (foundUser) {
-        const courseRole = guild.roles.cache.find(r => r.name === course.name);
+        const courseRole = guild.roles.cache.find((r) => r.name === course.name);
         await foundUser.roles.add(courseRole);
         if (instructor) {
-          const instructorRole = guild.roles.cache.find(r => r.name === `${course.name} ${courseAdminRole}`);
+          const instructorRole = guild.roles.cache.find((r) => r.name === `${course.name} ${courseAdminRole}`);
           await foundUser.roles.add(instructorRole);
         }
       }
@@ -228,33 +261,32 @@ const restoreCourseMembers = async (guild, models) => {
 };
 
 const deleteExtraChannels = async (guild, models) => {
-  await Promise.all(guild.channels.cache.map(async aChannel => {
-    if (aChannel.type !== "GUILD_CATEGORY") {
-      const channelToRemove = await getChannelByDiscordId(aChannel.id, models.Channel);
-      if (!channelToRemove) {
-        if (aChannel.parent) {
-          const parentId = aChannel.parent.id;
-          const parent = await getCourseByDiscordId(parentId, models.Course);
-          if (parent) {
-            aChannel.delete();
+  await Promise.all(
+    guild.channels.cache.map(async (aChannel) => {
+      if (aChannel.type !== ChannelType.GuildCategory) {
+        const channelToRemove = await getChannelByDiscordId(aChannel.id, models.Channel);
+        if (!channelToRemove) {
+          if (aChannel.parent) {
+            const parentId = aChannel.parent.id;
+            const parent = await getCourseByDiscordId(parentId, models.Course);
+            if (parent) {
+              aChannel.delete();
+            }
           }
         }
       }
-    }
-  }));
+    })
+  );
 };
 
 const emojiName = (categoryObject, currentCourse) => {
   if (!currentCourse.locked && !currentCourse.private) {
     categoryObject.name = "📚 " + currentCourse.name;
-  }
-  else if (!currentCourse.locked && currentCourse.private) {
+  } else if (!currentCourse.locked && currentCourse.private) {
     categoryObject.name = "👻 " + currentCourse.name;
-  }
-  else if (currentCourse.locked && !currentCourse.private) {
+  } else if (currentCourse.locked && !currentCourse.private) {
     categoryObject.name = "📚🔐 " + currentCourse.name;
-  }
-  else if (currentCourse.locked && currentCourse.private) {
+  } else if (currentCourse.locked && currentCourse.private) {
     categoryObject.name = "👻🔐 " + currentCourse.name;
   }
   return categoryObject;
@@ -264,9 +296,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("restore_server_from_database")
     .setDescription("Recreate Discord server from database")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/restore_server_from_database",
   description: "Recreate Discord server from database",
-  roles: ["admin"],
+  roles: ["admin"]
 };

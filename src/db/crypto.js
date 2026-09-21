@@ -19,7 +19,9 @@ const loadMasterKey = () => {
   }
   const key = Buffer.from(raw, "base64");
   if (key.length !== KEY_LENGTH) {
-    throw new Error(`${KEY_ENV} must decode to ${KEY_LENGTH} bytes (got ${key.length}) - generate one with: openssl rand -base64 ${KEY_LENGTH}`);
+    throw new Error(
+      `${KEY_ENV} must decode to ${KEY_LENGTH} bytes (got ${key.length}) - generate one with: openssl rand -base64 ${KEY_LENGTH}`
+    );
   }
   return key;
 };
@@ -38,7 +40,7 @@ const getSubkeys = () => {
     const masterKey = loadMasterKey();
     subkeys = {
       enc: deriveKey(masterKey, "joined_users/field-enc/v1"),
-      index: deriveKey(masterKey, "joined_users/blind-index/v1"),
+      index: deriveKey(masterKey, "joined_users/blind-index/v1")
     };
   }
   return subkeys;
@@ -71,7 +73,9 @@ const decrypt = (value) => {
   if (!isEncrypted(value)) return value;
   const packed = Buffer.from(value.slice(VERSION.length + 1), "base64");
   if (packed.length < IV_LENGTH + TAG_LENGTH) {
-    throw new Error(`${KEY_ENV}: ciphertext is truncated (${packed.length} bytes, expected at least ${IV_LENGTH + TAG_LENGTH})`);
+    throw new Error(
+      `${KEY_ENV}: ciphertext is truncated (${packed.length} bytes, expected at least ${IV_LENGTH + TAG_LENGTH})`
+    );
   }
   const iv = packed.subarray(0, IV_LENGTH);
   const tag = packed.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
@@ -80,11 +84,13 @@ const decrypt = (value) => {
   decipher.setAuthTag(tag);
   try {
     return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
-  }
-  catch (err) {
+  } catch (err) {
     // Raw GCM auth failures surface as "unable to authenticate data", which gives no
     // hint that the cause is almost always a changed or mistyped FIELD_ENCRYPTION_KEY.
-    throw new Error(`${KEY_ENV} does not decrypt this ${VERSION} value - the key does not match the one it was encrypted with (${err.message})`);
+    throw new Error(
+      `${KEY_ENV} does not decrypt this ${VERSION} value - the key does not match the one it was encrypted with (${err.message})`,
+      { cause: err }
+    );
   }
 };
 

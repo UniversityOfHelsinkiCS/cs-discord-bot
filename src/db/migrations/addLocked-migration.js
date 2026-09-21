@@ -5,10 +5,10 @@ module.exports = {
   up: async (queryInterface) => {
     await queryInterface.addColumn("course", "locked", {
       type: BOOLEAN,
-      defaultValue: false,
+      defaultValue: false
     });
   },
   down: async (queryInterface) => {
     await queryInterface.removeColumn("course", "locked");
-  },
+  }
 };

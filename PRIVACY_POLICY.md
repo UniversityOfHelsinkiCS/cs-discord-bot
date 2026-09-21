@@ -1,6 +1,6 @@
 # Privacy Policy — CS Discord Bot
 
-*Last updated: 2 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
+*Last updated: 19 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
 
 This Privacy Policy describes what data the CS Discord Bot ("the Bot") collects, why, and how it is handled. The Bot is a private bot developed and operated for one specific Discord server, that of the Department of Computer Science, University of Helsinki ("the Server"). It is not offered to, or run in, any other server. Source code: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot
 
@@ -24,11 +24,12 @@ The Bot is developed and run by the University of Helsinki's software developmen
 - **Message content** - the Bot receives message content through Discord's privileged Message Content intent for every channel it can see, but only *inspects* it as follows:
   - In the general chat channel and the "honeypot" spam-trap channel, message text is checked against known spam/scam patterns.
   - On messages that carry exactly four image attachments, in **any** channel, the images' dimensions are checked against known compromised-account scam fingerprints. Messages with any other number of images are received but their attachment metadata is not inspected.
+  - In **any** channel, the Bot checks whether a message starts with `/`. If someone types or pastes a slash command as plain text instead of using Discord's command picker, the Bot replies with a pointer to the guide, and for `/join <course>` it carries out the join for that course. The text of other messages is not used for this.
 
-  The message text and image dimensions used for these checks are not written to the database; text checked in the honeypot and chat channels is held only briefly in memory (see section 6).
+  The message text, typed slash commands and image dimensions used for these checks are not written to the database; text checked in the honeypot and chat channels is held only briefly in memory (see section 6).
 - **Moderation actions** - kicks and bans issued by the Bot, and the reason/context for them, tied to the affected user ID. These are **not** written to any table in our database - there is no moderation-log table - so the automatic deletion that happens when you leave the Server (see section 6) does not reach them. The record of a moderation action lives in two other places instead:
   - **The administrator-only channel.** When the Bot acts automatically (see section 2.5), and also when it flags a message as *possibly* a scam without taking action, it posts a report into a private, administrator-only channel on the Server. For honeypot hits that report includes the triggering message's text and any attachment links; for image-scam hits it includes the attachment metadata and images. An administrator reviews these reports. Reports an administrator judges to be false positives are deleted within about 24 hours of that review. Reports for confirmed scam or spam activity are kept indefinitely in that channel as a security log and to help improve the detection rules.
-  - **Logs and error monitoring.** A moderation event, or an error while carrying one out, may also produce a line in the Bot's console and operational logs, and - if it involved an error - an event in Sentry (see section 2.4). These are short-lived or kept per those services' own retention settings.
+  - **Logs and error monitoring.** A moderation event, or an error while carrying one out, may also produce a line in the Bot's console and operational logs, and - if it involved an error - an event in our Sentry instance (see section 2.4). The console and operational logs are short-lived; Sentry events are kept per that instance's retention settings.
 
 ### 2.2 Stored in our database
 
@@ -36,7 +37,7 @@ We persist the following in a PostgreSQL database.
 
 Records that relate to you as an individual:
 
-- **User records** (`joined_users` table): your Discord user ID (`discordId`) and your Discord account username (`name`) - the account username, not your nickname on the Server - plus two booleans, `admin` and `faculty`, recording whether you hold the Server's admin or faculty role. Each row also has an internal ID and a creation timestamp.
+- **User records** (`joined_users` table): your Discord user ID (`discordId`) and your Discord account username (`name`) - the account username, not your nickname on the Server - plus two booleans, `admin` and `faculty`, recording whether you hold the Server's admin or faculty role, which the Bot also uses to check who may run admin and faculty commands. Each row also has an internal ID and a creation timestamp.
 - **Course membership records** (`coursemember` table): a row linking your user record to a course record, with an `instructor` boolean and a creation timestamp. Together these record which course roles you hold.
 - **Website login sessions** (see section 2.3): stored server-side in this same database via the session store. A session record contains a session identifier and the Discord identity data returned during login - your Discord ID, username, and avatar, and this identity blob is encrypted (AES-256-GCM) at the application level before it is written. The OAuth access token issued for your login is used only transiently during the login request and is **not** written to the session store; no refresh token is stored. Sessions are removed when they expire or when you log out.
 
@@ -57,9 +58,9 @@ Logging in sets a session cookie, and your session is stored server-side in our 
 
 ### 2.4 Operational/diagnostic data
 
-- **Error monitoring (Sentry)**: when the Bot hits an error or unhandled exception anywhere in its operation - processing a command, handling a Discord event, or carrying out a moderation action - it sends diagnostic information to Sentry. This can include the acting or affected user's Discord ID and display name, the command or event name, and the error message and stack trace.
-- **Application logs**: the Bot writes operational logs to its own console/host (which may include Discord IDs and event details, but not full message content). These are additionally forwarded to the Papertrail (SolarWinds) log-management service only when a Papertrail endpoint is configured for the running deployment, which may not be the case at any given time.
-- **Usage metrics (Prometheus)**: the Bot's web component exposes a `/metrics` endpoint with aggregate counters (for example, the number of course joins per course) for external Prometheus-based monitoring infrastructure to scrape. These counters contain no usernames, user IDs, or message content.
+- **Error monitoring (Sentry)**: when the Bot hits an error or unhandled exception anywhere in its operation - processing a command, handling a Discord event, or carrying out a moderation action - it sends diagnostic information to our own Sentry instance, which we host on our infrastructure in Finland. This can include the acting or affected user's Discord ID and display name, the command or event name, and the error message and stack trace.
+- **Application logs**: the Bot writes operational logs to its own console/host (which may include Discord IDs and event details, but not full message content).
+- **Usage metrics (Prometheus)**: the Bot's web component exposes a `/metrics` endpoint with aggregate counters (for example, the number of course joins per course) for our own Prometheus and Grafana monitoring, hosted on our infrastructure in Finland, to scrape. These counters contain no usernames, user IDs, or message content.
 
 ### 2.5 Automated moderation decisions
 
@@ -74,6 +75,7 @@ The affected account receives a direct message explaining what happened (for a s
 ## 3. Why we collect this data
 
 - To manage course-related roles, channels, and membership on the Server.
+- To check that only admins and faculty can run the admin and faculty commands.
 - To detect and respond to spam/scam activity (compromised-account image scams, honeypot-channel spam) in order to protect members of the Server.
 - To let you verify faculty status or use a course-join link on the companion website, and to add you to the Server with the right role.
 - To diagnose and fix bugs, and to monitor that the Bot is running correctly.
@@ -91,7 +93,7 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 - Our database is hosted on our infrastructure and accessed only by the Bot service and designated administrators.
 - **Encryption of identity data.** In the `joined_users` table your Discord user ID and username are encrypted with AES-256-GCM at the application level before they are written, and a keyed HMAC-SHA256 index of the user ID is stored alongside so the Bot can still look you up by exact ID and enforce uniqueness without holding the ID in the clear. Website login sessions are encrypted the same way. The encryption key is held only in the running service's environment, separately from the database and its backups. Data in transit to Discord and to our database uses TLS/HTTPS.
 - **What this protects, and what it does not.** We hold this data as a persistent, queryable compilation; who is on the Server, under what username, in which courses, since when, and with what privileges. We treat that compilation as carrying more risk than the same facts glanced at in the Discord client, which is why the identity fields are encrypted. Application-level encryption does not hide everything: the number of rows still approximates the Server's member count and row timestamps still show roughly when each person joined and in what order. The shape of the course-membership graph is still visible to someone with database access, and copies of data in transaction logs, temporary files, and database statistics aren't protected. The `admin` and `faculty` flags, internal row IDs, join timestamps, and the course-membership links themselves are stored without application-level encryption.
-- Access to the database, hosting platform, and third-party dashboards (Sentry, log management) is restricted to Bot and infrastructure maintainers.
+- Access to the database, hosting platform, and monitoring dashboards (Sentry, Grafana) is restricted to Bot and infrastructure maintainers.
 
 ## 6. Data retention
 
@@ -99,21 +101,20 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 - **Course-membership records** for a user are deleted together with that user's record; the database removes them automatically when the user record is deleted.
 - **Course and channel records** are retained for as long as the course exists on the Server, and are removed by administrators when the course or channel is deleted or no longer needed. They contain no personal data about individual members.
 - **Website sessions** are removed when they expire or when you log out.
-- **Database backups.** We keep automated database backups: one from the last day, one from the last week, one from the last month, and one from the last year. Backups are encrypted, and a deletion from the live database is not reflected in a backup until that backup is next rotated, so a deleted record can persist in a backup for up to a year before it ages out.
+- **Database backups.** We keep automated database backups: one per day for the last week, one per week for the last month, and one per month for the last year. Backups are encrypted, and a deletion from the live database is not reflected in a backup until that backup is next rotated, so a deleted record can persist in a backup for up to a year before it ages out.
 - **In-memory spam-detection data**: the recent message and attachment fingerprints, the list of accounts that have posted in the honeypot channel, and the per-account report cooldowns are all held only in memory and discarded automatically about one hour after the event they relate to. All in-memory state is also cleared whenever the Bot restarts.
 - **Automated-moderation reports** in the administrator-only Discord channel: reports an administrator judges to be false positives are deleted within about 24 hours of that review. Reports for confirmed scam or spam activity are kept indefinitely as a security log and to improve the detection rules; these concern abusive or compromised accounts and the content they posted.
-- **Diagnostic data sent to Sentry or Papertrail** is retained according to those services' own retention settings, typically on the order of weeks to a few months.
+- **Diagnostic data sent to Sentry** is kept in our Sentry instance according to its retention settings.
 
 ## 7. Third parties and international transfers
 
-The Bot relies on the following external processors and platforms:
+The Bot relies on one external platform:
 
 - **Discord** - the platform the Bot operates on; all interactions necessarily pass through Discord's API.
-- **Sentry** - error monitoring; may receive user IDs, usernames, and error context.
-- **Papertrail (SolarWinds)** - log management; receives Discord IDs and event metadata only when log forwarding is enabled for the deployment (see section 2.4).
-- **Prometheus monitoring** - external monitoring infrastructure scrapes the Bot's `/metrics` endpoint (section 2.4). Only aggregate, non-identifying counters are exposed, so no personal data is shared this way.
 
-Some of these providers (Discord, Sentry, and Papertrail) are established outside the EU/EEA, primarily in the United States. Where data is transferred outside the EEA, the transfer relies on the European Commission's adequacy decision for the EU–US Data Privacy Framework where the provider is certified under it, and otherwise on the European Commission's Standard Contractual Clauses, as set out in each provider's own data-processing terms.
+Error monitoring (Sentry) and metrics monitoring (Prometheus and Grafana) are run by us on our own infrastructure in Finland, so diagnostic data and metrics are not sent to any other party. Only aggregate, non-identifying counters are exposed to the metrics monitoring (section 2.4).
+
+Discord is established outside the EU/EEA, primarily in the United States. Where data is transferred outside the EEA, the transfer relies on the European Commission's adequacy decision for the EU–US Data Privacy Framework where Discord is certified under it, and otherwise on the European Commission's Standard Contractual Clauses, as set out in Discord's own data-processing terms.
 
 We do not sell or use your data for advertising, and we do not share it with any party beyond what's listed above.
 

@@ -11,12 +11,16 @@ const initCourseMemberHooks = (guild, models) => {
     const user = await findUserByDbId(courseMember.dataValues.userId, models.User);
     logInfo("User: id=" + user.id);
     const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
-    const member = guild.members.cache.get(user.discordId)
-      || await guild.members.fetch(user.discordId).catch(() => null);
+    const member =
+      guild.members.cache.get(user.discordId) || (await guild.members.fetch(user.discordId).catch(() => null));
     logInfo("Member: " + member);
-    const courseRole = guild.roles.cache.find(r => r.name === course.name);
+    const courseRole = guild.roles.cache.find((r) => r.name === course.name);
     if (!member || !courseRole) {
-      return logError(new Error(`afterCreate hook: cannot add course role (course ${course.name}, discordId ${user.discordId}, member found: ${Boolean(member)}, role found: ${Boolean(courseRole)})`));
+      return logError(
+        new Error(
+          `afterCreate hook: cannot add course role (course ${course.name}, discordId ${user.discordId}, member found: ${Boolean(member)}, role found: ${Boolean(courseRole)})`
+        )
+      );
     }
     await member.roles.add(courseRole);
     joinedUsersCounter.inc({ course: course.name });
@@ -25,26 +29,28 @@ const initCourseMemberHooks = (guild, models) => {
   models.CourseMember.addHook("afterBulkDestroy", async (courseMember) => {
     const user = await findUserByDbId(courseMember.where.userId, models.User);
     const course = await findCourseFromDbById(courseMember.where.courseId, models.Course);
-    const member = guild.members.cache.get(user.discordId)
-      || await guild.members.fetch(user.discordId).catch(() => null);
+    const member =
+      guild.members.cache.get(user.discordId) || (await guild.members.fetch(user.discordId).catch(() => null));
 
     if (member) {
       const courseRoles = guild.roles.cache
-        .filter(role => (role.name === `${course.name} ${courseAdminRole}` || role.name === course.name))
-        .map(role => role.name);
+        .filter((role) => role.name === `${course.name} ${courseAdminRole}` || role.name === course.name)
+        .map((role) => role.name);
 
-      await Promise.all(member.roles.cache
-        .filter(role => courseRoles.includes(role.name))
-        .map(async role => await member.roles.remove(role)));
+      await Promise.all(
+        member.roles.cache
+          .filter((role) => courseRoles.includes(role.name))
+          .map(async (role) => await member.roles.remove(role))
+      );
     }
-    const announcementChannel = guild.channels.cache.find(c => c.name === `${course.name}_announcement`);
+    const announcementChannel = guild.channels.cache.find((c) => c.name === `${course.name}_announcement`);
     updateAnnouncementChannelMessage(guild, announcementChannel).catch(logError);
   });
 
   models.CourseMember.addHook("afterUpdate", async (courseMember) => {
     if (!courseMember._changed.has("instructor")) return;
     const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
-    const announcementChannel = guild.channels.cache.find(c => c.name === `${course.name}_announcement`);
+    const announcementChannel = guild.channels.cache.find((c) => c.name === `${course.name}_announcement`);
     updateAnnouncementChannelMessage(guild, announcementChannel).catch(logError);
   });
 };

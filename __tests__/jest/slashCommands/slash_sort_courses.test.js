@@ -1,3 +1,4 @@
+const { ChannelType } = require("discord.js");
 const { execute } = require("../../../src/discordBot/commands/admin/sort_courses");
 const { findCategoryWithCourseName } = require("../../../src/discordBot/services/service");
 const { findAllCourseNames } = require("../../../src/db/services/courseService");
@@ -18,8 +19,8 @@ afterEach(() => {
 });
 
 const setUpCategories = (client) => {
-  const channelA = { name: "📚 a", type: "GUILD_CATEGORY", edit: jest.fn(), position: 2 };
-  const channelB = { name: "📚 b", type: "GUILD_CATEGORY", edit: jest.fn(), position: 1 };
+  const channelA = { name: "📚 a", type: ChannelType.GuildCategory, edit: jest.fn(), position: 2 };
+  const channelB = { name: "📚 b", type: ChannelType.GuildCategory, edit: jest.fn(), position: 1 };
   client.guild.channels.cache.set(1, channelB);
   client.guild.channels.cache.set(2, channelA);
   return { channelA, channelB };

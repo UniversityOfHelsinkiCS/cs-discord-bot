@@ -1,3 +1,4 @@
+const { MessageFlags } = require("discord.js");
 const {
   sendErrorReport,
   sendErrorEphemeral,
@@ -6,7 +7,8 @@ const {
   sendErrorReportNoInteraction,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
-  editErrorEphemeral } = require("../../src/discordBot/services/message");
+  editErrorEphemeral
+} = require("../../src/discordBot/services/message");
 
 const { defaultAdminInteraction } = require("../mocks/mockInteraction");
 
@@ -44,14 +46,17 @@ describe("message service", () => {
     const msg = "fake message";
     await sendErrorEphemeral(defaultAdminInteraction, msg);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: `Error: ${msg}`, ephemeral: true });
+    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({
+      content: `Error: ${msg}`,
+      flags: MessageFlags.Ephemeral
+    });
   });
 
   test("ephemeral", async () => {
     const msg = "fake message";
     await sendEphemeral(defaultAdminInteraction, msg);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: `${msg}`, ephemeral: true });
+    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: `${msg}`, flags: MessageFlags.Ephemeral });
   });
 
   test("edit ephemeral", async () => {
@@ -59,9 +64,9 @@ describe("message service", () => {
     await sendEphemeral(defaultAdminInteraction, "Wait...");
     await editEphemeral(defaultAdminInteraction, msg);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", ephemeral: true });
+    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", flags: MessageFlags.Ephemeral });
     expect(defaultAdminInteraction.editReply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `${msg}`, ephemeral: true });
+    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `${msg}` });
   });
 
   test("edit error ephemeral", async () => {
@@ -69,9 +74,9 @@ describe("message service", () => {
     await sendEphemeral(defaultAdminInteraction, "Wait...");
     await editErrorEphemeral(defaultAdminInteraction, msg);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", ephemeral: true });
+    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", flags: MessageFlags.Ephemeral });
     expect(defaultAdminInteraction.editReply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `Error: ${msg}`, ephemeral: true });
+    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `Error: ${msg}` });
   });
 
   test("edit ephemeral with components", async () => {
@@ -80,9 +85,12 @@ describe("message service", () => {
     await sendEphemeral(defaultAdminInteraction, "Wait...");
     await editEphemeralWithComponents(defaultAdminInteraction, msg, components);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", ephemeral: true });
+    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", flags: MessageFlags.Ephemeral });
     expect(defaultAdminInteraction.editReply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `${msg}`, components: [components], ephemeral: true });
+    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({
+      content: `${msg}`,
+      components: [components]
+    });
   });
 
   test("edit ephemeral clear components", async () => {
@@ -90,8 +98,11 @@ describe("message service", () => {
     await sendEphemeral(defaultAdminInteraction, "Wait...");
     await editEphemeralClearComponents(defaultAdminInteraction, msg);
     expect(defaultAdminInteraction.reply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", ephemeral: true });
+    expect(defaultAdminInteraction.reply).toHaveBeenCalledWith({ content: "Wait...", flags: MessageFlags.Ephemeral });
     expect(defaultAdminInteraction.editReply).toHaveBeenCalledTimes(1);
-    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({ content: `${msg}`, components: [], ephemeral: true });
+    expect(defaultAdminInteraction.editReply).toHaveBeenCalledWith({
+      content: `${msg}`,
+      components: []
+    });
   });
 });

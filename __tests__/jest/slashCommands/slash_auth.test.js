@@ -17,6 +17,9 @@ describe("slash auth command", () => {
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
-    expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, `${process.env.BACKEND_SERVER_URL}/authenticate_faculty`);
+    expect(editEphemeral).toHaveBeenCalledWith(
+      defaultTeacherInteraction,
+      `${process.env.BACKEND_SERVER_URL}/authenticate_faculty`
+    );
   });
 });

@@ -1,4 +1,5 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ChannelType, PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 const {
   findChannelWithNameAndType,
   msToMinutesAndSeconds,
@@ -6,11 +7,10 @@ const {
   checkCourseCooldown,
   getCourseNameFromCategory,
   containsEmojis,
-  isCourseCategory } = require("../../services/service");
-const {
-  findCourseFromDb,
-  findCourseFromDbWithFullName } = require("../../../db/services/courseService");
-const { sendEphemeral, sendErrorEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+  isCourseCategory
+} = require("../../services/service");
+const { findCourseFromDb, findCourseFromDbWithFullName } = require("../../../db/services/courseService");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
@@ -20,17 +20,18 @@ const changeCourseCode = async (interaction, client, models, courseName, newValu
   const databaseValue = await findCourseFromDb(courseName, models.Course);
   const trimmedNewCourseName = newValue.replace(/\s/g, "");
   if (databaseValue.code.toLowerCase() === databaseValue.name.toLowerCase()) {
-    if (findChannelWithNameAndType(trimmedNewCourseName, "GUILD_CATEGORY", guild) && databaseValue.code.toLowerCase() !== trimmedNewCourseName.toLowerCase()) {
+    if (
+      findChannelWithNameAndType(trimmedNewCourseName, ChannelType.GuildCategory, guild) &&
+      databaseValue.code.toLowerCase() !== trimmedNewCourseName.toLowerCase()
+    ) {
       await editErrorEphemeral(interaction, "Course code already exists");
       return false;
-    }
-    else {
+    } else {
       databaseValue.code = trimmedNewCourseName;
       databaseValue.name = trimmedNewCourseName.toLowerCase();
       await databaseValue.save();
       return true;
     }
-
   }
   databaseValue.code = newValue.replace(/\s/g, "");
   await databaseValue.save();
@@ -39,7 +40,10 @@ const changeCourseCode = async (interaction, client, models, courseName, newValu
 
 const changeCourseName = async (interaction, models, courseName, newValue) => {
   const databaseValue = await findCourseFromDb(courseName, models.Course);
-  if (await findCourseFromDbWithFullName(newValue, models.Course) && databaseValue.fullName.toLowerCase() !== newValue.toLowerCase()) {
+  if (
+    (await findCourseFromDbWithFullName(newValue, models.Course)) &&
+    databaseValue.fullName.toLowerCase() !== newValue.toLowerCase()
+  ) {
     await editErrorEphemeral(interaction, "Course full name already exists");
     return false;
   }
@@ -48,14 +52,16 @@ const changeCourseName = async (interaction, models, courseName, newValue) => {
   return true;
 };
 
-
 const changeCourseNick = async (interaction, client, models, courseName, newValue) => {
   const guild = client.guild;
   const databaseValue = await findCourseFromDb(courseName, models.Course);
 
   const trimmedNewCourseName = newValue.replace(/\s/g, "").toLowerCase();
 
-  if (findChannelWithNameAndType(trimmedNewCourseName, "GUILD_CATEGORY", guild) && databaseValue.name.toLowerCase() !== trimmedNewCourseName.toLowerCase()) {
+  if (
+    findChannelWithNameAndType(trimmedNewCourseName, ChannelType.GuildCategory, guild) &&
+    databaseValue.name.toLowerCase() !== trimmedNewCourseName.toLowerCase()
+  ) {
     await editErrorEphemeral(interaction, "Course name already exists");
     return false;
   }
@@ -66,15 +72,12 @@ const changeCourseNick = async (interaction, client, models, courseName, newValu
 };
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Editing...");
   const guild = client.guild;
   const interactionChannel = guild.channels.cache.get(interaction.channelId);
-  if (!await isCourseCategory(interactionChannel.parent, models.Course)) {
+  if (!(await isCourseCategory(interactionChannel.parent, models.Course))) {
     return await editErrorEphemeral(interaction, "This is not a course category, can not execute the command");
   }
 
@@ -112,7 +115,6 @@ const execute = async (interaction, client, models) => {
   }
 
   if (changeSuccess) {
-    await client.emit("COURSES_CHANGED", models.Course);
     await editEphemeral(interaction, "Course information has been changed");
     const nameToCoolDown = getCourseNameFromCategory(interactionChannel.parent, guild);
     handleCooldown(nameToCoolDown);
@@ -123,20 +125,21 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("edit_course")
     .setDescription("Edit course code, name or nickname")
-    .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("options")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addStringOption((option) =>
+      option
+        .setName("options")
         .setDescription("Edit current course")
         .setRequired(true)
-        .addChoice("coursecode", "code")
-        .addChoice("full name", "name")
-        .addChoice("nickname", "nick"))
-    .addStringOption(option =>
-      option.setName("new_value")
-        .setDescription("Give new value")
-        .setRequired(true)),
+        .addChoices(
+          { name: "coursecode", value: "code" },
+          { name: "full name", value: "name" },
+          { name: "nickname", value: "nick" }
+        )
+    )
+    .addStringOption((option) => option.setName("new_value").setDescription("Give new value").setRequired(true)),
   execute,
   usage: "/edit_course [parameter]",
   description: "Edit course code, name or nickname.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

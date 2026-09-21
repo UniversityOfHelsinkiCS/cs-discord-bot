@@ -7,10 +7,9 @@ const fetchAllMembers = async (guild, attempts = 3) => {
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       return await guild.members.fetch({ time: 45000 });
-    }
-    catch (error) {
+    } catch (error) {
       logError(error);
-      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, 5000));
+      if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
   return null;
@@ -19,7 +18,7 @@ const fetchAllMembers = async (guild, attempts = 3) => {
 const execute = async (client, models) => {
   client.guild = await client.guilds.fetch(process.env.GUILD_ID);
   await initializeApplicationContext(client, models);
-  await setUpCommands(client, models.Course);
+  await setUpCommands(client);
 
   const members = await fetchAllMembers(client.guild);
   if (members) {
@@ -29,7 +28,7 @@ const execute = async (client, models) => {
 };
 
 module.exports = {
-  name: "ready",
+  name: "clientReady",
   once: true,
-  execute,
+  execute
 };

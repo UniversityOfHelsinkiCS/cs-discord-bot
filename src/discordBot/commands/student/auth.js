@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
 const { facultyRole } = require("../../../../config.json");
 
@@ -8,11 +8,8 @@ const execute = async (interaction) => {
 };
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("auth")
-    .setDescription(`Get auth URL to acquire ${facultyRole} role.`)
-    .setDefaultPermission(true),
+  data: new SlashCommandBuilder().setName("auth").setDescription(`Get auth URL to acquire ${facultyRole} role.`),
   execute,
   usage: "/auth",
-  description: `Get auth URL to acquire ${facultyRole} role.`,
+  description: `Get auth URL to acquire ${facultyRole} role.`
 };

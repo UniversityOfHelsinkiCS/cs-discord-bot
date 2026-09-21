@@ -2,8 +2,7 @@ const { Sequelize } = require("sequelize");
 
 const findCourseFromDb = async (courseName, Course) => {
   return await Course.findOne({
-    where:
-      { name: { [Sequelize.Op.iLike]: courseName } },
+    where: { name: { [Sequelize.Op.iLike]: courseName } }
   });
 };
 
@@ -56,16 +55,14 @@ const removeCourseFromDb = async (courseName, Course) => {
 
   if (course) {
     await Course.destroy({
-      where:
-        { name: { [Sequelize.Op.iLike]: courseName } },
+      where: { name: { [Sequelize.Op.iLike]: courseName } }
     });
   }
 };
 
 const findCourseFromDbById = async (courseId, Course) => {
   return await Course.findOne({
-    where:
-      { id: courseId },
+    where: { id: courseId }
   });
 };
 
@@ -73,20 +70,20 @@ const findCoursesFromDb = async (order, Course, state) => {
   const filter = {
     true: { private: true },
     false: { private: false },
-    undefined: {},
+    undefined: {}
   };
   return await Course.findAll({
     attributes: ["id", "code", "fullName", "name", "private", "locked", "categoryId"],
     order: [order],
     where: filter[state],
-    raw: true,
+    raw: true
   });
 };
 
 const getAllCourses = async (Course) => {
   return await Course.findAll({
     attributes: ["id", "code", "fullName", "name", "private", "locked", "categoryId", "telegramId"],
-    raw: true,
+    raw: true
   });
 };
 
@@ -95,9 +92,9 @@ const findLockedCoursesFromDb = async (order, Course) => {
     attributes: ["id", "code", "fullName", "name"],
     order: [order],
     where: {
-      locked: true,
+      locked: true
     },
-    raw: true,
+    raw: true
   });
 };
 
@@ -107,10 +104,10 @@ const findUnlockedCoursesFromDb = async (order, Course) => {
     order: [order],
     where: {
       locked: {
-        [Sequelize.Op.or]: [false, null],
-      },
+        [Sequelize.Op.or]: [false, null]
+      }
     },
-    raw: true,
+    raw: true
   });
 };
 
@@ -119,9 +116,9 @@ const findPrivateCoursesFromDb = async (order, Course) => {
     attributes: ["id", "code", "fullName", "name"],
     order: [order],
     where: {
-      private: true,
+      private: true
     },
-    raw: true,
+    raw: true
   });
 };
 
@@ -130,25 +127,25 @@ const findPublicCoursesFromDb = async (order, Course) => {
     attributes: ["id", "code", "fullName", "name"],
     order: [order],
     where: {
-      private: false,
+      private: false
     },
-    raw: true,
+    raw: true
   });
 };
 
 const findCourseFromDbWithFullName = async (courseFullName, Course) => {
   return await Course.findOne({
     where: {
-      fullName: { [Sequelize.Op.iLike]: courseFullName },
-    },
+      fullName: { [Sequelize.Op.iLike]: courseFullName }
+    }
   });
 };
 
 const findCourseNickNameFromDbWithCourseCode = async (courseName, Course) => {
   return await Course.findOne({
     where: {
-      code: { [Sequelize.Op.iLike]: courseName },
-    },
+      code: { [Sequelize.Op.iLike]: courseName }
+    }
   });
 };
 
@@ -161,19 +158,14 @@ const findAllCourseNames = async (Course) => {
   return courseNames;
 };
 
-
 const getCourseByDiscordId = async (id, Course) => {
   return await Course.findOne({
-    where:
-      { categoryId: id },
+    where: { categoryId: id }
   });
 };
 
-
 const saveCourseIdWithName = async (id, courseName, Course) => {
-  await Course.update(
-    { categoryId: id },
-    { where: { name: courseName } });
+  await Course.update({ categoryId: id }, { where: { name: courseName } });
 };
 
 module.exports = {
@@ -195,5 +187,5 @@ module.exports = {
   findLockedCoursesFromDb,
   findUnlockedCoursesFromDb,
   findPrivateCoursesFromDb,
-  findPublicCoursesFromDb,
+  findPublicCoursesFromDb
 };

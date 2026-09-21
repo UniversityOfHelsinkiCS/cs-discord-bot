@@ -6,19 +6,23 @@ const initUserHooks = (guild, models) => {
     const userDiscoId = user.discordId;
 
     if (changedValue.has("admin")) {
-      const adminRole = guild.roles.cache.find(r => r.name === "admin");
+      const adminRole = guild.roles.cache.find((r) => r.name === "admin");
       const userDisco = guild.members.cache.get(userDiscoId);
-      user.admin
-        ? userDisco.roles.add(adminRole)
-        : userDisco.roles.remove(adminRole);
+      if (user.admin) {
+        userDisco.roles.add(adminRole);
+      } else {
+        userDisco.roles.remove(adminRole);
+      }
     }
 
     if (changedValue.has("faculty")) {
-      const facultyRoleObject = guild.roles.cache.find(r => r.name === facultyRole);
+      const facultyRoleObject = guild.roles.cache.find((r) => r.name === facultyRole);
       const userDisco = guild.members.cache.get(userDiscoId);
-      user.faculty
-        ? userDisco.roles.add(facultyRoleObject)
-        : userDisco.roles.remove(facultyRoleObject);
+      if (user.faculty) {
+        userDisco.roles.add(facultyRoleObject);
+      } else {
+        userDisco.roles.remove(facultyRoleObject);
+      }
     }
   });
 };

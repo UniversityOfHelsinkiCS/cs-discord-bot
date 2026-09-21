@@ -1,16 +1,23 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { checkCourseCooldown, handleCooldown, getCourseNameFromCategory, msToMinutesAndSeconds } = require("../../services/service");
-const { findChannelFromDbByDiscordId, editChannelName, findChannelFromDbByName } = require("../../../db/services/channelService");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
+const {
+  checkCourseCooldown,
+  handleCooldown,
+  getCourseNameFromCategory,
+  msToMinutesAndSeconds
+} = require("../../services/service");
+const {
+  findChannelFromDbByDiscordId,
+  editChannelName,
+  findChannelFromDbByName
+} = require("../../../db/services/channelService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
-const { sendEphemeral, sendErrorEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 const { facultyRole } = require("../../../../config.json");
 const { confirmChoice } = require("../../services/confirm");
 
 const execute = async (interaction, client, models) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+  if (!(await requireFaculty(interaction, models))) return;
 
   await sendEphemeral(interaction, "Renaming text channel...");
 
@@ -65,13 +72,10 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("rename_channel")
     .setDescription("Rename text channel the command was used in.")
-    .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("name")
-        .setDescription("New name for the channel")
-        .setRequired(true)),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addStringOption((option) => option.setName("name").setDescription("New name for the channel").setRequired(true)),
   execute,
   usage: "/rename_channel [new name]",
   description: "Rename text channel the command was used in.*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

@@ -1,18 +1,16 @@
 const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
 
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
 
-let invite_url = "";
-
-process.env.NODE_ENV === "production" ? invite_url = `${process.env.BACKEND_SERVER_URL}` : invite_url = `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
-
+const invite_url =
+  process.env.NODE_ENV === "production"
+    ? `${process.env.BACKEND_SERVER_URL}`
+    : `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
 
 const updateGuide = async (guild, models) => {
-  const channel = guild.channels.cache.find(
-    (c) => c.name === GUIDE_CHANNEL_NAME,
-  );
+  const channel = guild.channels.cache.find((c) => c.name === GUIDE_CHANNEL_NAME);
 
   if (!channel) {
     console.error("Guide channel not found!");
@@ -35,9 +33,9 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
   const courseData = await findCoursesFromDb("code", models.Course, false);
 
   // Collecting all course member counts in parallel
-  const courseMemberCounts = await Promise.all(courseData.map(course =>
-    findCourseMemberCount(course.id, models.CourseMember),
-  ));
+  const courseMemberCounts = await Promise.all(
+    courseData.map((course) => findCourseMemberCount(course.id, models.CourseMember))
+  );
 
   const rows = courseData.map((course, index) => {
     const regExp = /[^0-9]*/;
@@ -70,7 +68,7 @@ Invitation link for the server ${invite_url}
 
   const messagesArray = Array.from(sortedMessages.values());
 
-  const courseMessages = messagesArray.filter(m => m.id !== infoMessage.id && m.type !== "CHANNEL_PINNED_MESSAGE");
+  const courseMessages = messagesArray.filter((m) => m.id !== infoMessage.id && m.type !== "CHANNEL_PINNED_MESSAGE");
 
   // Editing the info message
   await infoMessage.edit(infoContent);
@@ -85,12 +83,9 @@ Invitation link for the server ${invite_url}
       if (courseMessage.content !== rowContent) {
         editOrSendPromises.push(courseMessage.edit(rowContent));
       }
-    }
-    else {
+    } else {
       // If not enough courseMessages exist, send a new message and react to it
-      editOrSendPromises.push(
-        channel.send(rowContent).then(msg => msg.react("👤")),
-      );
+      editOrSendPromises.push(channel.send(rowContent).then((msg) => msg.react("👤")));
     }
   }
 
@@ -99,12 +94,12 @@ Invitation link for the server ${invite_url}
 
   // Delete any extra old course messages
   if (courseMessages.length > rows.length) {
-    const deletePromises = courseMessages.slice(rows.length).map(msg => msg.delete());
+    const deletePromises = courseMessages.slice(rows.length).map((msg) => msg.delete());
     await Promise.all(deletePromises);
   }
 };
 
 module.exports = {
   updateGuide,
-  updateGuideMessage,
+  updateGuideMessage
 };

@@ -1,30 +1,54 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/add_instructors");
-const { editEphemeral, editErrorEphemeral, sendErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
+const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { getCourseNameFromCategory, getUserWithUserId } = require("../../../src/discordBot/services/service");
 const { findUserByDiscordId } = require("../../../src/db/services/userService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { createCourseMemberToDatabase } = require("../../../src/db/services/courseMemberService");
 const { courseAdminRole } = require("../../../config.json");
-const { defaultStudentInteraction, defaultTeacherInteraction, defaultAdminInteraction } = require("../../mocks/mockInteraction");
+const {
+  defaultStudentInteraction,
+  defaultTeacherInteraction,
+  defaultAdminInteraction
+} = require("../../mocks/mockInteraction");
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
+jest.mock("../../../src/discordBot/services/permissions");
+const { requireFaculty } = require("../../../src/discordBot/services/permissions");
+requireFaculty.mockImplementation(() => true);
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/db/services/userService");
 jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/courseMemberService");
 
 getCourseNameFromCategory.mockImplementation(() => "test");
-findUserByDiscordId.mockImplementation(() => { return { id: 1 }; });
-findCourseFromDb.mockImplementation(() => { return { id: 1, name: "test" }; });
+findUserByDiscordId.mockImplementation(() => {
+  return { id: 1 };
+});
+findCourseFromDb.mockImplementation(() => {
+  return { id: 1, name: "test" };
+});
 findCourseFromDb.mockImplementationOnce(() => null);
-createCourseMemberToDatabase.mockImplementation(() => { return { id: 1, instructor: false, save: () => null }; });
+createCourseMemberToDatabase.mockImplementation(() => {
+  return { id: 1, instructor: false, save: () => null };
+});
 getUserWithUserId.mockImplementation(() => defaultAdminInteraction.member.user);
 
-
-defaultAdminInteraction.options = { getString: jest.fn(() => { return "<@!3>"; }) };
-defaultTeacherInteraction.options = { getUser: jest.fn(() => { return { id: 2 }; }) };
-defaultStudentInteraction.options = { getUser: jest.fn(() => { return { id: 2 }; }) };
+defaultAdminInteraction.options = {
+  getString: jest.fn(() => {
+    return "<@!3>";
+  })
+};
+defaultTeacherInteraction.options = {
+  getUser: jest.fn(() => {
+    return { id: 2 };
+  })
+};
+defaultStudentInteraction.options = {
+  getUser: jest.fn(() => {
+    return { id: 2 };
+  })
+};
 
 const initialResponse = "Adding instructors...";
 
@@ -91,11 +115,11 @@ describe("slash add instructor command", () => {
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, response);
   });
 
-  test("a student cannot use faculty command", async () => {
+  test("a user without faculty access cannot use the command", async () => {
     const client = defaultStudentInteraction.client;
-    const response = "You do not have permission to use this command.";
+    requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
-    expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
+    expect(sendEphemeral).not.toHaveBeenCalled();
   });
 });

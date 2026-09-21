@@ -9,7 +9,7 @@ const SCAM_IMAGES = [
   { contentType: "image/jpeg", name: "img1.jpg", size: 1000, width: 1920, height: 2560, url: "http://example.com/1" },
   { contentType: "image/jpeg", name: "img2.jpg", size: 1000, width: 1920, height: 2560, url: "http://example.com/2" },
   { contentType: "image/jpeg", name: "img3.jpg", size: 1000, width: 1920, height: 2560, url: "http://example.com/3" },
-  { contentType: "image/png", name: "img4.png", size: 500, width: 828, height: 1012, url: "http://example.com/4" },
+  { contentType: "image/png", name: "img4.png", size: 500, width: 828, height: 1012, url: "http://example.com/4" }
 ];
 
 const makeAttachments = (allAttachments) => ({
@@ -17,11 +17,11 @@ const makeAttachments = (allAttachments) => ({
     const filtered = allAttachments.filter(fn);
     return {
       size: filtered.length,
-      map: (mapFn) => filtered.map(mapFn),
+      map: (mapFn) => filtered.map(mapFn)
     };
   }),
   size: allAttachments.length,
-  values: () => allAttachments[Symbol.iterator](),
+  values: () => allAttachments[Symbol.iterator]()
 });
 
 const makeCollection = (items = []) => {
@@ -30,33 +30,42 @@ const makeCollection = (items = []) => {
     filter: (fn) => makeCollection(arr.filter(fn)),
     size: arr.length,
     first: () => arr[0],
-    values: () => arr[Symbol.iterator](),
+    values: () => arr[Symbol.iterator]()
   };
 };
 
 let authorCounter = 0;
-const makeMessage = ({ isBot = false, hasMember = true, attachments = SCAM_IMAGES, authorId, channelName = "chat", content = "", pinned = false, extraChannelMessages = [] } = {}) => {
+const makeMessage = ({
+  isBot = false,
+  hasMember = true,
+  attachments = SCAM_IMAGES,
+  authorId,
+  channelName = "chat",
+  content = "",
+  pinned = false,
+  extraChannelMessages = []
+} = {}) => {
   const id = authorId ?? `user-${++authorCounter}`;
   const msg = {
     author: { bot: isBot, id, tag: "user#0001", send: jest.fn().mockResolvedValue() },
     member: hasMember ? { displayName: "Test User", kick: jest.fn().mockResolvedValue() } : null,
     guild: {
-      members: { ban: jest.fn().mockResolvedValue({ id }), unban: jest.fn().mockResolvedValue() },
+      members: { ban: jest.fn().mockResolvedValue({ id }), unban: jest.fn().mockResolvedValue() }
     },
     url: "https://discord.com/channels/guild/channel-123/msg-456",
     attachments: makeAttachments(attachments),
     content,
     delete: jest.fn().mockResolvedValue(),
     pinned,
-    createdTimestamp: Date.now(),
+    createdTimestamp: Date.now()
   };
   msg.channel = {
     id: "channel-123",
     name: channelName,
     messages: {
-      fetch: jest.fn().mockResolvedValue(makeCollection([msg, ...extraChannelMessages])),
+      fetch: jest.fn().mockResolvedValue(makeCollection([msg, ...extraChannelMessages]))
     },
-    bulkDelete: jest.fn().mockResolvedValue(),
+    bulkDelete: jest.fn().mockResolvedValue()
   };
   return msg;
 };
@@ -91,7 +100,14 @@ describe("firewall", () => {
   });
 
   test("does nothing for messages with more than 4 images", async () => {
-    const extra = { contentType: "image/jpeg", name: "extra.jpg", size: 100, width: 100, height: 100, url: "http://example.com/5" };
+    const extra = {
+      contentType: "image/jpeg",
+      name: "extra.jpg",
+      size: 100,
+      width: 100,
+      height: 100,
+      url: "http://example.com/5"
+    };
     const msg = makeMessage({ attachments: [...SCAM_IMAGES, extra] });
     await firewall(msg, client);
     expect(msg.delete).not.toHaveBeenCalled();
@@ -103,7 +119,7 @@ describe("firewall", () => {
       { contentType: "application/pdf", name: "a.pdf", size: 100 },
       { contentType: "application/pdf", name: "b.pdf", size: 100 },
       { contentType: "text/plain", name: "c.txt", size: 100 },
-      { contentType: "text/plain", name: "d.txt", size: 100 },
+      { contentType: "text/plain", name: "d.txt", size: 100 }
     ];
     const msg = makeMessage({ attachments: nonImages });
     await firewall(msg, client);
@@ -116,7 +132,7 @@ describe("firewall", () => {
       { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
       { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
       { contentType: "image/jpeg", name: "c.jpg", size: 100, width: 500, height: 600, url: "http://example.com/c" },
-      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" },
+      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
     ];
     const msg = makeMessage({ attachments: suspiciousImages });
     await firewall(msg, client);
@@ -152,7 +168,7 @@ describe("firewall", () => {
       { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
       { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
       { contentType: "image/jpeg", name: "c.jpg", size: 100, width: 500, height: 600, url: "http://example.com/c" },
-      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" },
+      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
     ];
     const msg = makeMessage({ attachments: suspiciousImages });
     await firewall(msg, client);
@@ -270,7 +286,9 @@ describe("honeypot detection", () => {
   });
 
   test("attachment-only message in honeypot is deleted", async () => {
-    const att = [{ name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }];
+    const att = [
+      { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
+    ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     await firewall(msg, client);
     expect(msg.delete).toHaveBeenCalledTimes(1);
@@ -278,7 +296,9 @@ describe("honeypot detection", () => {
 
   test("same attachments in honeypot then chat - kicks", async () => {
     const authorId = "att-bot-1";
-    const att = [{ name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }];
+    const att = [
+      { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
+    ];
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     const chat = makeMessage({ authorId, channelName: "chat", content: "", attachments: att });
     await firewall(hp, client);
@@ -289,7 +309,9 @@ describe("honeypot detection", () => {
 
   test("same attachments in chat then honeypot - kicks", async () => {
     const authorId = "att-bot-2";
-    const att = [{ name: "scam.jpg", size: 8000, contentType: "image/jpeg", width: 200, height: 200, url: "http://example.com/sc" }];
+    const att = [
+      { name: "scam.jpg", size: 8000, contentType: "image/jpeg", width: 200, height: 200, url: "http://example.com/sc" }
+    ];
     const chat = makeMessage({ authorId, channelName: "chat", content: "", attachments: att });
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     await firewall(chat, client);
@@ -299,8 +321,12 @@ describe("honeypot detection", () => {
 
   test("different attachments in honeypot vs chat - no kick", async () => {
     const authorId = "att-bot-3";
-    const att1 = [{ name: "a.png", size: 1000, contentType: "image/png", width: 50, height: 50, url: "http://example.com/a" }];
-    const att2 = [{ name: "b.png", size: 2000, contentType: "image/png", width: 60, height: 60, url: "http://example.com/b" }];
+    const att1 = [
+      { name: "a.png", size: 1000, contentType: "image/png", width: 50, height: 50, url: "http://example.com/a" }
+    ];
+    const att2 = [
+      { name: "b.png", size: 2000, contentType: "image/png", width: 60, height: 60, url: "http://example.com/b" }
+    ];
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att1 });
     const chat = makeMessage({ authorId, channelName: "chat", content: "", attachments: att2 });
     await firewall(hp, client);
@@ -317,7 +343,12 @@ describe("honeypot detection", () => {
   test("second honeypot message from the same user triggers a ban+unban", async () => {
     const authorId = "repeat-poster-1";
     const msg1 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "different content", attachments: [] });
+    const msg2 = makeMessage({
+      authorId,
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: "different content",
+      attachments: []
+    });
     await firewall(msg1, client);
     await firewall(msg2, client);
     expect(msg2.guild.members.ban).toHaveBeenCalledTimes(1);
@@ -341,7 +372,10 @@ describe("honeypot detection", () => {
     const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "other", attachments: [] });
     await firewall(msg1, client);
     await firewall(msg2, client);
-    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining("HONEYPOT REPEAT MESSAGE KICK"));
+    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(
+      client,
+      expect.stringContaining("HONEYPOT REPEAT MESSAGE KICK")
+    );
   });
 
   test("honeypot message report includes the message content", async () => {
@@ -351,7 +385,9 @@ describe("honeypot detection", () => {
   });
 
   test("honeypot message report shows placeholder when there is no text content", async () => {
-    const att = [{ name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }];
+    const att = [
+      { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
+    ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     await firewall(msg, client);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
@@ -359,7 +395,9 @@ describe("honeypot detection", () => {
   });
 
   test("honeypot message report includes attachment URLs", async () => {
-    const att = [{ name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }];
+    const att = [
+      { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
+    ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     await firewall(msg, client);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
@@ -376,16 +414,33 @@ describe("honeypot detection", () => {
   test("repeat honeypot trigger report does not include the message content", async () => {
     const authorId = "repeat-poster-4";
     const msg1 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "other content", attachments: [] });
+    const msg2 = makeMessage({
+      authorId,
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: "other content",
+      attachments: []
+    });
     await firewall(msg1, client);
     await firewall(msg2, client);
-    const triggeredCall = sendReportToCommandsChannel.mock.calls.find(([, content]) => content.includes("HONEYPOT REPEAT MESSAGE KICK"));
+    const triggeredCall = sendReportToCommandsChannel.mock.calls.find(([, content]) =>
+      content.includes("HONEYPOT REPEAT MESSAGE KICK")
+    );
     expect(triggeredCall[1]).not.toContain("Message:");
   });
 
   test("different users posting in honeypot do not trigger each other's ban", async () => {
-    const msg1 = makeMessage({ authorId: "user-hp-a", channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    const msg2 = makeMessage({ authorId: "user-hp-b", channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
+    const msg1 = makeMessage({
+      authorId: "user-hp-a",
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: TEXT,
+      attachments: []
+    });
+    const msg2 = makeMessage({
+      authorId: "user-hp-b",
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: TEXT,
+      attachments: []
+    });
     await firewall(msg1, client);
     await firewall(msg2, client);
     expect(msg1.guild.members.ban).not.toHaveBeenCalled();
@@ -395,14 +450,24 @@ describe("honeypot detection", () => {
   test("accumulated non-pinned messages are bulk deleted when a new honeypot message arrives", async () => {
     const stale1 = { pinned: false, createdTimestamp: Date.now(), delete: jest.fn().mockResolvedValue() };
     const stale2 = { pinned: false, createdTimestamp: Date.now(), delete: jest.fn().mockResolvedValue() };
-    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [], extraChannelMessages: [stale1, stale2] });
+    const msg = makeMessage({
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: TEXT,
+      attachments: [],
+      extraChannelMessages: [stale1, stale2]
+    });
     await firewall(msg, client);
     expect(msg.channel.bulkDelete).toHaveBeenCalledTimes(1);
   });
 
   test("pinned honeypot warning message is not deleted during channel cleanup", async () => {
     const pinnedMsg = { pinned: true, createdTimestamp: Date.now(), delete: jest.fn().mockResolvedValue() };
-    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [], extraChannelMessages: [pinnedMsg] });
+    const msg = makeMessage({
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: TEXT,
+      attachments: [],
+      extraChannelMessages: [pinnedMsg]
+    });
     await firewall(msg, client);
     expect(pinnedMsg.delete).not.toHaveBeenCalled();
   });
@@ -410,7 +475,12 @@ describe("honeypot detection", () => {
   test("messages older than 14 days in honeypot are deleted individually", async () => {
     const oldTimestamp = Date.now() - 15 * 24 * 60 * 60 * 1000;
     const oldMsg = { pinned: false, createdTimestamp: oldTimestamp, delete: jest.fn().mockResolvedValue() };
-    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [], extraChannelMessages: [oldMsg] });
+    const msg = makeMessage({
+      channelName: HONEYPOT_CHANNEL_NAME,
+      content: TEXT,
+      attachments: [],
+      extraChannelMessages: [oldMsg]
+    });
     await firewall(msg, client);
     expect(oldMsg.delete).toHaveBeenCalledTimes(1);
     expect(msg.channel.bulkDelete).not.toHaveBeenCalled();

@@ -49,11 +49,11 @@ You can see all the available courses with `/courses`.
 
 ![courses](./images/courses.png)
 
-By typing the command `/join`, you can see all the courses available on the list that opens. Pick up the course you want to join and press enter.
+By typing the command `/join`, you can see all the courses available on the list that opens. The list is in alphabetical order by full name and shows each course as `Full name - nickname - CODE`. Keep typing any part of the name, nickname or code to narrow the list down. Pick up the course you want to join and press enter.
 
 ![join](./images/join.png)
 
-If you want to leave a course, use command `/leave`. You see from the list all the courses you have joined earlier. Choose a course you want to leave from and press enter.
+If you want to leave a course, use command `/leave`. You see from the list all the courses you have joined earlier, and you can narrow it down by typing. Choose a course you want to leave from and press enter.
 
 After you have joined a course, you can see different course channels on the left bar. At this stage there are four types of channels; announcement, general, a voice channel, and possible added text channels  (these might change during the development).
 
@@ -86,4 +86,4 @@ Command | Explanation | Arguments
 
 ### Material
 
-[Source code for the Bot](https://github.com/Ohtuproju2021syksy/Discord-Bot-better)
+[Source code for the Bot](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)

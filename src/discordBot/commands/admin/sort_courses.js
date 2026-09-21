@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { findAllCourseNames } = require("../../../db/services/courseService");
 const { findCategoryWithCourseName } = require("../../services/service");
 const { requireAdmin } = require("../../services/permissions");
@@ -16,7 +16,7 @@ const execute = async (interaction, client, models) => {
   const categoryNames = await findAllCourseNames(models.Course);
   categoryNames.sort((a, b) => a.localeCompare(b));
   const categories = [];
-  categoryNames.forEach(cat => {
+  categoryNames.forEach((cat) => {
     const guildCat = findCategoryWithCourseName(cat, guild);
     if (guildCat) {
       categories.push(guildCat);
@@ -37,9 +37,9 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("sort_courses")
     .setDescription("Sort courses to alphabetical order.")
-    .setDefaultPermission(false),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
   usage: "/sort_courses",
   description: "Sort courses to alphabetical order.",
-  roles: ["admin"],
+  roles: ["admin"]
 };

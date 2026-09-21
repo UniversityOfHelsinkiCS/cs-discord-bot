@@ -2,22 +2,19 @@ const { Sequelize } = require("sequelize");
 
 const findChannelFromDbByName = async (channelName, Channel) => {
   return await Channel.findOne({
-    where:
-      { name: { [Sequelize.Op.iLike]: channelName } },
+    where: { name: { [Sequelize.Op.iLike]: channelName } }
   });
 };
 
 const findChannelFromDbByDiscordId = async (discordId, Channel) => {
   return await Channel.findOne({
-    where:
-      { discordId:  discordId },
+    where: { discordId: discordId }
   });
 };
 
 const createChannelToDatabase = async (channelAttributes, Channel) => {
   const alreadyinuse = await Channel.findOne({
-    where:
-      { name: { [Sequelize.Op.iLike]: channelAttributes.name } },
+    where: { name: { [Sequelize.Op.iLike]: channelAttributes.name } }
   });
   if (!alreadyinuse) {
     await Channel.create(channelAttributes);
@@ -30,13 +27,11 @@ const createDefaultChannelsToDatabase = async (channelObjects, Channel) => {
 
 const removeChannelFromDb = async (channelName, Channel) => {
   const channel = await Channel.findOne({
-    where:
-      { name: { [Sequelize.Op.iLike]: channelName } },
+    where: { name: { [Sequelize.Op.iLike]: channelName } }
   });
   if (channel) {
     await Channel.destroy({
-      where:
-      { name: { [Sequelize.Op.iLike]: channelName } },
+      where: { name: { [Sequelize.Op.iLike]: channelName } }
     });
   }
 };
@@ -44,23 +39,23 @@ const removeChannelFromDb = async (channelName, Channel) => {
 const findChannelsByCourse = async (id, Channel) => {
   return await Channel.findAll({
     where: {
-      courseId: id,
-    },
+      courseId: id
+    }
   });
 };
 
 const getAllChannels = async (Channel) => {
   return await Channel.findAll({
     attributes: ["id", "courseId", "name", "topic", "defaultChannel", "voiceChannel", "discordId"],
-    raw: true,
+    raw: true
   });
 };
 
 const countChannelsByCourse = async (id, Channel) => {
   return await Channel.count({
     where: {
-      courseId: id,
-    },
+      courseId: id
+    }
   });
 };
 
@@ -92,19 +87,14 @@ const editChannelName = async (discordId, newName, Channel) => {
   }
 };
 
-
 const getChannelByDiscordId = async (id, Channel) => {
   return await Channel.findOne({
-    where:
-      { discordId: id },
+    where: { discordId: id }
   });
 };
 
-
 const saveChannelIdWithName = async (id, channelName, Channel) => {
-  await Channel.update(
-    { discordId: id },
-    { where: { name: channelName } });
+  await Channel.update({ discordId: id }, { where: { name: channelName } });
 };
 
 const editChannelHiddenStatus = async (discordId, hiddenStatus, Channel) => {
@@ -131,5 +121,5 @@ module.exports = {
   getAllChannels,
   editChannelName,
   saveChannelTopicToDb,
-  editChannelHiddenStatus,
+  editChannelHiddenStatus
 };

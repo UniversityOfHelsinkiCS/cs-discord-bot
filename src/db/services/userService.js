@@ -2,17 +2,17 @@ const { blindIndex, decrypt } = require("../crypto");
 
 const findUserByDiscordId = async (id, User) => {
   return await User.findOne({
-    where:{
-      discordIdHash: blindIndex(id),
-    },
+    where: {
+      discordIdHash: blindIndex(id)
+    }
   });
 };
 
 const findUserByDbId = async (id, User) => {
   return await User.findOne({
-    where:{
-      id: id,
-    },
+    where: {
+      id: id
+    }
   });
 };
 
@@ -29,8 +29,8 @@ const removeUserFromDb = async (discordId, User) => {
   if (user) {
     await User.destroy({
       where: {
-        id: user.id,
-      },
+        id: user.id
+      }
     });
   }
 };
@@ -46,15 +46,15 @@ const getAllUsers = async (User) => {
   // raw: true bypasses the model getters, so decrypt the identity fields here.
   const rows = await User.findAll({
     attributes: ["name", "admin", "faculty", "discordId"],
-    raw: true,
+    raw: true
   });
   return rows.map((r) => ({ ...r, name: decrypt(r.name), discordId: decrypt(r.discordId) }));
 };
 
 const pruneUsersNotInGuild = async (guild, User) => {
   const users = await getAllUsers(User);
-  const staleUsers = users.filter(u => !guild.members.cache.has(u.discordId));
-  await Promise.all(staleUsers.map(u => removeUserFromDb(u.discordId, User)));
+  const staleUsers = users.filter((u) => !guild.members.cache.has(u.discordId));
+  await Promise.all(staleUsers.map((u) => removeUserFromDb(u.discordId, User)));
 };
 
 module.exports = {
@@ -64,4 +64,5 @@ module.exports = {
   saveFacultyRoleToDb,
   findUserByDbId,
   getAllUsers,
-  pruneUsersNotInGuild };
+  pruneUsersNotInGuild
+};

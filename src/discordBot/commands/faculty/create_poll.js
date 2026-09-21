@@ -1,23 +1,33 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
+  EmbedBuilder,
+  MessageFlags,
+  PermissionFlagsBits,
+  SlashCommandBuilder
+} = require("discord.js");
+const { requireFaculty } = require("../../services/permissions");
 
-const { sendEphemeral, editEphemeral, sendErrorEphemeral, editEphemeralWithComponents, editEphemeralClearComponents } = require("../../services/message");
+const {
+  sendEphemeral,
+  editEphemeral,
+  editEphemeralWithComponents,
+  editEphemeralClearComponents
+} = require("../../services/message");
 
 const { facultyRole } = require("../../../../config.json");
-const numbers = [ "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟" ];
+const numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
-const execute = async (interaction, client) => {
-  if (!interaction.member.permissions.has("ADMINISTRATOR") && !interaction.member.roles.cache.some(r => r.name === facultyRole)) {
-    await sendErrorEphemeral(interaction, "You do not have permission to use this command.");
-    return;
-  }
+const execute = async (interaction, client, models) => {
+  if (!(await requireFaculty(interaction, models))) return;
 
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 
   const pollTitle = interaction.options.getString("title").trim();
   await sendEphemeral(interaction, "Creating poll...");
-
 
   let answers = 0;
   const voteMap = new Map();
@@ -39,125 +49,110 @@ const execute = async (interaction, client) => {
     voteMap.set(numbers[i], 0);
   }
 
-  answerDescription = answerDescription.concat("\n\nYou can answer only one option.\nYou can change your answer by clicking another choice\nYou can remove your answer with ❌");
+  answerDescription = answerDescription.concat(
+    "\n\nYou can answer only one option.\nYou can change your answer by clicking another choice\nYou can remove your answer with ❌"
+  );
 
-  const pollEmbed = new MessageEmbed()
-    .setColor().setColor("#0099ff")
-    .setTitle(pollTitle)
-    .setDescription(answerDescription);
+  const pollEmbed = new EmbedBuilder().setColor("#0099ff").setTitle(pollTitle).setDescription(answerDescription);
 
-  const row = new MessageActionRow();
-  const row2 = new MessageActionRow();
-  const row3 = new MessageActionRow();
+  const row = new ActionRowBuilder();
+  const row2 = new ActionRowBuilder();
+  const row3 = new ActionRowBuilder();
 
   for (let i = 0; i < 5 && i < answerList.length; i++) {
     row.addComponents(
-      new MessageButton()
+      new ButtonBuilder()
         .setCustomId("" + i)
         .setLabel(numbers[i])
-        .setStyle("PRIMARY"),
+        .setStyle(ButtonStyle.Primary)
     );
   }
 
   if (answerList.length > 5) {
     for (let i = 5; i < answerList.length; i++) {
       row2.addComponents(
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("" + i)
           .setLabel(numbers[i])
-          .setStyle("PRIMARY"),
+          .setStyle(ButtonStyle.Primary)
       );
     }
   }
   if (answerList.length < 5) {
-    row.addComponents(
-      new MessageButton()
-        .setCustomId("x")
-        .setLabel("❌")
-        .setStyle("SECONDARY"),
-    );
-  }
-  else if (answerList.length < 10) {
-    row2.addComponents(
-      new MessageButton()
-        .setCustomId("x")
-        .setLabel("❌")
-        .setStyle("SECONDARY"),
-    );
-  }
-  else {
-    row3.addComponents(
-      new MessageButton()
-        .setCustomId("x")
-        .setLabel("❌")
-        .setStyle("SECONDARY"),
-    );
+    row.addComponents(new ButtonBuilder().setCustomId("x").setLabel("❌").setStyle(ButtonStyle.Secondary));
+  } else if (answerList.length < 10) {
+    row2.addComponents(new ButtonBuilder().setCustomId("x").setLabel("❌").setStyle(ButtonStyle.Secondary));
+  } else {
+    row3.addComponents(new ButtonBuilder().setCustomId("x").setLabel("❌").setStyle(ButtonStyle.Secondary));
   }
   let msgEmbed = "";
 
   if (answerList.length === 10) {
     msgEmbed = await channel.send({ embeds: [pollEmbed], components: [row, row2, row3] });
-  }
-  else if (answerList.length >= 5) {
+  } else if (answerList.length >= 5) {
     msgEmbed = await channel.send({ embeds: [pollEmbed], components: [row, row2] });
-  }
-  else {
+  } else {
     msgEmbed = await channel.send({ embeds: [pollEmbed], components: [row] });
   }
 
-  const closeRow = new MessageActionRow();
+  const closeRow = new ActionRowBuilder();
   closeRow.addComponents(
-    new MessageButton()
-      .setCustomId("close")
-      .setLabel("Close the poll")
-      .setStyle("DANGER"),
+    new ButtonBuilder().setCustomId("close").setLabel("Close the poll").setStyle(ButtonStyle.Danger)
   );
 
   let duration = "";
   if (interaction.options.getInteger("duration") >= 15) {
     duration = 14 * 60000;
-  }
-  else {
+  } else {
     duration = interaction.options.getInteger("duration") * 60000;
   }
 
-
-  const closeReply = await editEphemeralWithComponents(interaction, "Poll started, it will close in " + (duration / 60000).toFixed() + " minutes or you can close it from this button.", closeRow);
+  const closeReply = await editEphemeralWithComponents(
+    interaction,
+    "Poll started, it will close in " + (duration / 60000).toFixed() + " minutes or you can close it from this button.",
+    closeRow
+  );
   let stop = false;
-  const collectorButtonClose = closeReply.createMessageComponentCollector({ componentType: "BUTTON", time: duration });
+  const collectorButtonClose = closeReply.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    time: duration
+  });
 
-  collectorButtonClose.on("collect", i => {
+  collectorButtonClose.on("collect", (i) => {
     const buttonId = i.customId;
     if (buttonId === "close");
     stop = true;
   });
 
-  const collectorbutton = msgEmbed.createMessageComponentCollector({ componentType: "BUTTON", time: duration });
+  const collectorbutton = msgEmbed.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    time: duration
+  });
   const userMap = new Map();
 
-  collectorbutton.on("collect", i => {
+  collectorbutton.on("collect", (i) => {
     const userTag = i.user.tag;
     const buttonId = i.customId;
     if (!userMap.has(userTag) && !i.user.bot && buttonId !== "x") {
       userMap.set(userTag, numbers[buttonId]);
       voteMap.set(numbers[buttonId], voteMap.get(numbers[buttonId]) + 1);
-      i.reply({ content: "Thank you for answering! Your answer: " + answerList[buttonId], ephemeral: true });
-    }
-    else if (buttonId == "x") {
+      i.reply({
+        content: "Thank you for answering! Your answer: " + answerList[buttonId],
+        flags: MessageFlags.Ephemeral
+      });
+    } else if (buttonId == "x") {
       const emojiToRemove = userMap.get(userTag);
       voteMap.set(emojiToRemove, voteMap.get(emojiToRemove) - 1);
       userMap.delete(userTag);
-      i.reply({ content: "Answer removed!", ephemeral: true });
-    }
-    else {
+      i.reply({ content: "Answer removed!", flags: MessageFlags.Ephemeral });
+    } else {
       const emojiToRemove = userMap.get(userTag);
       voteMap.set(emojiToRemove, voteMap.get(emojiToRemove) - 1);
       voteMap.set(numbers[buttonId], voteMap.get(numbers[buttonId]) + 1);
       userMap.set(userTag, numbers[buttonId]);
-      i.reply({ content: "Your answer has been changed to: " + answerList[buttonId], ephemeral: true });
+      i.reply({ content: "Your answer has been changed to: " + answerList[buttonId], flags: MessageFlags.Ephemeral });
     }
   });
-
 
   for (let i = 0; i < duration;) {
     await sleep(1000);
@@ -176,7 +171,7 @@ const execute = async (interaction, client) => {
   let highestScore = 0;
   let highestOption = "";
   for (let i = 0, len = answers; i < len; i++) {
-    resultsText = resultsText.concat(numbers[i] + " " + answerList[i] + " = " + (voteMap.get(numbers[i])) + "\n\n");
+    resultsText = resultsText.concat(numbers[i] + " " + answerList[i] + " = " + voteMap.get(numbers[i]) + "\n\n");
     if (voteMap.get(numbers[i]) > highestScore) {
       highestScore = voteMap.get(numbers[i]);
     }
@@ -186,8 +181,7 @@ const execute = async (interaction, client) => {
     if (value === highestScore) {
       if (highestOption === "") {
         highestOption = answerList[numbers.indexOf(key)];
-      }
-      else {
+      } else {
         highestOption = highestOption.concat(", " + answerList[numbers.indexOf(key)]);
       }
     }
@@ -195,8 +189,7 @@ const execute = async (interaction, client) => {
 
   resultsText = resultsText.concat("Most votes: " + highestOption);
 
-
-  const resultEmbed = new MessageEmbed()
+  const resultEmbed = new EmbedBuilder()
     .setColor("#0099ff")
     .setTitle("Results of the poll\n\n" + pollTitle)
     .setDescription(resultsText);
@@ -214,30 +207,26 @@ const execute = async (interaction, client) => {
   }
 };
 
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("create_poll")
     .setDescription("Create poll")
-    .setDefaultPermission(false)
-    .addStringOption(option =>
-      option.setName("title")
-        .setDescription("Poll title")
-        .setRequired(true))
-    .addIntegerOption(option =>
-      option.setName("duration")
-        .setDescription("Duration of the poll (1-14 minutes)")
-        .setRequired(true))
-    .addStringOption(option =>
-      option.setName("answers")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addStringOption((option) => option.setName("title").setDescription("Poll title").setRequired(true))
+    .addIntegerOption((option) =>
+      option.setName("duration").setDescription("Duration of the poll (1-14 minutes)").setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("answers")
         .setDescription("Answers for poll separated by | (e.g. answer1 | answer2 | answer3)")
-        .setRequired(true))
-    .addStringOption(option =>
-      option.setName("description")
-        .setDescription("Set description for the poll")
-        .setRequired(false)),
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option.setName("description").setDescription("Set description for the poll").setRequired(false)
+    ),
   execute,
   usage: "/create_poll ",
   description: "Create a poll for x duration*",
-  roles: ["admin", facultyRole],
+  roles: ["admin", facultyRole]
 };

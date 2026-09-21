@@ -32,7 +32,10 @@ Invite: https://discord.gg/V5R9dZFCkD
 - Course-page links on the companion website route through `/join/:course` and
   drop the user straight into that course.
 
-### Faculty tools (slash commands, gated by a faculty role)
+### Faculty tools (slash commands, gated by the faculty flag in the database)
+
+Like admin commands, faculty commands are hidden from the command picker until the faculty, `admin` and `cs-admin`
+roles are allowed for them in Discord's Integrations settings.
 
 - Course lifecycle: `/create_course`, `/edit_course`, `/hide_course` /
   `/unhide_course`, `/lock_chat` / `/unlock_chat`, `/create_channel`,
@@ -46,15 +49,20 @@ Invite: https://discord.gg/V5R9dZFCkD
   member logs in with Discord OAuth and the university single sign-on
   (employee-number check) to be granted the faculty role.
 
-### Admin tools (`!` prefix commands, run in the staff `#commands` channel)
+### Admin tools (slash commands, admin only)
 
-- `!add_admin_rights` / `!remove_admin_rights`, `!remove_faculty_rights`.
-- `!reload_commands` and slash-command registration / permission management.
-- `!fix_course_roles` — reconciles Discord course roles against the database in
-  both directions. `!update_instructors`, `!update_invitelinks`, `!sort_courses`.
-- `!update_database` + `!restore_server_from_database` — snapshot the server's
+Admin commands run only for users with the admin flag in the database, and are hidden from the command picker
+until the `admin` / `cs-admin` roles are granted access in Discord's Integrations settings. Their replies are
+visible only to the person who ran them.
+
+- `/add_admin_rights` / `/remove_admin_rights`, `/remove_faculty_rights`.
+- `/reload_commands` and `/delete_command` — slash-command registration.
+- `/fix_course_roles` — reconciles Discord course roles against the database in
+  both directions. `/update_instructors`, `/update_invitelinks`, `/sort_courses`, `/update_categorynames`.
+- `/update_database` + `/restore_server_from_database` — snapshot the server's
   courses, roles, and memberships to the database and rebuild them; used for
   recovery and migrations.
+- `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
 
 ### Membership sync
 
@@ -75,12 +83,6 @@ Invite: https://discord.gg/V5R9dZFCkD
   deleted, the account is kicked, and the user is DM'd recovery instructions.
   Staff receive a report in `#commands` either way.
 
-### Telegram bridge (opt-in per channel)
-
-- Faculty link a course text channel to a Telegram group with `/enable_bridge` /
-  `/disable_bridge`. Messages (text and media) are then relayed both directions,
-  with Discord mentions and emoji rendered to plain text.
-
 ### Metrics
 
 - Join/leave counts and per-course trends are exposed for a Grafana dashboard and
@@ -90,21 +92,19 @@ Invite: https://discord.gg/V5R9dZFCkD
 
 - PostgreSQL tables only for `User`, `Course`, `Channel`, and `CourseMember`.
 - **No message content is persisted.** Chat text is used transiently for command
-  parsing, spam detection (in memory, 1-hour TTL), staff reports, and Telegram
-  relay.
+  parsing, spam detection (in memory, 1-hour TTL), and staff reports.
 
 ## Gateway intents
 
 | Intent | Why |
 | --- | --- |
 | Guilds | Channel, role, and guild state. |
-| **Guild Members** (privileged) | Join/leave events drive database sync and role management; `!fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
-| **Message Content** (privileged) | Parse `!` prefix commands and copy-pasted `/join`; compare message text for spam/scam detection; relay text over the Telegram bridge. |
-| Guild Webhooks, Guild Invites | Course invite-link management and channel webhooks. |
-| Guild Messages, Guild Message Reactions | Command handling, polls, confirmations. |
+| **Guild Members** (privileged) | Join/leave events drive database sync and role management; `/fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
+| **Message Content** (privileged) | Read copy-pasted `/join` and compare message text for spam/scam detection. |
+| Guild Messages, Guild Message Reactions | Spam firewall and copy-pasted `/join` (messages); joining and leaving courses from the guide channel (reactions). |
 | Guild Voice States | Voice-channel state used by course channels. |
 
-The Guild Presences intent is **not** used.
+The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
 
 ## Documentation
 
@@ -120,10 +120,11 @@ The Guild Presences intent is **not** used.
 - [Create the Discord server](./documentation/discordserver.md)
 - [Create and configure the bot](./documentation/setupmainbot.md)
 - [Companion website OAuth2 backend](./documentation/OAuth2.md)
-- [Telegram bridge setup](./documentation/telegram.md) (The bridge is getting removed soon)
 - [CI/CD pipeline](./documentation/ci-cd-pipeline.md)
 
 ## Running locally
+
+Node.js 24 or newer is required (the Docker image uses `ubi9/nodejs-24-minimal`).
 
 Clone the repository and install dependencies:
 
@@ -134,7 +135,6 @@ npm install
 Add a `.env` file to the repository root (same directory as `package.json`):
 
 ```
-PREFIX=!
 DISCORD_BOT_TOKEN=your-own-token
 GUILD_ID=your-discord-server-id
 BOT_ID=id-of-your-bot
@@ -151,12 +151,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 GRAFANA_TOKEN=your-grafana-authorization-token
 GRAFANA_URL=your-server-url/grafana/your-dashboard-specific-stuff
 GRAFANA_PANEL_ID=your-grafana-panel-id
-PAPERTRAIL_URL=papertrailapp-url
 WORKSHOPS_API=pajat-api-url
-
-# Bridge
-TELEGRAM_BOT_TOKEN=telegram-bridge-bot-token
-TG_BRIDGE_ENABLED=true
 ```
 
 Add a `config.json` file:
@@ -178,6 +173,17 @@ npm start       # staging
 npm test        # run all tests
 ```
 
+### Running with Docker
+
+`docker-compose.yml` starts the bot together with its own PostgreSQL 17 (user, password and database `postgres`,
+default `public` schema) on the `cs-discord-bot-net` network. The Docker image runs in the Europe/Helsinki time zone
+(`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; only `DATABASE_URL` is overridden to
+point at the database container.
+
+```
+docker compose up --build
+```
+
 ## Field encryption
 
 `joined_users.name` / `discordId` and the website session store are encrypted at
@@ -195,7 +201,7 @@ only thing validated and a weak key still passes that check.
 The key lives only in the service environment; store it separately from any
 database backup. **Losing `FIELD_ENCRYPTION_KEY` makes `name` / `discordId`
 unrecoverable** — the only recovery is to truncate `joined_users` and rebuild
-from Discord with `!update_database` + `!restore_server_from_database`
+from Discord with `/update_database` + `/restore_server_from_database`
 (course-membership history is lost). To roll the migration back (key still
 present): `NODE_ENV=production node src/db/rollback.js`.
 

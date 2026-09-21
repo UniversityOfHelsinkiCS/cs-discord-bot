@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const axios = require("axios");
 const router = require("express").Router();
 
@@ -9,13 +9,12 @@ router.post("/:webhookId", async (req, res) => {
     await axios.post(webhookUrl, webhookData, {
       params: req.query,
       headers: {
-        "Content-Type": req.headers["Content-Type"],
-      },
+        "Content-Type": req.headers["Content-Type"]
+      }
     });
     res.status(200).send("Webhook sent successfully");
     return;
-  }
-  catch (error) {
+  } catch (error) {
     console.error(error);
     res.status(500).send("Internal server error");
     return;
