@@ -1,4 +1,4 @@
-FROM node:24-alpina
+FROM node:24-alpine
 
 ENV TZ=Europe/Helsinki
 
