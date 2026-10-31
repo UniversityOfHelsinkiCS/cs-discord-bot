@@ -74,7 +74,7 @@ visible only to the person who ran them.
 
 ### Spam / scam protection (automated moderation)
 
-- **Honeypot channel:** anyone posting in the hidden "do not post here" channel
+- **Honeypot channel:** anyone posting in the "do not post here" channel
   is reported to staff, and posting the same content in both the honeypot and the
   public chat channel triggers an automatic kick (ban immediately followed by an
   unban, which also purges ~24 h of that account's recent messages).
