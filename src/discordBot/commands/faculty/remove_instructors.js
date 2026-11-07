@@ -57,7 +57,8 @@ const execute = async (interaction, client, models) => {
     }
     const userInstance = await findUserByDiscordId(memberToDemote.user.id, userModel);
 
-    const courseMemberInstance = await findCourseMember(userInstance.id, parentCourse.id, courseMemberModel);
+    const courseMemberInstance =
+      userInstance && (await findCourseMember(userInstance.id, parentCourse.id, courseMemberModel));
 
     if (!courseMemberInstance) {
       return await editErrorEphemeral(interaction, "All listed users must be members of this course!");

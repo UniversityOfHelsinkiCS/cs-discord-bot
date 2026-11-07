@@ -124,4 +124,15 @@ describe("slash remove instructor command", () => {
     expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
     expect(sendEphemeral).not.toHaveBeenCalled();
   });
+
+  test("a listed user without a user record is treated as not a course member", async () => {
+    findUserByDiscordId.mockImplementationOnce(() => null);
+    const client = defaultAdminInteraction.client;
+    await execute(defaultAdminInteraction, client, models);
+    expect(findCourseMember).not.toHaveBeenCalled();
+    expect(editErrorEphemeral).toHaveBeenCalledWith(
+      defaultAdminInteraction,
+      "All listed users must be members of this course!"
+    );
+  });
 });
