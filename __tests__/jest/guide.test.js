@@ -131,23 +131,53 @@ describe("updateGuideMessage", () => {
   });
 
   test("edits info message, edits existing course messages, deletes extras", async () => {
-    const { infoMessage, courseMessages, extras, sortedMessages, channel } = setupMocks(5, 1);
+    const { infoMessage, courseMessages, extras, sortedMessages, channel } = setupMocks(5, 2);
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
     expect(infoMessage.edit).toHaveBeenCalledTimes(1);
     courseMessages.forEach((msg) => expect(msg.edit).toHaveBeenCalledTimes(1));
+    expect(extras[0].edit).toHaveBeenCalledTimes(1);
     expect(channel.send).not.toHaveBeenCalled();
-    extras.forEach((msg) => expect(msg.delete).toHaveBeenCalledTimes(1));
+    expect(extras[1].delete).toHaveBeenCalledTimes(1);
   });
 
-  test("sends new course messages when there are too few messages", async () => {
+  test("sends new course messages and the bottom info message in order when there are too few messages", async () => {
     const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(5, -1);
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
     expect(infoMessage.edit).toHaveBeenCalledTimes(1);
     expect(courseMessages[0].edit).toHaveBeenCalledTimes(1);
-    expect(channel.send).toHaveBeenCalledTimes(1);
+    expect(channel.send).toHaveBeenCalledTimes(2);
+    expect(channel.send.mock.calls[0][0].components).toHaveLength(1);
+    expect(channel.send.mock.calls[1][0].components).toEqual([]);
+  });
+
+  test("the top info message points below and the bottom one points above, without a leading dot", async () => {
+    const { infoMessage, sortedMessages, channel } = setupMocks(1, 0);
+
+    await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
+
+    const topContent = infoMessage.edit.mock.calls[0][0];
+    const bottomContent = channel.send.mock.calls[0][0].content;
+    expect(topContent.startsWith("### Suomeksi\nAlla on lista")).toBe(true);
+    expect(topContent).toContain("Nedan är en lista");
+    expect(topContent).toContain("Below is a list");
+    expect(bottomContent.startsWith("### Suomeksi\nYllä on lista")).toBe(true);
+    expect(bottomContent).toContain("Ovan är en lista");
+    expect(bottomContent).toContain("Above is a list");
+  });
+
+  test("the bottom info message has its course button removed when the course list shrinks", async () => {
+    const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 1);
+    const lastMessage = [...sortedMessages.values()].at(-1);
+    lastMessage.components = [{ components: [{ customId: "guide:2" }] }];
+
+    await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
+
+    expect(courseMessages[0].edit).toHaveBeenCalledTimes(1);
+    expect(lastMessage.edit.mock.calls[0][0].components).toEqual([]);
+    expect(lastMessage.delete).not.toHaveBeenCalled();
   });
 });

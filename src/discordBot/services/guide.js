@@ -25,6 +25,29 @@ const invite_url =
     ? `${process.env.BACKEND_SERVER_URL}`
     : `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
 
+const LIST_BELOW = { fi: "Alla", sv: "Nedan", en: "Below" };
+const LIST_ABOVE = { fi: "Yllä", sv: "Ovan", en: "Above" };
+
+const buildInfoContent = (listPosition) => `### Suomeksi
+${listPosition.fi} on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin **${GUIDE_BUTTON_LABEL}** -painiketta.
+Voit myös liittyä kursseille ja poistua niiltä komennoilla \`/join\` ja \`/leave\`.
+Kurssikohtaisilla kanavilla voit käyttää komentoa \`/instructors\` nähdäksesi kurssin ohjaajat.
+Lisää komennolla \`/help\`.
+
+### På svensk
+${listPosition.sv} är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **${GUIDE_BUTTON_LABEL}**-knapp.
+Du kan också gå med i och lämna kurser med kommandona \`/join\` och \`/leave\`.
+I kursspecifika kanaler kan du lista instruktörer med kommandot \`/instructors\`.
+Se mer med kommandot \`/help\`.
+
+### In english
+${listPosition.en} is a list of courses that you can join or leave by clicking the course's **${GUIDE_BUTTON_LABEL}** button.
+You can also join and leave courses with the \`/join\` and \`/leave\` commands.
+In course specific channels you can list instructors with the command \`/instructors\`
+See more with \`/help\` command.
+
+Invitation link for the server ${invite_url}`;
+
 const updateGuide = async (guild, models) => {
   const channel = guild.channels.cache.find((c) => c.name === GUIDE_CHANNEL_NAME);
 
@@ -53,68 +76,39 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
     courseData.map((course) => findCourseMemberCount(course.id, models.CourseMember))
   );
 
-  const rows = courseData.map((course, index) => ({
+  const courseRows = courseData.map((course, index) => ({
     content: `### ${course.fullName}\n${course.name} · ${course.code} · 👥 ${courseMemberCounts[index]}`,
     customId: `${GUIDE_BUTTON_PREFIX}${course.id}`
   }));
+  const rows = [...courseRows, { content: buildInfoContent(LIST_ABOVE) }];
 
-  const infoContent = `.
-**Suomeksi**
- Alla on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin **${GUIDE_BUTTON_LABEL}** -painiketta.
-Voit myös liittyä kursseille ja poistua niiltä komennoilla \`/join\` ja \`/leave\`.
-Kurssikohtaisilla kanavilla voit käyttää komentoa \`/instructors\` nähdäksesi kurssin ohjaajat.
-Lisää komennolla \`/help\`.
-
-**På svensk**
-Nedan är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **${GUIDE_BUTTON_LABEL}**-knapp.
-Du kan också gå med i och lämna kurser med kommandona \`/join\` och \`/leave\`.
-I kursspecifika kanaler kan du lista instruktörer med kommandot \`/instructors\`.
-Se mer med kommandot \`/help\`.
-
-**In english**
-Below is a list of courses that you can join or leave by clicking the course's **${GUIDE_BUTTON_LABEL}** button.
-You can also join and leave courses with the \`/join\` and \`/leave\` commands.
-In course specific channels you can list instructors with the command \`/instructors\`
-See more with \`/help\` command.
-
-Invitation link for the server ${invite_url}
-`;
-
-  const messagesArray = Array.from(sortedMessages.values());
-
-  const courseMessages = messagesArray.filter(
+  const listMessages = Array.from(sortedMessages.values()).filter(
     (m) => m.id !== infoMessage.id && m.type !== MessageType.ChannelPinnedMessage
   );
 
-  // Editing the info message
-  await infoMessage.edit(infoContent);
+  await infoMessage.edit(buildInfoContent(LIST_BELOW));
   await removeReactions(infoMessage);
 
-  // Editing course messages
-  const editOrSendPromises = [];
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const courseMessage = courseMessages[i];
-    const messageData = { content: row.content, components: [buildGuideButtonRow(row.customId)] };
+  const toMessageData = (row) => ({
+    content: row.content,
+    components: row.customId ? [buildGuideButtonRow(row.customId)] : []
+  });
 
-    if (courseMessage) {
-      if (courseMessage.content !== row.content || getGuideButtonId(courseMessage) !== row.customId) {
-        editOrSendPromises.push(courseMessage.edit(messageData));
+  await Promise.all(
+    rows.slice(0, listMessages.length).map(async (row, i) => {
+      const message = listMessages[i];
+      if (message.content !== row.content || getGuideButtonId(message) !== row.customId) {
+        await message.edit(toMessageData(row));
       }
-      editOrSendPromises.push(removeReactions(courseMessage));
-    } else {
-      editOrSendPromises.push(channel.send(messageData));
-    }
+      await removeReactions(message);
+    })
+  );
+
+  for (const row of rows.slice(listMessages.length)) {
+    await channel.send(toMessageData(row));
   }
 
-  // Promise all at once
-  await Promise.all(editOrSendPromises);
-
-  // Delete any extra old course messages
-  if (courseMessages.length > rows.length) {
-    const deletePromises = courseMessages.slice(rows.length).map((msg) => msg.delete());
-    await Promise.all(deletePromises);
-  }
+  await Promise.all(listMessages.slice(rows.length).map((message) => message.delete()));
 };
 
 module.exports = {
