@@ -5,7 +5,9 @@ const {
   saveFacultyRoleToDb,
   findUserByDbId,
   getAdminUsers,
-  pruneUsersNotInGuild
+  pruneUsersNotInGuild,
+  findUnusedUserIds,
+  removeUsersByDbIds
 } = require("../../../src/db/services/userService");
 const { blindIndex, encrypt } = require("../../../src/db/crypto");
 
@@ -157,5 +159,25 @@ describe("userService", () => {
     await pruneUsersNotInGuild(guild, userModelMock);
 
     expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
+  });
+  test("unused users are those with no courses and no admin or faculty flag", async () => {
+    const courseMemberModelMock = { findAll: jest.fn().mockResolvedValueOnce([{ userId: 1 }]) };
+    userModelMock.findAll.mockResolvedValueOnce([
+      { id: 1, admin: false, faculty: false },
+      { id: 2, admin: true, faculty: false },
+      { id: 3, admin: false, faculty: true },
+      { id: 4, admin: false, faculty: false },
+      { id: 5, admin: null, faculty: null }
+    ]);
+
+    const ids = await findUnusedUserIds(userModelMock, courseMemberModelMock);
+
+    expect(ids).toEqual([4, 5]);
+  });
+
+  test("remove users by database ids", async () => {
+    await removeUsersByDbIds([4, 5], userModelMock);
+
+    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: [4, 5] } });
   });
 });

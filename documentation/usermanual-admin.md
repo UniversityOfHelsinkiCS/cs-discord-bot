@@ -123,6 +123,7 @@ Command | Explanation | Arguments
 [/fix_course_roles](./commands/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:
 [/list_admins](./commands/admin/list_admins.md) | List all users with the admin flag in the database. | :x:
 [/list_courses](./commands/admin/list_courses.md) | List all courses and channels in them | :x:
+[/prune_users](./commands/admin/prune_users.md) | Delete user records with no courses and no admin or faculty rights. | :x:
 [/reload_commands](./commands/admin/reload_commands.md) | Reload all slash commands, returning deleted commands and registering new commands. | :x:
 [/remove_admin_rights](./commands/admin/remove_admin_rights.md) | Remove admin rights from a user. | :heavy_check_mark:
 [/remove_faculty_rights](./commands/admin/remove_faculty_rights.md) | Remove faculty rights from a user. | :heavy_check_mark:

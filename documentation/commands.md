@@ -32,6 +32,7 @@ Command | Description | Example
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
 `/list_admins` | List all users with the admin flag in the database. | `/list_admins`
 `/list_courses` | List all courses and channels. | `/list_courses`
+`/prune_users` | Delete user records with no courses and no admin or faculty rights. | `/prune_users`
 `/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
 `/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`
 `/remove_faculty_rights` | Remove faculty rights from given user. | `/remove_faculty_rights user:@someone`

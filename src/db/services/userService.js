@@ -70,6 +70,15 @@ const pruneUsersNotInGuild = async (guild, User) => {
   await Promise.all(staleUsers.map((u) => removeUserFromDb(u.discordId, User)));
 };
 
+const findUnusedUserIds = async (User, CourseMember) => {
+  const memberships = await CourseMember.findAll({ attributes: ["userId"], raw: true });
+  const userIdsWithCourses = new Set(memberships.map((m) => m.userId));
+  const users = await User.findAll({ attributes: ["id", "admin", "faculty"], raw: true });
+  return users.filter((u) => !u.admin && !u.faculty && !userIdsWithCourses.has(u.id)).map((u) => u.id);
+};
+
+const removeUsersByDbIds = async (ids, User) => await User.destroy({ where: { id: ids } });
+
 module.exports = {
   findUserByDiscordId,
   createUserToDatabase,
@@ -77,6 +86,8 @@ module.exports = {
   saveFacultyRoleToDb,
   findUserByDbId,
   findUsersByDbIds,
+  findUnusedUserIds,
+  removeUsersByDbIds,
   getAllUsers,
   getAdminUsers,
   pruneUsersNotInGuild
