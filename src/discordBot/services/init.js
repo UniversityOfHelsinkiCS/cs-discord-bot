@@ -1,7 +1,7 @@
 const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const { findOrCreateRoleWithName } = require("./service");
 const { facultyRole, githubRepo } = require("../../../config.json");
-const { updateGuide } = require("../../discordBot/services/guide");
+const { updateGuide, startGuideRefresh } = require("../../discordBot/services/guide");
 const { setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME } = require("../../discordBot/services/honeypot");
 const { startFirewallPruning } = require("../../discordBot/services/firewall");
 const { initHooks } = require("../../db/hookInit");
@@ -89,6 +89,7 @@ const initializeApplicationContext = async (client, models) => {
   setInitialGuideMessage(client.guild, "guide", models);
   setInitialHoneypotMessage(client.guild);
   startFirewallPruning();
+  startGuideRefresh(client.guild, models);
 
   if (process.env.NODE_ENV === "production") {
     await sendPullDateMessage(client);

@@ -29,7 +29,8 @@ Invite: https://discord.gg/V5R9dZFCkD
   `/help` shows a role-aware command list.
 - A **guide** channel is generated automatically and kept in sync with the
   current course list, sorted by full name. Each course has **Join** and **Leave**
-  buttons, so newcomers can join channels without commands.
+  buttons, so newcomers can join channels without commands. The member counts
+  refresh every hour and whenever a course changes.
 - Course-page links on the companion website route through `/join/:course` and
   drop the user straight into that course.
 

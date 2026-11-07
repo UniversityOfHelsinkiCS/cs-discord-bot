@@ -16,6 +16,7 @@ const GUIDE_CHANNEL_NAME = "guide";
 const GUIDE_BUTTON_PREFIX = "guide:";
 const JOIN_ACTION = "join";
 const LEAVE_ACTION = "leave";
+const GUIDE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 
 const buildGuideButtonId = (action, courseId) => `${GUIDE_BUTTON_PREFIX}${action}:${courseId}`;
 
@@ -84,7 +85,7 @@ Voit myös liittyä kursseille ja poistua niiltä komennoilla \`/join\` ja \`/le
 Kurssikohtaisilla kanavilla voit käyttää komentoa \`/instructors\` nähdäksesi kurssin ohjaajat.
 Lisää komennolla \`/help\`.
 
-### På svensk
+### På svenska
 ${listPosition.sv} är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **Join**- eller **Leave**-knapp.
 Du kan också gå med i och lämna kurser med kommandona \`/join\` och \`/leave\`.
 I kursspecifika kanaler kan du lista instruktörer med kommandot \`/instructors\`.
@@ -134,7 +135,10 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
     (m) => m.id !== infoMessage.id && m.type !== MessageType.ChannelPinnedMessage
   );
 
-  await infoMessage.edit(buildInfoContent(LIST_BELOW));
+  const infoContent = buildInfoContent(LIST_BELOW);
+  if (infoMessage.content !== infoContent) {
+    await infoMessage.edit(infoContent);
+  }
   await removeReactions(infoMessage);
 
   await Promise.all(
@@ -154,8 +158,12 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
   await Promise.all(listMessages.slice(rows.length).map((message) => message.delete()));
 };
 
+const startGuideRefresh = (guild, models) =>
+  setInterval(() => updateGuide(guild, models).catch(logError), GUIDE_REFRESH_INTERVAL_MS);
+
 module.exports = {
   updateGuide,
+  startGuideRefresh,
   updateGuideMessage,
   GUIDE_BUTTON_PREFIX,
   JOIN_ACTION,

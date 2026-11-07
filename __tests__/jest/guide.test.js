@@ -1,5 +1,5 @@
-const { ButtonStyle, ComponentType, MessageFlags, MessageType } = require("discord.js");
-const { updateGuideMessage } = require("../../src/discordBot/services/guide");
+const { ButtonStyle, Collection, ComponentType, MessageFlags, MessageType } = require("discord.js");
+const { updateGuideMessage, startGuideRefresh } = require("../../src/discordBot/services/guide");
 
 jest.mock("../../src/db/services/courseService", () => ({
   findCoursesFromDb: jest.fn()
@@ -194,5 +194,44 @@ describe("updateGuideMessage", () => {
     expect(infoText.type).toBe(ComponentType.TextDisplay);
     expect(infoText.content.startsWith("### Suomeksi\nYllä on lista")).toBe(true);
     expect(lastMessage.delete).not.toHaveBeenCalled();
+  });
+
+  test("an up-to-date top info message is not edited again", async () => {
+    const { infoMessage, sortedMessages, channel } = setupMocks(1, 0);
+    await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
+    infoMessage.content = infoMessage.edit.mock.calls[0][0];
+    infoMessage.edit.mockClear();
+    setupMocks(1, 0);
+
+    await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
+
+    expect(infoMessage.edit).not.toHaveBeenCalled();
+  });
+});
+
+describe("startGuideRefresh", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    console.error.mockRestore();
+  });
+
+  test("refreshes the guide once an hour", async () => {
+    const fetch = jest.fn(() => Promise.resolve(new Collection()));
+    const guild = { channels: { cache: { find: () => ({ messages: { fetch } }) } } };
+
+    startGuideRefresh(guild, { Course: {}, CourseMember: {} });
+
+    await jest.advanceTimersByTimeAsync(59 * 60 * 1000);
+    expect(fetch).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(60 * 1000);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(60 * 60 * 1000);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
