@@ -1,8 +1,19 @@
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
+const { logError } = require("./logger");
 
 require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
+const GUIDE_BUTTON_PREFIX = "guide:";
+const GUIDE_BUTTON_LABEL = "Join / Leave";
+
+const buildGuideButtonRow = (customId) =>
+  new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(customId).setLabel(GUIDE_BUTTON_LABEL).setStyle(ButtonStyle.Primary)
+  );
+
+const getGuideButtonId = (message) => message.components?.[0]?.components?.[0]?.customId;
 
 const invite_url =
   process.env.NODE_ENV === "production"
@@ -30,36 +41,31 @@ const updateGuide = async (guild, models) => {
 };
 
 const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) => {
-  const courseData = await findCoursesFromDb("name", models.Course, false);
+  const courseData = await findCoursesFromDb("fullName", models.Course, false);
 
   // Collecting all course member counts in parallel
   const courseMemberCounts = await Promise.all(
     courseData.map((course) => findCourseMemberCount(course.id, models.CourseMember))
   );
 
-  const rows = courseData.map((course, index) => {
-    const regExp = /[^0-9]*/;
-    const fullname = course.fullName;
-    const name = course.name;
-    const matches = regExp.exec(course.code)?.[0];
-    const code = matches ? matches + course.code.slice(matches.length) : course.code;
-    const count = courseMemberCounts[index];
-    return `${name} - ${code} - ${fullname} 👥${count}`;
-  });
+  const rows = courseData.map((course, index) => ({
+    content: `**${course.fullName}**\n-# ${course.name} · ${course.code} · 👥 ${courseMemberCounts[index]}`,
+    customId: `${GUIDE_BUTTON_PREFIX}${course.id}`
+  }));
 
   const infoContent = `.
 **Suomeksi**
- Alla on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin reaktionappulaa [👤 1].
+ Alla on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin **${GUIDE_BUTTON_LABEL}** -painiketta.
 Kurssikohtaisilla kanavilla voit käyttää komentoa \`/instructors\` nähdäksesi kurssin ohjaajat.
 Lisää komennolla \`/help\`.
 
 **På svensk**
-Nedan är en lista över kurser som du kan delta i eller lämna genom att klicka på reaktionsknappen för kurser [👤 1].
+Nedan är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **${GUIDE_BUTTON_LABEL}**-knapp.
 I kursspecifika kanaler kan du lista instruktörer med kommandot \`/instructors\`.
 Se mer med kommandot \`/help\`.
 
 **In english**
-Below is a list of course that you can join or leave by clicking the course reaction button [👤 1].
+Below is a list of courses that you can join or leave by clicking the course's **${GUIDE_BUTTON_LABEL}** button.
 In course specific channels you can list instructors with the command \`/instructors\`
 See more with \`/help\` command.
 
@@ -76,16 +82,19 @@ Invitation link for the server ${invite_url}
   // Editing course messages
   const editOrSendPromises = [];
   for (let i = 0; i < rows.length; i++) {
-    const rowContent = rows[i];
+    const row = rows[i];
     const courseMessage = courseMessages[i];
+    const messageData = { content: row.content, components: [buildGuideButtonRow(row.customId)] };
 
     if (courseMessage) {
-      if (courseMessage.content !== rowContent) {
-        editOrSendPromises.push(courseMessage.edit(rowContent));
+      if (courseMessage.content !== row.content || getGuideButtonId(courseMessage) !== row.customId) {
+        editOrSendPromises.push(courseMessage.edit(messageData));
+      }
+      if (courseMessage.reactions?.cache.size) {
+        editOrSendPromises.push(courseMessage.reactions.removeAll().catch(logError));
       }
     } else {
-      // If not enough courseMessages exist, send a new message and react to it
-      editOrSendPromises.push(channel.send(rowContent).then((msg) => msg.react("👤")));
+      editOrSendPromises.push(channel.send(messageData));
     }
   }
 
@@ -101,5 +110,6 @@ Invitation link for the server ${invite_url}
 
 module.exports = {
   updateGuide,
-  updateGuideMessage
+  updateGuideMessage,
+  GUIDE_BUTTON_PREFIX
 };
