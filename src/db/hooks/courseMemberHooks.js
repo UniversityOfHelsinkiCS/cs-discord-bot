@@ -40,14 +40,14 @@ const initCourseMemberHooks = (guild, models) => {
       );
     }
     const announcementChannel = guild.channels.cache.find((c) => c.name === `${course.name}_announcement`);
-    updateAnnouncementChannelMessage(guild, announcementChannel).catch(logError);
+    updateAnnouncementChannelMessage(guild, announcementChannel, models).catch(logError);
   });
 
   models.CourseMember.addHook("afterUpdate", async (courseMember) => {
     if (!courseMember._changed.has("instructor")) return;
     const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
     const announcementChannel = guild.channels.cache.find((c) => c.name === `${course.name}_announcement`);
-    updateAnnouncementChannelMessage(guild, announcementChannel).catch(logError);
+    updateAnnouncementChannelMessage(guild, announcementChannel, models).catch(logError);
   });
 };
 

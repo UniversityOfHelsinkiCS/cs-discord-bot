@@ -165,7 +165,7 @@ const restoreChannels = async (guild, models) => {
 
         if (newChannel.name.includes("_announcement")) {
           await createInvitation(guild, parentId.dataValues.name);
-          await updateAnnouncementChannelMessage(guild, newChannel);
+          await updateAnnouncementChannelMessage(guild, newChannel, models);
         }
       } else if (currentChannel.voiceChannel) {
         const channelObject = {

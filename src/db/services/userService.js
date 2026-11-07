@@ -16,6 +16,14 @@ const findUserByDbId = async (id, User) => {
   });
 };
 
+const findUsersByDbIds = async (ids, User) => {
+  return await User.findAll({
+    where: {
+      id: ids
+    }
+  });
+};
+
 const createUserToDatabase = async (discordId, username, User) => {
   const alreadyinuse = await findUserByDiscordId(discordId, User);
   if (!alreadyinuse) {
@@ -68,6 +76,7 @@ module.exports = {
   removeUserFromDb,
   saveFacultyRoleToDb,
   findUserByDbId,
+  findUsersByDbIds,
   getAllUsers,
   getAdminUsers,
   pruneUsersNotInGuild

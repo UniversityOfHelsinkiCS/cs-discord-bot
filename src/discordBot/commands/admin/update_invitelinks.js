@@ -8,7 +8,7 @@ const execute = async (interaction, client, models) => {
 
   await sendEphemeral(interaction, "Updating invite links...");
 
-  await updateInviteLinks(client.guild);
+  await updateInviteLinks(client.guild, models);
 
   return await editEphemeral(interaction, "Updated invite links.");
 };

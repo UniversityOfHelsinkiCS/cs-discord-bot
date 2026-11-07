@@ -110,7 +110,7 @@ const initCourseHooks = (guild, models) => {
         await changeCourseRoles(previousCourseName, courseName, guild);
         await setCoursePositionABC(guild, `${categoryEmojis} ${courseName}`, models.Course);
         await editChannelNames(course.id, previousCourseName, courseName, models.Channel);
-        await updateAnnouncementChannelMessage(guild, channelAnnouncement);
+        await updateAnnouncementChannelMessage(guild, channelAnnouncement, models);
       }
       await updateGuide(guild, models);
     }

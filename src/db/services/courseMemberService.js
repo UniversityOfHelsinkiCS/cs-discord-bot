@@ -23,6 +23,15 @@ const findCourseMemberCount = async (courseId, CourseMember) => {
   });
 };
 
+const findCourseInstructors = async (courseId, CourseMember) => {
+  return await CourseMember.findAll({
+    where: {
+      courseId: courseId,
+      instructor: true
+    }
+  });
+};
+
 const findAllCourseMembersByUser = async (userId, CourseMember) => {
   return await CourseMember.findAll({
     where: {
@@ -64,6 +73,7 @@ module.exports = {
   createCourseMemberToDatabase,
   removeCourseMemberFromDb,
   findCourseMemberCount,
+  findCourseInstructors,
   findAllCourseMembersByUser,
   getAllMembers
 };

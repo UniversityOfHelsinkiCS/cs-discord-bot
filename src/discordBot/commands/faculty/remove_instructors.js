@@ -70,7 +70,7 @@ const execute = async (interaction, client, models) => {
   }
 
   const announcementChannel = guild.channels.cache.find((c) => c.name === `${parentCourse.name}_announcement`);
-  await updateAnnouncementChannelMessage(guild, announcementChannel);
+  await updateAnnouncementChannelMessage(guild, announcementChannel, models);
 
   return await editEphemeral(interaction, `Removed role '${instructorRole.name}' from all users listed.`);
 };
