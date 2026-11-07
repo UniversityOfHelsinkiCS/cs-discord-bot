@@ -25,7 +25,7 @@ Go to your _Course page_ (MOOC, Moodle, etc.). From there you can find a link to
 
 ![Moodle link](./images/moodlelink.png)
 
-By clicking the link, you will be forwarded to the Discord server and automatically added to the course channel. The application should open to the _#guide_ text channel. Here you can see all the courses you can join as well as some basic instructions on how to use the Discord bot. Click a course's **Join / Leave** button to join it, and click it again to leave. The bot replies with a message only you can see.
+By clicking the link, you will be forwarded to the Discord server and automatically added to the course channel. The application should open to the _#guide_ text channel. Here you can see all the courses you can join as well as some basic instructions on how to use the Discord bot. Click a course's blue **Join** button to join it, or its red **Leave** button to leave. The bot replies with a message only you can see.
 
 ![Welcome](./images/welcome.png)
 

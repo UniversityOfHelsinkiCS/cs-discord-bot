@@ -1,4 +1,12 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageType } = require("discord.js");
+const {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
+  MessageFlags,
+  MessageType,
+  TextDisplayBuilder
+} = require("discord.js");
 const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
 const { logError } = require("./logger");
@@ -6,14 +14,56 @@ const { logError } = require("./logger");
 require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
 const GUIDE_BUTTON_PREFIX = "guide:";
-const GUIDE_BUTTON_LABEL = "Join / Leave";
+const JOIN_ACTION = "join";
+const LEAVE_ACTION = "leave";
 
-const buildGuideButtonRow = (customId) =>
-  new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(customId).setLabel(GUIDE_BUTTON_LABEL).setStyle(ButtonStyle.Primary)
-  );
+const buildGuideButtonId = (action, courseId) => `${GUIDE_BUTTON_PREFIX}${action}:${courseId}`;
 
-const getGuideButtonId = (message) => message.components?.[0]?.components?.[0]?.customId;
+const parseGuideButtonId = (customId) => {
+  const [action, courseId] = customId.slice(GUIDE_BUTTON_PREFIX.length).split(":");
+  return { action, courseId };
+};
+
+const buildCourseBlocks = (course, memberCount) => [
+  { text: `### ${course.fullName}` },
+  {
+    buttons: [
+      { customId: buildGuideButtonId(JOIN_ACTION, course.id), label: "Join", style: ButtonStyle.Primary },
+      { customId: buildGuideButtonId(LEAVE_ACTION, course.id), label: "Leave", style: ButtonStyle.Danger }
+    ]
+  },
+  { text: `${course.name} · ${course.code} · 👥 ${memberCount}` }
+];
+
+const buildComponent = (block) =>
+  block.text
+    ? new TextDisplayBuilder().setContent(block.text)
+    : new ActionRowBuilder().addComponents(
+        block.buttons.map((button) =>
+          new ButtonBuilder().setCustomId(button.customId).setLabel(button.label).setStyle(button.style)
+        )
+      );
+
+const toMessageData = (blocks) => ({
+  content: "",
+  flags: MessageFlags.IsComponentsV2,
+  components: blocks.map(buildComponent)
+});
+
+const blockSignature = (blocks) =>
+  blocks
+    .map((block) => block.text ?? block.buttons.map((button) => `${button.label}:${button.customId}`).join(","))
+    .join("\n");
+
+const componentSignature = (component) => {
+  if (component.type === ComponentType.TextDisplay) return component.content;
+  if (component.type === ComponentType.ActionRow) {
+    return component.components.map((button) => `${button.label}:${button.customId}`).join(",");
+  }
+  return "";
+};
+
+const messageSignature = (message) => (message.components ?? []).map(componentSignature).join("\n");
 
 const removeReactions = async (message) => {
   if (!message.reactions?.cache.size) return;
@@ -29,19 +79,19 @@ const LIST_BELOW = { fi: "Alla", sv: "Nedan", en: "Below" };
 const LIST_ABOVE = { fi: "Yllä", sv: "Ovan", en: "Above" };
 
 const buildInfoContent = (listPosition) => `### Suomeksi
-${listPosition.fi} on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin **${GUIDE_BUTTON_LABEL}** -painiketta.
+${listPosition.fi} on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin **Join**- tai **Leave**-painiketta.
 Voit myös liittyä kursseille ja poistua niiltä komennoilla \`/join\` ja \`/leave\`.
 Kurssikohtaisilla kanavilla voit käyttää komentoa \`/instructors\` nähdäksesi kurssin ohjaajat.
 Lisää komennolla \`/help\`.
 
 ### På svensk
-${listPosition.sv} är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **${GUIDE_BUTTON_LABEL}**-knapp.
+${listPosition.sv} är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **Join**- eller **Leave**-knapp.
 Du kan också gå med i och lämna kurser med kommandona \`/join\` och \`/leave\`.
 I kursspecifika kanaler kan du lista instruktörer med kommandot \`/instructors\`.
 Se mer med kommandot \`/help\`.
 
 ### In english
-${listPosition.en} is a list of courses that you can join or leave by clicking the course's **${GUIDE_BUTTON_LABEL}** button.
+${listPosition.en} is a list of courses that you can join or leave by clicking the course's **Join** or **Leave** button.
 You can also join and leave courses with the \`/join\` and \`/leave\` commands.
 In course specific channels you can list instructors with the command \`/instructors\`
 See more with \`/help\` command.
@@ -71,16 +121,14 @@ const updateGuide = async (guild, models) => {
 const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) => {
   const courseData = await findCoursesFromDb("fullName", models.Course, false);
 
-  // Collecting all course member counts in parallel
   const courseMemberCounts = await Promise.all(
     courseData.map((course) => findCourseMemberCount(course.id, models.CourseMember))
   );
 
-  const courseRows = courseData.map((course, index) => ({
-    content: `### ${course.fullName}\n${course.name} · ${course.code} · 👥 ${courseMemberCounts[index]}`,
-    customId: `${GUIDE_BUTTON_PREFIX}${course.id}`
-  }));
-  const rows = [...courseRows, { content: buildInfoContent(LIST_ABOVE) }];
+  const rows = [
+    ...courseData.map((course, index) => buildCourseBlocks(course, courseMemberCounts[index])),
+    [{ text: buildInfoContent(LIST_ABOVE) }]
+  ];
 
   const listMessages = Array.from(sortedMessages.values()).filter(
     (m) => m.id !== infoMessage.id && m.type !== MessageType.ChannelPinnedMessage
@@ -89,23 +137,18 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
   await infoMessage.edit(buildInfoContent(LIST_BELOW));
   await removeReactions(infoMessage);
 
-  const toMessageData = (row) => ({
-    content: row.content,
-    components: row.customId ? [buildGuideButtonRow(row.customId)] : []
-  });
-
   await Promise.all(
-    rows.slice(0, listMessages.length).map(async (row, i) => {
+    rows.slice(0, listMessages.length).map(async (blocks, i) => {
       const message = listMessages[i];
-      if (message.content !== row.content || getGuideButtonId(message) !== row.customId) {
-        await message.edit(toMessageData(row));
+      if (messageSignature(message) !== blockSignature(blocks)) {
+        await message.edit(toMessageData(blocks));
       }
       await removeReactions(message);
     })
   );
 
-  for (const row of rows.slice(listMessages.length)) {
-    await channel.send(toMessageData(row));
+  for (const blocks of rows.slice(listMessages.length)) {
+    await channel.send(toMessageData(blocks));
   }
 
   await Promise.all(listMessages.slice(rows.length).map((message) => message.delete()));
@@ -114,5 +157,8 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
 module.exports = {
   updateGuide,
   updateGuideMessage,
-  GUIDE_BUTTON_PREFIX
+  GUIDE_BUTTON_PREFIX,
+  JOIN_ACTION,
+  LEAVE_ACTION,
+  parseGuideButtonId
 };

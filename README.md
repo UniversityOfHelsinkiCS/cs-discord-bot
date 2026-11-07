@@ -28,8 +28,8 @@ Invite: https://discord.gg/V5R9dZFCkD
 - `/courses` lists public courses, `/instructors` lists a course's instructors,
   `/help` shows a role-aware command list.
 - A **guide** channel is generated automatically and kept in sync with the
-  current course list, sorted by full name. Each course has a **Join / Leave**
-  button, so newcomers can join channels without commands.
+  current course list, sorted by full name. Each course has **Join** and **Leave**
+  buttons, so newcomers can join channels without commands.
 - Course-page links on the companion website route through `/join/:course` and
   drop the user straight into that course.
 

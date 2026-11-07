@@ -1,4 +1,4 @@
-const { MessageType } = require("discord.js");
+const { ButtonStyle, ComponentType, MessageFlags, MessageType } = require("discord.js");
 const { updateGuideMessage } = require("../../src/discordBot/services/guide");
 
 jest.mock("../../src/db/services/courseService", () => ({
@@ -52,15 +52,13 @@ const setupMocks = (courseCount = 2, extraMessages = 1) => {
   ]);
 
   const channel = {
-    send: jest.fn(() =>
-      Promise.resolve({
-        react: jest.fn(() => Promise.resolve())
-      })
-    )
+    send: jest.fn(() => Promise.resolve({}))
   };
 
   return { infoMessage, courseMessages, extras, sortedMessages, channel, courses };
 };
+
+const toJSON = (messageData) => messageData.components.map((component) => component.toJSON());
 
 describe("updateGuideMessage", () => {
   beforeEach(() => {
@@ -76,22 +74,36 @@ describe("updateGuideMessage", () => {
     expect(findCoursesFromDb).toHaveBeenCalledWith("fullName", models.Course, false);
   });
 
-  test("course messages show the full name as a heading, details below and a join/leave button", async () => {
+  test("course messages show the heading, a blue join and red leave button, then the details", async () => {
     const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 0);
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
-    const { content, components } = courseMessages[0].edit.mock.calls[0][0];
-    expect(content).toBe("### Course 1\ntkt101 · TKT101 · 👥 5");
-    const button = components[0].toJSON().components[0];
-    expect(button.custom_id).toBe("guide:1");
-    expect(button.label).toBe("Join / Leave");
+    const messageData = courseMessages[0].edit.mock.calls[0][0];
+    expect(messageData.content).toBe("");
+    expect(messageData.flags).toBe(MessageFlags.IsComponentsV2);
+    const [heading, buttonRow, details] = toJSON(messageData);
+    expect(heading).toMatchObject({ type: ComponentType.TextDisplay, content: "### Course 1" });
+    expect(buttonRow.components).toMatchObject([
+      { custom_id: "guide:join:1", label: "Join", style: ButtonStyle.Primary },
+      { custom_id: "guide:leave:1", label: "Leave", style: ButtonStyle.Danger }
+    ]);
+    expect(details).toMatchObject({ type: ComponentType.TextDisplay, content: "tkt101 · TKT101 · 👥 5" });
   });
 
   test("an up-to-date course message is not edited again", async () => {
     const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 0);
-    courseMessages[0].content = "### Course 1\ntkt101 · TKT101 · 👥 5";
-    courseMessages[0].components = [{ components: [{ customId: "guide:1" }] }];
+    courseMessages[0].components = [
+      { type: ComponentType.TextDisplay, content: "### Course 1" },
+      {
+        type: ComponentType.ActionRow,
+        components: [
+          { label: "Join", customId: "guide:join:1" },
+          { label: "Leave", customId: "guide:leave:1" }
+        ]
+      },
+      { type: ComponentType.TextDisplay, content: "tkt101 · TKT101 · 👥 5" }
+    ];
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
@@ -150,8 +162,9 @@ describe("updateGuideMessage", () => {
     expect(infoMessage.edit).toHaveBeenCalledTimes(1);
     expect(courseMessages[0].edit).toHaveBeenCalledTimes(1);
     expect(channel.send).toHaveBeenCalledTimes(2);
-    expect(channel.send.mock.calls[0][0].components).toHaveLength(1);
-    expect(channel.send.mock.calls[1][0].components).toEqual([]);
+    expect(channel.send.mock.calls[0][0].components).toHaveLength(3);
+    expect(channel.send.mock.calls[1][0].components).toHaveLength(1);
+    expect(channel.send.mock.calls[1][0].flags).toBe(MessageFlags.IsComponentsV2);
   });
 
   test("the top info message points below and the bottom one points above, without a leading dot", async () => {
@@ -160,24 +173,26 @@ describe("updateGuideMessage", () => {
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
     const topContent = infoMessage.edit.mock.calls[0][0];
-    const bottomContent = channel.send.mock.calls[0][0].content;
+    const [bottomText] = toJSON(channel.send.mock.calls[0][0]);
     expect(topContent.startsWith("### Suomeksi\nAlla on lista")).toBe(true);
     expect(topContent).toContain("Nedan är en lista");
     expect(topContent).toContain("Below is a list");
-    expect(bottomContent.startsWith("### Suomeksi\nYllä on lista")).toBe(true);
-    expect(bottomContent).toContain("Ovan är en lista");
-    expect(bottomContent).toContain("Above is a list");
+    expect(topContent).toContain("**Join** or **Leave** button");
+    expect(bottomText.content.startsWith("### Suomeksi\nYllä on lista")).toBe(true);
+    expect(bottomText.content).toContain("Ovan är en lista");
+    expect(bottomText.content).toContain("Above is a list");
   });
 
-  test("the bottom info message has its course button removed when the course list shrinks", async () => {
+  test("a former course message becomes the bottom info message when the course list shrinks", async () => {
     const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 1);
     const lastMessage = [...sortedMessages.values()].at(-1);
-    lastMessage.components = [{ components: [{ customId: "guide:2" }] }];
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
     expect(courseMessages[0].edit).toHaveBeenCalledTimes(1);
-    expect(lastMessage.edit.mock.calls[0][0].components).toEqual([]);
+    const [infoText] = toJSON(lastMessage.edit.mock.calls[0][0]);
+    expect(infoText.type).toBe(ComponentType.TextDisplay);
+    expect(infoText.content.startsWith("### Suomeksi\nYllä on lista")).toBe(true);
     expect(lastMessage.delete).not.toHaveBeenCalled();
   });
 });
