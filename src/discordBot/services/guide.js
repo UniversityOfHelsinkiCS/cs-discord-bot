@@ -56,16 +56,19 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
   const infoContent = `.
 **Suomeksi**
  Alla on lista kursseja, joiden keskustelukanaville voi liittyä tai poistua painamalla kurssin **${GUIDE_BUTTON_LABEL}** -painiketta.
+Voit myös liittyä kursseille ja poistua niiltä komennoilla \`/join\` ja \`/leave\`.
 Kurssikohtaisilla kanavilla voit käyttää komentoa \`/instructors\` nähdäksesi kurssin ohjaajat.
 Lisää komennolla \`/help\`.
 
 **På svensk**
 Nedan är en lista över kurser som du kan delta i eller lämna genom att klicka på kursens **${GUIDE_BUTTON_LABEL}**-knapp.
+Du kan också gå med i och lämna kurser med kommandona \`/join\` och \`/leave\`.
 I kursspecifika kanaler kan du lista instruktörer med kommandot \`/instructors\`.
 Se mer med kommandot \`/help\`.
 
 **In english**
 Below is a list of courses that you can join or leave by clicking the course's **${GUIDE_BUTTON_LABEL}** button.
+You can also join and leave courses with the \`/join\` and \`/leave\` commands.
 In course specific channels you can list instructors with the command \`/instructors\`
 See more with \`/help\` command.
 
