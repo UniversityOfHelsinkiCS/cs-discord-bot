@@ -1,6 +1,11 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { getAllCourses } = require("../../../db/services/courseService");
-const { findUserByDiscordId, findUserByDbId, createUserToDatabase } = require("../../../db/services/userService");
+const {
+  findUserByDiscordId,
+  findUserByDbId,
+  createUserToDatabase,
+  removeUserIfUnused
+} = require("../../../db/services/userService");
 const {
   findCourseMember,
   findAllCourseMembers,
@@ -68,6 +73,7 @@ const execute = async (interaction, client, models) => {
 
       if (!member.roles.cache.has(courseRole.id) && !hasInstructorRole(member)) {
         await removeCourseMemberFromDb(courseMember.userId, course.id, models.CourseMember);
+        await removeUserIfUnused(courseMember.userId, models.User, models.CourseMember);
         fixes.push(`${member.user.username}: removed from ${course.name} in database`);
       }
     }

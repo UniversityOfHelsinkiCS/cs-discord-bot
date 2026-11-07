@@ -95,7 +95,7 @@ The University of Helsinki is a public body. Where GDPR applies, our processing 
 
 ## 6. Data retention
 
-- **User records** are automatically deleted from our database when a member leaves, is kicked, or is banned from the Server, and also reconciled and cleaned up every time the Bot starts up (in case a departure happened while the Bot was offline).
+- **User records** are automatically deleted from our database when a member leaves, is kicked, or is banned from the Server, and also reconciled and cleaned up every time the Bot starts up (in case a departure happened while the Bot was offline). A user record is also deleted as soon as it is no longer needed: when you leave your last course, or lose your admin or faculty rights, and have neither another course nor another of those rights left.
 - **Course-membership records** for a user are deleted together with that user's record; the database removes them automatically when the user record is deleted.
 - **Course and channel records** are retained for as long as the course exists on the Server, and are removed by administrators when the course or channel is deleted or no longer needed. They contain no personal data about individual members.
 - **Website sessions** are removed when they expire or when you log out.

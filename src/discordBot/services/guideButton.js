@@ -2,7 +2,7 @@ const { MessageFlags } = require("discord.js");
 const { GUIDE_BUTTON_PREFIX, JOIN_ACTION, LEAVE_ACTION, parseGuideButtonId } = require("./guide");
 const { editEphemeral, editErrorEphemeral } = require("./message");
 const { findCourseFromDbById } = require("../../db/services/courseService");
-const { createUserToDatabase, findUserByDiscordId } = require("../../db/services/userService");
+const { createUserToDatabase, findUserByDiscordId, removeUserIfUnused } = require("../../db/services/userService");
 const {
   findCourseMember,
   createCourseMemberToDatabase,
@@ -34,6 +34,7 @@ const leaveCourse = async (interaction, course, models) => {
     );
   }
   await removeCourseMemberFromDb(user.id, course.id, models.CourseMember);
+  await removeUserIfUnused(user.id, models.User, models.CourseMember);
   return await editEphemeral(interaction, `You left **${course.fullName}**.`);
 };
 

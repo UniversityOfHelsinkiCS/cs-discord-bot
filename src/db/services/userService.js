@@ -77,6 +77,13 @@ const findUnusedUserIds = async (User, CourseMember) => {
   return users.filter((u) => !u.admin && !u.faculty && !userIdsWithCourses.has(u.id)).map((u) => u.id);
 };
 
+const removeUserIfUnused = async (userId, User, CourseMember) => {
+  const user = await findUserByDbId(userId, User);
+  if (!user || user.admin || user.faculty) return;
+  const membershipCount = await CourseMember.count({ where: { userId } });
+  if (membershipCount === 0) await User.destroy({ where: { id: userId } });
+};
+
 const removeUsersByDbIds = async (ids, User) => await User.destroy({ where: { id: ids } });
 
 module.exports = {
@@ -88,6 +95,7 @@ module.exports = {
   findUsersByDbIds,
   findUnusedUserIds,
   removeUsersByDbIds,
+  removeUserIfUnused,
   getAllUsers,
   getAdminUsers,
   pruneUsersNotInGuild

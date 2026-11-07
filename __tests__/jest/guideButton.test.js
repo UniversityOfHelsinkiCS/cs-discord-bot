@@ -1,7 +1,7 @@
 const { isGuideButton, handleGuideButton } = require("../../src/discordBot/services/guideButton");
 const { editEphemeral, editErrorEphemeral } = require("../../src/discordBot/services/message");
 const { findCourseFromDbById } = require("../../src/db/services/courseService");
-const { createUserToDatabase, findUserByDiscordId } = require("../../src/db/services/userService");
+const { createUserToDatabase, findUserByDiscordId, removeUserIfUnused } = require("../../src/db/services/userService");
 const {
   findCourseMember,
   createCourseMemberToDatabase,
@@ -67,6 +67,7 @@ describe("leave button", () => {
     const interaction = makeInteraction("guide:leave:7");
     await handleGuideButton(interaction, {}, models);
     expect(removeCourseMemberFromDb).toHaveBeenCalledWith(user.id, course.id, models.CourseMember);
+    expect(removeUserIfUnused).toHaveBeenCalledWith(user.id, models.User, models.CourseMember);
     expect(editEphemeral).toHaveBeenCalledWith(interaction, "You left **Ohjelmistotuotanto**.");
   });
 

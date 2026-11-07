@@ -1,6 +1,11 @@
 const { execute } = require("../../../src/discordBot/commands/admin/fix_course_roles");
 const { getAllCourses } = require("../../../src/db/services/courseService");
-const { findUserByDiscordId, findUserByDbId, createUserToDatabase } = require("../../../src/db/services/userService");
+const {
+  findUserByDiscordId,
+  findUserByDbId,
+  createUserToDatabase,
+  removeUserIfUnused
+} = require("../../../src/db/services/userService");
 const {
   findCourseMember,
   findAllCourseMembers,
@@ -87,6 +92,7 @@ describe("slash fix_course_roles command", () => {
     await execute(interaction, buildClient(member), models);
 
     expect(removeCourseMemberFromDb).toHaveBeenCalledWith(10, 1, models.CourseMember);
+    expect(removeUserIfUnused).toHaveBeenCalledWith(10, models.User, models.CourseMember);
     expect(replyInChunks).toHaveBeenCalledTimes(1);
   });
 

@@ -1,5 +1,5 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
-const { findUserByDiscordId } = require("../../../db/services/userService");
+const { findUserByDiscordId, removeUserIfUnused } = require("../../../db/services/userService");
 const { confirmChoice } = require("../../services/confirm");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
@@ -23,6 +23,7 @@ const execute = async (interaction, client, models) => {
 
   user.faculty = false;
   await user.save();
+  await removeUserIfUnused(user.id, models.User, models.CourseMember);
 
   return await editEphemeral(interaction, `Removed faculty rights from ${user.name}.`);
 };

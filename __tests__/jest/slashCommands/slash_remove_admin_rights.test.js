@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/admin/remove_admin_rights");
-const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { findUserByDiscordId, removeUserIfUnused } = require("../../../src/db/services/userService");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
@@ -67,6 +67,7 @@ describe("slash remove_admin_rights", () => {
     expect(confirmChoice).toHaveBeenCalledTimes(1);
     expect(userModelInstanceMock.save).toHaveBeenCalledTimes(1);
     expect(userModelInstanceMock.admin).toBe(false);
+    expect(removeUserIfUnused).toHaveBeenCalledWith(userModelInstanceMock.id, models.User, models.CourseMember);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, "Removed admin rights from JonDoe.");
   });
 });
