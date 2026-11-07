@@ -4,7 +4,6 @@ const {
   sendErrorEphemeral,
   sendEphemeral,
   editEphemeral,
-  sendErrorReportNoInteraction,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
   editErrorEphemeral
@@ -24,19 +23,6 @@ describe("message service", () => {
     const error = "faked error";
     const msg = `**ERROR DETECTED!**\nMember: admin\nCommand: ${defaultAdminInteraction.commandName}\nChannel: ${channel.name}`;
     await sendErrorReport(defaultAdminInteraction, client, error);
-    expect(commandChannel.send).toHaveBeenCalledTimes(2);
-    expect(commandChannel.send).toHaveBeenCalledWith({ content: msg });
-    expect(commandChannel.send).toHaveBeenCalledWith({ content: error });
-  });
-
-  test("errors without interaction sent to commands channel", async () => {
-    const member = { name: "Error generator" };
-    const error = "faked error";
-    const client = defaultAdminInteraction.client;
-    const commandChannel = client.guild.channels.cache.find((c) => c.name === "commands");
-    const channel = client.guild.channels.cache.get(defaultAdminInteraction.channelId);
-    const msg = `**ERROR DETECTED!**\nMember: ${member}\nChannel: ${channel}`;
-    await sendErrorReportNoInteraction(0, member, channel, client, error);
     expect(commandChannel.send).toHaveBeenCalledTimes(2);
     expect(commandChannel.send).toHaveBeenCalledWith({ content: msg });
     expect(commandChannel.send).toHaveBeenCalledWith({ content: error });
