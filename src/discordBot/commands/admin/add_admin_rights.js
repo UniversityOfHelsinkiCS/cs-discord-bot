@@ -1,5 +1,5 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
-const { findUserByDiscordId } = require("../../../db/services/userService");
+const { createUserToDatabase } = require("../../../db/services/userService");
 const { confirmChoice } = require("../../services/confirm");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
@@ -10,11 +10,11 @@ const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Adding admin rights...");
 
   const targetUser = interaction.options.getUser("user");
-  const user = await findUserByDiscordId(targetUser.id, models.User);
-
-  if (!user) {
-    return await editErrorEphemeral(interaction, `No user found with the id ${targetUser.id}.`);
+  if (targetUser.bot) {
+    return await editErrorEphemeral(interaction, "Bots can't be given admin rights.");
   }
+
+  const user = await createUserToDatabase(targetUser.id, targetUser.username, models.User);
 
   const confirm = await confirmChoice(interaction, "Give admin rights to " + user.name);
   if (!confirm) {

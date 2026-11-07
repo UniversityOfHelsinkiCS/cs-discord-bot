@@ -1,7 +1,7 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/add_instructors");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { getCourseNameFromCategory, getUserWithUserId } = require("../../../src/discordBot/services/service");
-const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { createUserToDatabase } = require("../../../src/db/services/userService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { createCourseMemberToDatabase } = require("../../../src/db/services/courseMemberService");
 const { courseAdminRole } = require("../../../config.json");
@@ -22,7 +22,7 @@ jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/courseMemberService");
 
 getCourseNameFromCategory.mockImplementation(() => "test");
-findUserByDiscordId.mockImplementation(() => {
+createUserToDatabase.mockImplementation(() => {
   return { id: 1 };
 });
 findCourseFromDb.mockImplementation(() => {

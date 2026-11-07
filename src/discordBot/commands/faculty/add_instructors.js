@@ -5,7 +5,7 @@ const {
   updateAnnouncementChannelMessage,
   getUserWithUserId
 } = require("../../services/service");
-const { findUserByDiscordId } = require("../../../db/services/userService");
+const { createUserToDatabase } = require("../../../db/services/userService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { createCourseMemberToDatabase } = require("../../../db/services/courseMemberService");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
@@ -54,7 +54,7 @@ const execute = async (interaction, client, models) => {
     if (memberToPromote.user.bot) {
       continue;
     }
-    const userInstance = await findUserByDiscordId(memberToPromote.user.id, userModel);
+    const userInstance = await createUserToDatabase(memberToPromote.user.id, memberToPromote.user.username, userModel);
 
     const courseMemberInstance = await createCourseMemberToDatabase(
       userInstance.id,

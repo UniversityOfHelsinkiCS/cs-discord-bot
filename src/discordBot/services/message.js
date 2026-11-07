@@ -1,5 +1,4 @@
 const { ChannelType, MessageFlags } = require("discord.js");
-const { logError } = require("./logger");
 
 const validateChannel = (channel) => {
   if (channel.parent) return false;
@@ -56,27 +55,6 @@ const editErrorEphemeral = async (interaction, msg) => {
   await interaction.editReply({ content: `Error: ${msg}` });
 };
 
-const sendReplyMessage = async (message, channel, replyText) => {
-  const interactionId = message.id;
-  const reply = await message.reply({ content: `${replyText}` });
-  setTimeout(async () => {
-    try {
-      const fetchedReply = await channel.messages.fetch(reply.id);
-      fetchedReply.delete();
-    } catch (e) {
-      logError(e);
-      // console.log(error);
-    }
-    try {
-      const fetchedInteraction = await channel.messages.fetch(interactionId);
-      fetchedInteraction.delete();
-    } catch (e) {
-      logError(e);
-      // console.log(error);
-    }
-  }, 86400000);
-};
-
 const sendReportToCommandsChannel = async (client, content, files = []) => {
   const commandsChannel = client.guild.channels.cache.find((c) => validateChannel(c));
   await commandsChannel.send({ content, files });
@@ -104,7 +82,6 @@ module.exports = {
   editEphemeralWithComponents,
   editEphemeralClearComponents,
   editErrorEphemeral,
-  sendReplyMessage,
   sendFollowUpEphemeral,
   replyInChunks
 };
