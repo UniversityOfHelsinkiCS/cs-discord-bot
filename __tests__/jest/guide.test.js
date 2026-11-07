@@ -75,13 +75,13 @@ describe("updateGuideMessage", () => {
     expect(findCoursesFromDb).toHaveBeenCalledWith("fullName", models.Course, false);
   });
 
-  test("course messages show the full name, details as subtext and a join/leave button", async () => {
+  test("course messages show the full name as a heading, details below and a join/leave button", async () => {
     const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 0);
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
     const { content, components } = courseMessages[0].edit.mock.calls[0][0];
-    expect(content).toBe("**Course 1**\n-# tkt101 · TKT101 · 👥 5");
+    expect(content).toBe("### Course 1\ntkt101 · TKT101 · 👥 5");
     const button = components[0].toJSON().components[0];
     expect(button.custom_id).toBe("guide:1");
     expect(button.label).toBe("Join / Leave");
@@ -89,7 +89,7 @@ describe("updateGuideMessage", () => {
 
   test("an up-to-date course message is not edited again", async () => {
     const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 0);
-    courseMessages[0].content = "**Course 1**\n-# tkt101 · TKT101 · 👥 5";
+    courseMessages[0].content = "### Course 1\ntkt101 · TKT101 · 👥 5";
     courseMessages[0].components = [{ components: [{ customId: "guide:1" }] }];
 
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });

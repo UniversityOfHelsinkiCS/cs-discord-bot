@@ -49,7 +49,7 @@ const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) 
   );
 
   const rows = courseData.map((course, index) => ({
-    content: `**${course.fullName}**\n-# ${course.name} · ${course.code} · 👥 ${courseMemberCounts[index]}`,
+    content: `### ${course.fullName}\n${course.name} · ${course.code} · 👥 ${courseMemberCounts[index]}`,
     customId: `${GUIDE_BUTTON_PREFIX}${course.id}`
   }));
 
