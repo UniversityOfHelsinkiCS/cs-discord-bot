@@ -1,3 +1,4 @@
+const { MessageType } = require("discord.js");
 const { updateGuideMessage } = require("../../src/discordBot/services/guide");
 
 jest.mock("../../src/db/services/courseService", () => ({
@@ -95,6 +96,28 @@ describe("updateGuideMessage", () => {
     await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
 
     expect(courseMessages[0].edit).not.toHaveBeenCalled();
+  });
+
+  test("old reactions are removed from the info message", async () => {
+    const { infoMessage, sortedMessages, channel } = setupMocks(1, 0);
+    const removeAll = jest.fn(() => Promise.resolve());
+    infoMessage.reactions = { cache: { size: 1 }, removeAll };
+
+    await updateGuideMessage(infoMessage, sortedMessages, channel, { Course: {}, CourseMember: {} });
+
+    expect(removeAll).toHaveBeenCalledTimes(1);
+  });
+
+  test("the pinned message notice is not treated as a course message", async () => {
+    const { infoMessage, courseMessages, sortedMessages, channel } = setupMocks(1, 0);
+    const pinNotice = { ...createMockMessage("pin"), type: MessageType.ChannelPinnedMessage };
+    const withPinNotice = new Map([["info", infoMessage], ["pin", pinNotice], ...sortedMessages]);
+
+    await updateGuideMessage(infoMessage, withPinNotice, channel, { Course: {}, CourseMember: {} });
+
+    expect(pinNotice.edit).not.toHaveBeenCalled();
+    expect(pinNotice.delete).not.toHaveBeenCalled();
+    expect(courseMessages[0].edit).toHaveBeenCalledTimes(1);
   });
 
   test("old reactions are removed from course messages", async () => {

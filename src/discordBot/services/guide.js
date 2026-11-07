@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageType } = require("discord.js");
 const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
 const { logError } = require("./logger");
@@ -14,6 +14,11 @@ const buildGuideButtonRow = (customId) =>
   );
 
 const getGuideButtonId = (message) => message.components?.[0]?.components?.[0]?.customId;
+
+const removeReactions = async (message) => {
+  if (!message.reactions?.cache.size) return;
+  await message.reactions.removeAll().catch(logError);
+};
 
 const invite_url =
   process.env.NODE_ENV === "production"
@@ -77,10 +82,13 @@ Invitation link for the server ${invite_url}
 
   const messagesArray = Array.from(sortedMessages.values());
 
-  const courseMessages = messagesArray.filter((m) => m.id !== infoMessage.id && m.type !== "CHANNEL_PINNED_MESSAGE");
+  const courseMessages = messagesArray.filter(
+    (m) => m.id !== infoMessage.id && m.type !== MessageType.ChannelPinnedMessage
+  );
 
   // Editing the info message
   await infoMessage.edit(infoContent);
+  await removeReactions(infoMessage);
 
   // Editing course messages
   const editOrSendPromises = [];
@@ -93,9 +101,7 @@ Invitation link for the server ${invite_url}
       if (courseMessage.content !== row.content || getGuideButtonId(courseMessage) !== row.customId) {
         editOrSendPromises.push(courseMessage.edit(messageData));
       }
-      if (courseMessage.reactions?.cache.size) {
-        editOrSendPromises.push(courseMessage.reactions.removeAll().catch(logError));
-      }
+      editOrSendPromises.push(removeReactions(courseMessage));
     } else {
       editOrSendPromises.push(channel.send(messageData));
     }
