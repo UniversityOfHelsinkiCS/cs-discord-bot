@@ -1,14 +1,14 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { editEphemeral, editErrorEphemeral, sendEphemeral, sendFollowUpEphemeral } = require("../../services/message");
 const { respondWithChoices } = require("../../services/autocomplete");
+const { findUserByDiscordId } = require("../../../db/services/userService");
 const { facultyRole, courseAdminRole, githubRepo } = require("../../../../config.json");
 
-const getBestRole = (member) => {
-  let highestRole = member.roles.highest.name;
-  if (highestRole !== "admin" && highestRole !== `${facultyRole}`) {
-    highestRole = member.roles.cache.find((r) => r.name.includes(courseAdminRole)) ? courseAdminRole : undefined;
-  }
-  return highestRole;
+const getAccessLevel = async (discordId, models) => {
+  const user = await findUserByDiscordId(discordId, models.User);
+  if (user?.admin) return "admin";
+  if (user?.faculty) return facultyRole;
+  return undefined;
 };
 
 const handleAllCommands = async (interaction, member, adminData, facultyData, courseAdminData, studentData) => {
@@ -75,10 +75,9 @@ const isAdminOnly = (command) =>
   !command.roles.includes(facultyRole) &&
   !command.roles.includes(courseAdminRole);
 
-const getCommandsByCategory = (client, member) => {
-  const highestRole = getBestRole(member);
-  const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && highestRole === "admin");
-  const seesStaffCommands = highestRole === "admin" || highestRole === facultyRole;
+const getCommandsByCategory = (client, accessLevel) => {
+  const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && accessLevel === "admin");
+  const seesStaffCommands = accessLevel === "admin" || accessLevel === facultyRole;
   const facultyData = client.slashCommands.filter(
     (command) => seesStaffCommands && command.roles && !isAdminOnly(command) && !command.roles.includes(courseAdminRole)
   );
@@ -89,10 +88,11 @@ const getCommandsByCategory = (client, member) => {
   return { adminData, facultyData, courseAdminData, studentData };
 };
 
-const execute = async (interaction, client) => {
+const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Hold on...");
   const member = interaction.member;
-  const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, member);
+  const accessLevel = await getAccessLevel(member.user.id, models);
+  const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, accessLevel);
   if (!interaction.options.getString("command")) {
     await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
   } else {
@@ -100,9 +100,9 @@ const execute = async (interaction, client) => {
   }
 };
 
-const autocomplete = async (interaction, client) => {
-  const member = interaction.member;
-  const categories = getCommandsByCategory(client, member);
+const autocomplete = async (interaction, client, models) => {
+  const accessLevel = await getAccessLevel(interaction.member.user.id, models);
+  const categories = getCommandsByCategory(client, accessLevel);
   const names = Object.values(categories)
     .flatMap((commands) => [...commands.keys()])
     .sort((a, b) => a.localeCompare(b));
