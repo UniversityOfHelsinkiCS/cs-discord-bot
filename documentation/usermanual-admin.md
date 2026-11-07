@@ -28,7 +28,7 @@ You can join to the Helsinki University Discord server in two different ways. Jo
 
 The Discord server has a bot that can help you with many things. Interaction with bot is achieved with Discord's slash commands.
 
-Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to manually type the commands; the bot rarely understands copy-pasted commands!**
+Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to type the commands and pick them from the list; the bot does not read commands pasted as plain messages.**
 
 **Admin commands are only visible in the `/` command picker to members with the `admin` or `cs-admin` role. Their replies are ephemeral (only visible to you), and success or failure is reported directly in the reply.**
 

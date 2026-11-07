@@ -66,8 +66,12 @@ visible only to the person who ran them.
 
 ### Membership sync
 
-- On join, the bot creates the user's database record and refreshes the guide; on
-  leave, it deletes the user record and their course-membership rows.
+- A user's database record is created the first time they need one: joining a
+  course, being made an instructor, faculty verification or admin rights. Joining
+  the server alone creates nothing.
+- On leave, the bot deletes the user record and their course-membership rows and
+  refreshes the guide. On startup it also deletes records of anyone who left while
+  it was offline.
 - Identity fields (`name`, Discord ID) are encrypted at rest with AES-256-GCM,
   with an HMAC blind-index column for exact-match lookups. See
   [Field encryption](#field-encryption).
@@ -94,9 +98,9 @@ visible only to the person who ran them.
 | Intent | Why |
 | --- | --- |
 | Guilds | Channel, role, and guild state. |
-| **Guild Members** (privileged) | Join/leave events drive database sync and role management; `/fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
-| **Message Content** (privileged) | Read copy-pasted `/join` and compare message text for spam/scam detection. |
-| Guild Messages, Guild Message Reactions | Spam firewall and copy-pasted `/join` (messages); joining and leaving courses from the guide channel (reactions). |
+| **Guild Members** (privileged) | Leave events delete the user's data; the startup member list removes data of members who left while the bot was offline; `/fix_course_roles`, `/server_status`, `/update_database` and server restore compare every member's roles with the database. |
+| **Message Content** (privileged) | Spam/scam detection only: image attachment fingerprints, and honeypot/`#chat` message comparison. The bot has no text or prefix commands. |
+| Guild Messages, Guild Message Reactions | Spam firewall (messages); joining and leaving courses from the guide channel (reactions). |
 | Guild Voice States | Voice-channel state used by course channels. |
 
 The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
