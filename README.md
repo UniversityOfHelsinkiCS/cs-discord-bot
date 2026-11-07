@@ -28,7 +28,8 @@ Invite: https://discord.gg/V5R9dZFCkD
 - `/courses` lists public courses, `/instructors` lists a course's instructors,
   `/help` shows a role-aware command list.
 - A **guide** channel is generated automatically and kept in sync with the
-  current course list so newcomers can find channels without commands.
+  current course list, sorted by full name. Each course has a **Join / Leave**
+  button, so newcomers can join channels without commands.
 - Course-page links on the companion website route through `/join/:course` and
   drop the user straight into that course.
 
@@ -100,7 +101,7 @@ visible only to the person who ran them.
 | Guilds | Channel, role, and guild state. |
 | **Guild Members** (privileged) | Leave events delete the user's data; the startup member list removes data of members who left while the bot was offline; `/fix_course_roles`, `/server_status`, `/update_database` and server restore compare every member's roles with the database. |
 | **Message Content** (privileged) | Spam/scam detection only: image attachment fingerprints, and honeypot/`#chat` message comparison. The bot has no text or prefix commands. |
-| Guild Messages, Guild Message Reactions | Spam firewall (messages); joining and leaving courses from the guide channel (reactions). |
+| Guild Messages | Spam firewall. |
 | Guild Voice States | Voice-channel state used by course channels. |
 
 The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.

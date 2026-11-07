@@ -19,7 +19,7 @@ The Bot is developed and run by the University of Helsinki's software developmen
 
 ### 2.1 Collected automatically via Discord
 
-- **Discord user ID, username, and display name** - collected for any member of the Server, and for anyone who sends a message, reacts, or joins or leaves. Only the user ID and username are kept in the database (section 2.2); the display name appears only in error reports and logs (section 2.4), not the database. (Discord has retired the old four-digit discriminator/"tag" for most accounts; where an account still has one it may appear in logs.)
+- **Discord user ID, username, and display name** - collected for any member of the Server, and for anyone who sends a message, uses a command or button, or joins or leaves. Only the user ID and username are kept in the database (section 2.2); the display name appears only in error reports and logs (section 2.4), not the database. (Discord has retired the old four-digit discriminator/"tag" for most accounts; where an account still has one it may appear in logs.)
 - **Server (guild) membership data** - via the Server Members intent, so the Bot can detect when members leave and delete their data, find members who left while it was offline, and manage course roles.
 - **Message content** - the Bot receives message content through Discord's privileged Message Content intent for every channel it can see, but only *inspects* it as follows:
   - In the general chat channel and the "honeypot" spam-trap channel, message text is checked against known spam/scam patterns.
