@@ -30,7 +30,7 @@ const updateGuide = async (guild, models) => {
 };
 
 const updateGuideMessage = async (infoMessage, sortedMessages, channel, models) => {
-  const courseData = await findCoursesFromDb("code", models.Course, false);
+  const courseData = await findCoursesFromDb("name", models.Course, false);
 
   // Collecting all course member counts in parallel
   const courseMemberCounts = await Promise.all(

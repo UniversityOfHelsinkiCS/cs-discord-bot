@@ -66,6 +66,15 @@ describe("updateGuideMessage", () => {
     jest.clearAllMocks();
   });
 
+  test("lists public courses ordered by course name", async () => {
+    const { infoMessage, sortedMessages, channel } = setupMocks(2, 0);
+    const models = { Course: {}, CourseMember: {} };
+
+    await updateGuideMessage(infoMessage, sortedMessages, channel, models);
+
+    expect(findCoursesFromDb).toHaveBeenCalledWith("name", models.Course, false);
+  });
+
   test("edits info message, edits existing course messages, deletes extras", async () => {
     const { infoMessage, courseMessages, extras, sortedMessages, channel } = setupMocks(5, 1);
 
