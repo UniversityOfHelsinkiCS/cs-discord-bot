@@ -338,7 +338,7 @@ const getCategoryObject = (categoryName, permissionOverwrites) => ({
 });
 
 const getUserWithUserId = async (guild, userId) => {
-  return await guild.members.cache.get(userId);
+  return await guild.members.fetch(userId);
 };
 
 const changeCourseRoles = async (courseName, newValue, guild) => {

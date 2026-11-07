@@ -48,7 +48,7 @@ const logInfo = (message) => {
 };
 
 const logInteractionError = (error, client, interaction) => {
-  const member = client.guild.members.cache.get(interaction.member.user.id);
+  const member = interaction.member;
   const channel = client.guild.channels.cache.get(interaction.channelId);
   const msg = `ERROR DETECTED!\nMember: ${member.displayName}\nCommand: ${interaction.commandName}\nChannel: ${channel.name}}`;
   logger.error(msg);

@@ -233,8 +233,10 @@ const defaultTeacherInteraction = {
   channelId: 1,
   member: {
     user: teacher,
+    displayName: teacher.displayName,
     roles: {
-      cache: teacher.roles.cache
+      cache: teacher.roles.cache,
+      highest: teacher.roles.highest
     },
     permissions: {
       list: [],
@@ -252,8 +254,10 @@ const defaultStudentInteraction = {
   channelId: 2,
   member: {
     user: student,
+    displayName: student.displayName,
     roles: {
-      cache: student.roles.cache
+      cache: student.roles.cache,
+      highest: student.roles.highest
     },
     permissions: {
       list: [],
@@ -273,6 +277,11 @@ const studentInteractionWithoutOptions = {
     user: {
       id: 2
     },
+    displayName: student.displayName,
+    roles: {
+      cache: student.roles.cache,
+      highest: student.roles.highest
+    },
     permissions: {
       list: [],
       has(perm) {
@@ -288,8 +297,10 @@ const defaultAdminInteraction = {
   channelId: 2,
   member: {
     user: admin,
+    displayName: admin.displayName,
     roles: {
-      cache: admin.roles.cache
+      cache: admin.roles.cache,
+      highest: admin.roles.highest
     },
     permissions: {
       list: [PermissionFlagsBits.Administrator],

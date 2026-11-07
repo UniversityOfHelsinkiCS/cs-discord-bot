@@ -91,8 +91,7 @@ const getCommandsByCategory = (client, member) => {
 
 const execute = async (interaction, client) => {
   await sendEphemeral(interaction, "Hold on...");
-  const guild = client.guild;
-  const member = guild.members.cache.get(interaction.member.user.id);
+  const member = interaction.member;
   const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, member);
   if (!interaction.options.getString("command")) {
     await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
@@ -102,7 +101,7 @@ const execute = async (interaction, client) => {
 };
 
 const autocomplete = async (interaction, client) => {
-  const member = client.guild.members.cache.get(interaction.member.user.id);
+  const member = interaction.member;
   const categories = getCommandsByCategory(client, member);
   const names = Object.values(categories)
     .flatMap((commands) => [...commands.keys()])

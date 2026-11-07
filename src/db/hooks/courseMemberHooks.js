@@ -10,8 +10,7 @@ const initCourseMemberHooks = (guild, models) => {
     const user = await findUserByDbId(courseMember.dataValues.userId, models.User);
     logInfo("User: id=" + user.id);
     const course = await findCourseFromDbById(courseMember.dataValues.courseId, models.Course);
-    const member =
-      guild.members.cache.get(user.discordId) || (await guild.members.fetch(user.discordId).catch(() => null));
+    const member = await guild.members.fetch(user.discordId).catch(() => null);
     logInfo("Member: " + member);
     const courseRole = guild.roles.cache.find((r) => r.name === course.name);
     if (!member || !courseRole) {
@@ -27,8 +26,7 @@ const initCourseMemberHooks = (guild, models) => {
   models.CourseMember.addHook("afterBulkDestroy", async (courseMember) => {
     const user = await findUserByDbId(courseMember.where.userId, models.User);
     const course = await findCourseFromDbById(courseMember.where.courseId, models.Course);
-    const member =
-      guild.members.cache.get(user.discordId) || (await guild.members.fetch(user.discordId).catch(() => null));
+    const member = await guild.members.fetch(user.discordId).catch(() => null);
 
     if (member) {
       const courseRoles = guild.roles.cache

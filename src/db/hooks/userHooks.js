@@ -7,7 +7,7 @@ const initUserHooks = (guild, models) => {
 
     if (changedValue.has("admin")) {
       const adminRole = guild.roles.cache.find((r) => r.name === "admin");
-      const userDisco = guild.members.cache.get(userDiscoId);
+      const userDisco = await guild.members.fetch(userDiscoId);
       if (user.admin) {
         userDisco.roles.add(adminRole);
       } else {
@@ -17,7 +17,7 @@ const initUserHooks = (guild, models) => {
 
     if (changedValue.has("faculty")) {
       const facultyRoleObject = guild.roles.cache.find((r) => r.name === facultyRole);
-      const userDisco = guild.members.cache.get(userDiscoId);
+      const userDisco = await guild.members.fetch(userDiscoId);
       if (user.faculty) {
         userDisco.roles.add(facultyRoleObject);
       } else {
