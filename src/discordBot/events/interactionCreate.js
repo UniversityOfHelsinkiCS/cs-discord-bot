@@ -33,11 +33,11 @@ const execute = async (interaction, client, models) => {
   } catch (error) {
     console.error(error);
     logInteractionError(error, client, interaction);
-    await sendErrorReport(interaction, client, error.toString());
+    await sendErrorReport(interaction, client, error.toString()).catch(logError);
     await sendErrorEphemeral(
       interaction,
       "There was an error while executing this command - Error report sent to administrators!"
-    );
+    ).catch(logError);
   }
 };
 
