@@ -6,7 +6,6 @@ const { createCourseMemberToDatabase } = require("../../db/services/courseMember
 const { findCourseFromDb } = require("../../db/services/courseService");
 const { saveFacultyRoleToDb, createUserToDatabase } = require("../../db/services/userService");
 const models = require("../../db/dbInit");
-const { facultyRole } = require("../../../config.json");
 
 router.get(
   "/",
@@ -15,9 +14,9 @@ router.get(
     failureFlash: true
   }),
   async (req, res) => {
+    const { roleID, faculty } = req.authInfo.state;
     const roles = await getRoles();
-    const role = roles.find((r) => r.id === req.authInfo.state.roleID);
-    const teacherRole = roles.find((r) => r.name === facultyRole);
+    const role = roles.find((r) => r.id === roleID);
     const member = await getMember(req.user.id);
     if (member.user) {
       await addRole(member.user, role);
@@ -25,7 +24,7 @@ router.get(
       await addMember(req.user, role);
     }
     const user = await createUserToDatabase(req.user.id, req.user.username, models.User);
-    if (role.id === teacherRole.id) {
+    if (faculty) {
       await saveFacultyRoleToDb(user.discordId, models.User);
     }
     const course = await findCourseFromDb(role.name, models.Course);

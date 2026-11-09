@@ -13,7 +13,7 @@ router.get("/", async (req, res, next) => {
   }
   passport.authenticate("discord", {
     session: false,
-    state: { roleID: teacherRole.id }
+    state: { roleID: teacherRole.id, faculty: true }
   })(req, res, next);
 });
 
