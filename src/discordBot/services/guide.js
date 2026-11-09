@@ -10,6 +10,7 @@ const {
 const { findCoursesFromDb } = require("../../db/services/courseService");
 const { findCourseMemberCount } = require("../../db/services/courseMemberService");
 const { logError } = require("./logger");
+const { backendUrl } = require("./backendUrl");
 
 require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
@@ -71,11 +72,6 @@ const removeReactions = async (message) => {
   await message.reactions.removeAll().catch(logError);
 };
 
-const invite_url =
-  process.env.NODE_ENV === "production"
-    ? `${process.env.BACKEND_SERVER_URL}`
-    : `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
-
 const LIST_BELOW = { fi: "Alla", sv: "Nedan", en: "Below" };
 const LIST_ABOVE = { fi: "Yllä", sv: "Ovan", en: "Above" };
 
@@ -97,7 +93,7 @@ You can also join and leave courses with the \`/join\` and \`/leave\` commands.
 In course specific channels you can list instructors with the command \`/instructors\`
 See more with \`/help\` command.
 
-Invitation link for the server ${invite_url}`;
+Invitation link for the server ${backendUrl}`;
 
 const updateGuide = async (guild, models) => {
   const channel = guild.channels.cache.find((c) => c.name === GUIDE_CHANNEL_NAME);

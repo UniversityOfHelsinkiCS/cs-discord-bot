@@ -1,6 +1,7 @@
 const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const axios = require("axios");
 const { logError } = require("./logger");
+const { backendUrl } = require("./backendUrl");
 const { findAllCourseNames, findCourseFromDb } = require("../../db/services/courseService");
 const { findCourseInstructors } = require("../../db/services/courseMemberService");
 const { findUsersByDbIds } = require("../../db/services/userService");
@@ -8,11 +9,6 @@ const { courseAdminRole } = require("../../../config.json");
 
 require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
-
-const invite_url =
-  process.env.NODE_ENV === "production"
-    ? `${process.env.BACKEND_SERVER_URL}`
-    : `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
 
 const cooldownMap = new Map();
 
@@ -33,7 +29,7 @@ const findOrCreateRoleWithName = async (name, guild) => {
 
 const createCourseInvitationLink = (courseName) => {
   courseName = courseName.replace(/ /g, "%20").trim();
-  return `Invitation link for the course <${invite_url}/join/${courseName}>`;
+  return `Invitation link for the course <${backendUrl}/join/${courseName}>`;
 };
 
 const createInvitation = async (guild, args) => {
@@ -48,7 +44,7 @@ const createInvitation = async (guild, args) => {
   if (args === GUIDE_CHANNEL_NAME) {
     course = guild.channels.cache.find((c) => c.parent === category);
     await guide.createInvite({ maxAge: 0, unique: true, reason: args });
-    invitationlink = `Invitation link for the server <${invite_url}>`;
+    invitationlink = `Invitation link for the server <${backendUrl}>`;
   } else {
     course = guild.channels.cache.find((c) => c.parent === category && c.name === `${name}_announcement`);
     invitationlink = createCourseInvitationLink(args);
