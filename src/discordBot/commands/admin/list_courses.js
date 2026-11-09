@@ -5,9 +5,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Listing courses...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   let statusMessage = "";
   const allCourses = await getAllCourses(models.Course);

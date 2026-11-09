@@ -37,7 +37,7 @@ describe("slash add_admin_rights", () => {
   test("Only admins can use the command", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(createUserToDatabase).toHaveBeenCalledTimes(0);
     expect(userModelInstanceMock.save).toHaveBeenCalledTimes(0);
   });

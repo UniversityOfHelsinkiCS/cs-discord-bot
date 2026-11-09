@@ -5,9 +5,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Looking for unused user records...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const unusedIds = await findUnusedUserIds(models.User, models.CourseMember);
   if (unusedIds.length === 0) {

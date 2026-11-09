@@ -12,9 +12,8 @@ const { facultyRole } = require("../../../../config.json");
 const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Fetching status...");
+  if (!(await requireFaculty(interaction, models))) return;
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 

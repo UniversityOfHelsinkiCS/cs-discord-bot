@@ -24,9 +24,8 @@ const { updateGuide } = require("../../services/guide");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Restore EVERYTHING from database?");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const confirm = await confirmChoice(interaction, "Restore EVERYTHING from database?");
   if (!confirm) {

@@ -13,9 +13,8 @@ const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Deleting text channel...");
+  if (!(await requireFaculty(interaction, models))) return;
   const channelModel = models.Channel;
   const courseModel = models.Course;
   const deleteName = interaction.options.getString("channel").toLowerCase().trim().replace(/ /g, "-");

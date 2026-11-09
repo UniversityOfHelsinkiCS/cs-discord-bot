@@ -122,7 +122,7 @@ describe("slash remove instructor command", () => {
     requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
     expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
-    expect(sendEphemeral).not.toHaveBeenCalled();
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
   });
 
   test("a listed user without a user record is treated as not a course member", async () => {

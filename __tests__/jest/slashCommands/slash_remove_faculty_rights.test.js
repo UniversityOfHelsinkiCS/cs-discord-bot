@@ -37,7 +37,7 @@ describe("slash remove_faculty_rights", () => {
   test("Only admins can use the command", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(findUserByDiscordId).toHaveBeenCalledTimes(0);
     expect(userModelInstanceMock.save).toHaveBeenCalledTimes(0);
   });

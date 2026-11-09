@@ -17,9 +17,8 @@ const { facultyRole } = require("../../../../config.json");
 const { confirmChoice } = require("../../services/confirm");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Renaming text channel...");
+  if (!(await requireFaculty(interaction, models))) return;
 
   const courseModel = models.Course;
   const channelModel = models.Channel;

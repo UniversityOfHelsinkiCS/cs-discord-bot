@@ -6,9 +6,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Deleting course...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const courseName = interaction.options.getString("course_name").trim();
 

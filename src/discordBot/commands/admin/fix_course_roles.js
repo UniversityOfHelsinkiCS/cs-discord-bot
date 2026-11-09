@@ -17,9 +17,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Fixing course roles...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const guild = client.guild;
   await guild.roles.fetch();

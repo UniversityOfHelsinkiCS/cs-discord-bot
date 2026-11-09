@@ -21,13 +21,13 @@ const { facultyRole } = require("../../../../config.json");
 const numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
 const execute = async (interaction, client, models) => {
+  await sendEphemeral(interaction, "Creating poll...");
   if (!(await requireFaculty(interaction, models))) return;
 
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 
   const pollTitle = interaction.options.getString("title").trim();
-  await sendEphemeral(interaction, "Creating poll...");
 
   let answers = 0;
   const voteMap = new Map();

@@ -5,9 +5,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Removing faculty rights...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const targetUser = interaction.options.getUser("user");
   const user = await findUserByDiscordId(targetUser.id, models.User);

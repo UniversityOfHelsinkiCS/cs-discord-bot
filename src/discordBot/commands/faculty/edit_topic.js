@@ -13,9 +13,8 @@ const { facultyRole } = require("../../../../config.json");
 const { saveChannelTopicToDb } = require("../../../db/services/channelService");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Editing topic...");
+  if (!(await requireFaculty(interaction, models))) return;
   const newTopic = interaction.options.getString("topic").trim();
 
   const guild = client.guild;

@@ -52,7 +52,7 @@ describe("slash fix_course_roles command", () => {
     requireAdmin.mockImplementationOnce(() => false);
     const member = buildMember([instructorRole.id]);
     await execute(interaction, buildClient(member), models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(getAllCourses).toHaveBeenCalledTimes(0);
     expect(member.roles.add).toHaveBeenCalledTimes(0);
   });

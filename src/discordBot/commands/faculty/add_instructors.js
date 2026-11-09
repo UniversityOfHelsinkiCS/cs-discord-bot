@@ -12,9 +12,8 @@ const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../serv
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Adding instructors...");
+  if (!(await requireFaculty(interaction, models))) return;
 
   const courseModel = models.Course;
   const userModel = models.User;

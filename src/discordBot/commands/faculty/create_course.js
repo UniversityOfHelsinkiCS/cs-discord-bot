@@ -12,6 +12,7 @@ const { createCourseMemberToDatabase, findCourseMember } = require("../../../db/
 const { findUserByDiscordId } = require("../../../db/services/userService");
 
 const execute = async (interaction, client, models) => {
+  await sendEphemeral(interaction, "Creating course...");
   if (!(await requireFaculty(interaction, models))) return;
 
   const courseCode = interaction.options.getString("coursecode").replace(/\s/g, "");
@@ -40,7 +41,6 @@ const execute = async (interaction, client, models) => {
   }
 
   if (await findCourseFromDb(courseName, models.Course)) return await sendErrorEphemeral(interaction, errorMessage);
-  await sendEphemeral(interaction, "Creating course...");
 
   await createCourseToDatabase(courseCode, courseFullName, courseName, models.Course);
   await editEphemeral(interaction, `Created course ${courseName}. Adding you as an instructor to the course.`);

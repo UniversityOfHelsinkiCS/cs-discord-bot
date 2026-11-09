@@ -8,9 +8,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Checking server status...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const guild = client.guild;
   const channelCache = guild.channels.cache;

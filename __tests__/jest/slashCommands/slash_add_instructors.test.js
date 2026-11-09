@@ -120,6 +120,6 @@ describe("slash add instructor command", () => {
     requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
     expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
-    expect(sendEphemeral).not.toHaveBeenCalled();
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
   });
 });

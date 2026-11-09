@@ -31,7 +31,7 @@ describe("slash reload command", () => {
   test("non-admin cannot reload commands", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(setUpCommands).toHaveBeenCalledTimes(0);
   });
 });

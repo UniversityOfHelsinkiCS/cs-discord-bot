@@ -4,9 +4,8 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, replyInChunks } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Listing admins...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const admins = await getAdminUsers(models.User);
   if (admins.length === 0) {
