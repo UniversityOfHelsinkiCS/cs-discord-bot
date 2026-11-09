@@ -142,6 +142,23 @@ describe("channelService", () => {
     expect(channelModelInstanceMock.name).toBe("tgdisco_general");
   });
 
+  test("waits for every channel rename to be saved", async () => {
+    let saved = false;
+    const channel = {
+      name: "wepa_general",
+      save: () => new Promise((resolve) => setTimeout(() => resolve((saved = true)), 10))
+    };
+    const Channel = { findAll: jest.fn().mockResolvedValue([channel]) };
+    await editChannelNames(1, "wepa", "wepa2", Channel);
+    expect(saved).toBe(true);
+  });
+
+  test("passes a failed channel rename to the caller", async () => {
+    const channel = { name: "wepa_general", save: jest.fn().mockRejectedValue(new Error("rename failed")) };
+    const Channel = { findAll: jest.fn().mockResolvedValue([channel]) };
+    await expect(editChannelNames(1, "wepa", "wepa2", Channel)).rejects.toThrow("rename failed");
+  });
+
   test("save channel topic to database", async () => {
     await saveChannelTopicToDb("discotg_general", "topic of the chat", channelModelMock);
     expect(channelModelMock.findOne).toHaveBeenCalledTimes(1);

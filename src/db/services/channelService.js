@@ -61,12 +61,12 @@ const countChannelsByCourse = async (id, Channel) => {
 
 const editChannelNames = async (courseId, previousCourseName, newCourseName, Channel) => {
   const channels = await findChannelsByCourse(courseId, Channel);
-  channels.map(async (channel) => {
-    const newChannelName = channel.name.replace(previousCourseName, newCourseName);
-    channel.name = newChannelName;
-    await channel.save();
-  });
-  await Promise.all(channels);
+  await Promise.all(
+    channels.map(async (channel) => {
+      channel.name = channel.name.replace(previousCourseName, newCourseName);
+      await channel.save();
+    })
+  );
 };
 
 const saveChannelTopicToDb = async (channelName, newTopic, Channel) => {
