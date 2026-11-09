@@ -106,7 +106,7 @@ Use `/edit_topic` inside a channel to set the text shown at the top of the chann
 
 ### Edit the course
 
-Use `/edit_course` inside the course to change the course code, full name or nickname. If you change the name shown in the channel list, you have to wait 15 minutes before you can change it again.
+Use `/edit_course` inside the course to change the course code, full name or nickname. After an edit, you have to wait 5 minutes before you can edit the course again. The same wait applies to locking, hiding and changing channel topics on that course.
 
 ### Polls
 
