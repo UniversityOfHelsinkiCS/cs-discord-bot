@@ -102,7 +102,7 @@ Use `/edit_topic` inside a channel to set the text shown at the top of the chann
 
 ### Lock the chat
 
-`/lock_chat wepa` stops students from posting in the course channels, so only faculty and admins can write. Course instructors who are not faculty can't post either while the chat is locked. This is useful during an exam. Locked courses are shown with 🔐. `/unlock_chat wepa` opens the chat again.
+`/lock_chat wepa` stops students from posting in the course channels, so only the course instructors, faculty and admins can write. This is useful during an exam. Locked courses are shown with 🔐. `/unlock_chat wepa` opens the chat again.
 
 ### Edit the course
 
@@ -135,7 +135,7 @@ Command | Explanation | Arguments
 [/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | Required
 [/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | None
 [/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course wepa. | Required
-[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only faculty and admins can post messages) of a given course | Required
+[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors, faculty and admins can post messages) of a given course | Required
 [/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | Required
 [/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | Required
 [/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | None
