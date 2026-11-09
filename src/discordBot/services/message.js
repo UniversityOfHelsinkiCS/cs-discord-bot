@@ -1,4 +1,7 @@
 const { ChannelType, MessageFlags } = require("discord.js");
+const { describeInteraction } = require("./logger");
+
+const MESSAGE_LIMIT = 2000;
 
 const validateChannel = (channel) => {
   if (channel.parent) return false;
@@ -14,10 +17,10 @@ const sendPullDateMessage = async (client) => {
 
 const sendErrorReport = async (interaction, client, error) => {
   const commandsChannel = client.guild.channels.cache.find((c) => validateChannel(c));
-  const channel = client.guild.channels.cache.get(interaction.channelId);
-  const msg = `**ERROR DETECTED!**\nMember: ${interaction.member.displayName}\nCommand: ${interaction.commandName}\nChannel: ${channel.name}`;
+  const { action, channelName } = describeInteraction(client, interaction);
+  const msg = `**ERROR DETECTED!**\nMember: ${interaction.member?.displayName}\nCommand: ${action}\nChannel: ${channelName}`;
   await commandsChannel.send({ content: msg });
-  await commandsChannel.send({ content: error });
+  await commandsChannel.send({ content: error.slice(0, MESSAGE_LIMIT) });
 };
 
 const sendErrorEphemeral = async (interaction, msg) => {

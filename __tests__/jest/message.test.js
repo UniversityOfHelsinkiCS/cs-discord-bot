@@ -28,6 +28,22 @@ describe("message service", () => {
     expect(commandChannel.send).toHaveBeenCalledWith({ content: error });
   });
 
+  test("error report from a button in an uncached channel", async () => {
+    const client = defaultAdminInteraction.client;
+    const commandChannel = client.guild.channels.cache.find((c) => c.name === "commands");
+    const interaction = {
+      member: { displayName: "admin" },
+      customId: "guide:join:1",
+      channelId: "thread-1",
+      channel: { name: "help-thread" }
+    };
+    await sendErrorReport(interaction, client, "x".repeat(3000));
+    expect(commandChannel.send).toHaveBeenCalledWith({
+      content: "**ERROR DETECTED!**\nMember: admin\nCommand: button guide:join:1\nChannel: help-thread"
+    });
+    expect(commandChannel.send).toHaveBeenCalledWith({ content: "x".repeat(2000) });
+  });
+
   test("error ephemeral", async () => {
     const msg = "fake message";
     await sendErrorEphemeral(defaultAdminInteraction, msg);
