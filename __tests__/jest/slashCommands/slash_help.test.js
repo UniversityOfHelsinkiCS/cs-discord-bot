@@ -119,6 +119,21 @@ describe("slash help command", () => {
     expect(listing).toContain("Category: **admin**");
   });
 
+  test("splits a long command list into messages under the Discord limit", async () => {
+    const { Collection } = require("discord.js");
+    const commands = new Collection();
+    for (let i = 0; i < 40; i++) {
+      const name = `admin_command_${i}`;
+      commands.set(name, { data: { name }, usage: `/${name}`, description: "x".repeat(80), roles: ["admin"] });
+    }
+    const interaction = { member: { displayName: "admin", user: { id: 3 } }, options: { getString: () => null } };
+    await execute(interaction, { slashCommands: commands }, models);
+    const messages = [...editEphemeral.mock.calls, ...sendFollowUpEphemeral.mock.calls].map((call) => call[1]);
+    expect(messages.length).toBeGreaterThan(1);
+    messages.forEach((message) => expect(message.length).toBeLessThanOrEqual(2000));
+    expect(messages.join(" ")).toContain("**/admin_command_39**");
+  });
+
   test("slash help with valid arg should give correct command info", async () => {
     const client = defaultStudentInteraction.client;
     await execute(defaultStudentInteraction, client, models);

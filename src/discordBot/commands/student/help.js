@@ -11,45 +11,66 @@ const getAccessLevel = async (discordId, models) => {
   return undefined;
 };
 
-const handleAllCommands = async (interaction, member, adminData, facultyData, courseAdminData, studentData) => {
-  const data = [];
-  const data2 = [];
-  data.push(`Hi **${member.displayName}**!\n`);
+const MESSAGE_LIMIT = 2000;
 
-  data.push("Here's a list of commands you can use:\n");
-  data.push("Category: **default**");
-  data.push(studentData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-  data.push(`[User manual for students](<${githubRepo}/blob/main/documentation/usermanual-student.md>)`);
-  data.push("\n");
+const formatCommands = (commands) =>
+  commands.map((command) => `**${command.usage}** - ${command.description}`).join("\n");
+
+const splitOversized = (section) => {
+  const text = section.join("\n");
+  return text.length > MESSAGE_LIMIT ? text.split("\n") : [text];
+};
+
+const packIntoMessages = (sections) =>
+  sections.flatMap(splitOversized).reduce((messages, piece) => {
+    const last = messages[messages.length - 1];
+    if (last !== undefined && last.length + 1 + piece.length <= MESSAGE_LIMIT) {
+      messages[messages.length - 1] = `${last}\n${piece}`;
+    } else {
+      messages.push(piece);
+    }
+    return messages;
+  }, []);
+
+const handleAllCommands = async (interaction, member, adminData, facultyData, courseAdminData, studentData) => {
+  const userSections = [
+    [`Hi **${member.displayName}**!\n`, "Here's a list of commands you can use:\n"],
+    [
+      "Category: **default**",
+      formatCommands(studentData),
+      `[User manual for students](<${githubRepo}/blob/main/documentation/usermanual-student.md>)`,
+      "\n"
+    ]
+  ];
+  const staffSections = [];
 
   if (adminData.size) {
-    data.push("Category: **admin**");
-    data.push(adminData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-    data.push("\n");
+    userSections.push(["Category: **admin**", formatCommands(adminData), "\n"]);
   }
 
   if (facultyData.size) {
-    data2.push(`Category: **${facultyRole}**`);
-    data2.push(facultyData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-    data2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation//usermanual-faculty.md>)`);
-    data2.push("\n");
+    staffSections.push([
+      `Category: **${facultyRole}**`,
+      formatCommands(facultyData),
+      `[User manual for faculty](<${githubRepo}/blob/main/documentation/usermanual-faculty.md>)`,
+      "\n"
+    ]);
   }
 
   if (courseAdminData.size) {
-    data2.push(`Category: **${courseAdminRole}**`);
-    data2.push(courseAdminData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-    data2.push("\n");
+    staffSections.push([`Category: **${courseAdminRole}**`, formatCommands(courseAdminData), "\n"]);
   }
 
-  if (data2.length > 0) {
-    data2.push("*Commands can be used only in course channels");
-    data2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
-    await editEphemeral(interaction, data.join("\n"));
-    return await sendFollowUpEphemeral(interaction, data2.join("\n"));
-  } else {
-    data.push("*Commands can be used only in course channels");
-    data.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
-    return await editEphemeral(interaction, data.join("\n"));
+  const footer = [
+    "*Commands can be used only in course channels",
+    `\nYou can send \`/help [command name]\` to get info on a specific command!`
+  ];
+  (staffSections.length > 0 ? staffSections : userSections).push(footer);
+
+  const [first, ...rest] = [...packIntoMessages(userSections), ...packIntoMessages(staffSections)];
+  await editEphemeral(interaction, first);
+  for (const message of rest) {
+    await sendFollowUpEphemeral(interaction, message);
   }
 };
 
@@ -96,7 +117,7 @@ const execute = async (interaction, client, models) => {
   if (!interaction.options.getString("command")) {
     await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
   } else {
-    handleSingleCommand(interaction, member, client.slashCommands);
+    await handleSingleCommand(interaction, member, client.slashCommands);
   }
 };
 
