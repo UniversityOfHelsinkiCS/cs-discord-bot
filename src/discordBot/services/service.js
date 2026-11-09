@@ -155,10 +155,17 @@ const getCourseNameFromCategory = (category) => {
   return trimmedName;
 };
 
-const findAndUpdateInstructorRole = async (name, guild, adminRole) => {
-  const oldInstructorRole = guild.roles.cache.find((role) => role.name !== name && role.name.includes(name));
+const findAndUpdateInstructorRole = async (name, guild, adminRole, courseNames) => {
+  const instructorRoleName = `${name} ${adminRole}`;
+  const otherCourseRoleNames = courseNames
+    .filter((courseName) => courseName !== name)
+    .flatMap((courseName) => [courseName, `${courseName} ${adminRole}`]);
+  const oldInstructorRole = guild.roles.cache.find(
+    (role) =>
+      role.name.startsWith(`${name} `) && role.name !== instructorRoleName && !otherCourseRoleNames.includes(role.name)
+  );
   if (oldInstructorRole) {
-    oldInstructorRole.setName(`${name} ${adminRole}`);
+    await oldInstructorRole.setName(instructorRoleName);
   }
 };
 
