@@ -4,14 +4,14 @@ This guide is for course lecturers who want a Discord chat for their course. It 
 
 ## 1. Why use the CS Discord for your course
 
-The Department of Computer Science has one Discord server for course support. Each course gets its own space on the server, and students only see the courses they have joined.
+The Department of Computer Science has a dedicated Discord server for course support. Each course gets its own space on the server, and students only see the courses they have joined.
 
 - **Ready-made course space.** One command creates a course with an announcement channel that only staff can post in, a general chat, and a voice channel. You can add more channels, including channels that only staff can see.
 - **Students join with one click.** Put the course link on your Moodle or MOOC page. Students who click it are added to the server and your course in one step. They can also join from the `#guide` channel or with the `/join` command.
-- **Moderated platform.** The server has rules and admins. The bot automatically removes known scam messages from hacked accounts and kicks spam bots. You can lock the course chat, for example during an exam, and disconnect people from voice channels.
+- **Moderated platform.** The server has rules and admins. The bot automatically removes known scam messages from hacked accounts and kicks spam bots.
+- **Chat controls.** You can lock the course chat, for example during an exam, and disconnect people from voice channels.
 - **Help from instructors and peers.** You can give course assistants the instructor role, so students can see who to ask with `/instructors`. Students also help each other.
 - **No Discord setup needed.** The bot handles roles and permissions. You never have to touch Discord's server settings.
-- **Privacy.** The bot stores only what it needs to run the courses, and deletes it when it is no longer needed. See the [privacy policy](../PRIVACY_POLICY.md).
 
 ## 2. Getting onto Discord
 
@@ -127,42 +127,40 @@ Use `/edit_course` inside the course to change the course code, full name or nic
 
 Command | Explanation | Arguments
 --------|-------------|----------:
-[/add_instructors](./commands/faculty/add_instructors.md) | Give instructor role to (multiple) users, e.g., /add_instructors @user1 @user2. | :heavy_check_mark:
-[/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | :heavy_check_mark:
-[/create_course](./commands/faculty/create_course.md) | Create a new course | :heavy_check_mark:
-[/create_poll](./commands/faculty/create_poll.md) | Create a new poll | :heavy_check_mark:
-[/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | :heavy_check_mark:
-[/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | :heavy_check_mark:
-[/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | :heavy_check_mark:
-[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | :x:
-[/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course wepa. | :heavy_check_mark:
-[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only faculty and admins can post messages) of a given course | :heavy_check_mark:
-[/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | :heavy_check_mark:
-[/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | :heavy_check_mark:
-[/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | :x:
-[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | :x:
-[/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course wepa. | :heavy_check_mark:
-[/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | :heavy_check_mark:
+[/add_instructors](./commands/faculty/add_instructors.md) | Give instructor role to (multiple) users, e.g., /add_instructors @user1 @user2. | Required
+[/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | Required
+[/create_course](./commands/faculty/create_course.md) | Create a new course | Required
+[/create_poll](./commands/faculty/create_poll.md) | Create a new poll | Required
+[/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | Required
+[/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | Required
+[/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | Required
+[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | None
+[/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course wepa. | Required
+[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only faculty and admins can post messages) of a given course | Required
+[/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | Required
+[/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | Required
+[/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | None
+[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | None
+[/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course wepa. | Required
+[/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | Required
 
 #### Instructor commands
 
 Command | Explanation | Arguments
 --------|-------------|----------:
-[/instructor_disconnect](./commands/instructor/instructor_disconnect.md) | Disconnect another user from a voice chat, e.g., /instructor_disconnect @user1. | :heavy_check_mark:
+[/instructor_disconnect](./commands/instructor/instructor_disconnect.md) | Disconnect another user from a voice chat, e.g., /instructor_disconnect @user1. | Required
 
 #### General commands
 
 Command | Explanation | Arguments
 --------|-------------|----------:
-[/auth](./commands/general/auth.md) | Returns the URL from which the faculty role can be obtained. | :x:
-[/courses](./commands/general/courses.md) | Returns a list of all courses. | :x:
-[/help](./commands/general/help.md) | Returns a list of commands with info or info about a specific command. | :o:
-[/instructors](./commands/general/instructors.md) | Used in course channel returns a list of course instructors. Can be used anywhere when a parameter is given. | :o:
-[/join](./commands/general/join.md) | Joins you into the course given, e.g., /join ohpe. | :heavy_check_mark:
-[/leave](./commands/general/leave.md) | Remove you from the course given, e.g., /leave ohpe. | :heavy_check_mark:
-[/workshops](./commands/general/workshops.md) | Get workshop info for the course. | :x:
-
-:o: means that the command can be used with or without arguments
+[/auth](./commands/general/auth.md) | Returns the URL from which the faculty role can be obtained. | None
+[/courses](./commands/general/courses.md) | Returns a list of all courses. | None
+[/help](./commands/general/help.md) | Returns a list of commands with info or info about a specific command. | Optional
+[/instructors](./commands/general/instructors.md) | Used in a course channel, returns a list of the course instructors. | None
+[/join](./commands/general/join.md) | Joins you into the course given, e.g., /join ohpe. | Required
+[/leave](./commands/general/leave.md) | Remove you from the course given, e.g., /leave ohpe. | Required
+[/workshops](./commands/general/workshops.md) | Get workshop info for the course. | None
 
 ## Material
 
