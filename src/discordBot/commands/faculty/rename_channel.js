@@ -50,6 +50,10 @@ const execute = async (interaction, client, models) => {
     return await editErrorEphemeral(interaction, "Channel not found from database.");
   }
 
+  if (currentChannel.defaultChannel) {
+    return await editErrorEphemeral(interaction, "Default course channels can't be renamed.");
+  }
+
   const confirm = await confirmChoice(interaction, "Confirm command: Rename channel to " + channelName);
 
   if (!confirm) {
