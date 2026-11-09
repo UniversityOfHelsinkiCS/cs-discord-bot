@@ -86,7 +86,9 @@ const restoreChannels = async (guild, models) => {
     const channelFound = await channelCache.get(currentChannel.discordId);
 
     if (channelFound) {
-      channelFound.name = currentChannel.name;
+      if (channelFound.name !== currentChannel.name) {
+        await channelFound.setName(currentChannel.name);
+      }
       const parentChannel = await findCourseFromDbById(currentChannel.courseId, models.Course);
       await channelFound.setParent(parentChannel.categoryId);
     } else {
@@ -191,43 +193,40 @@ const restorePermissions = async (guild, models) => {
 
   for (const course in allCourses) {
     const currentCourse = allCourses[course];
-    const discordCategory = await channelCache.get(currentCourse.categoryId);
+    const discordCategory = channelCache.get(currentCourse.categoryId);
+    if (!discordCategory) continue;
+    const findRole = (roleName) => guild.roles.cache.find((r) => r.name === roleName);
+
+    await discordCategory.permissionOverwrites.create(findRole(currentCourse.name), {
+      ViewChannel: true,
+      SendMessages: !currentCourse.locked
+    });
     if (currentCourse.locked) {
-      discordCategory.permissionOverwrites.create(
-        guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name}`),
-        { ViewChannel: true, SendMessages: false }
-      );
-      discordCategory.permissionOverwrites.create(
-        guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name} ${courseAdminRole}`),
-        { ViewChannel: true, SendMessages: true }
-      );
-      discordCategory.permissionOverwrites.create(
-        guild.roles.cache.find((r) => r.name === "faculty"),
-        { SendMessages: true }
-      );
-      discordCategory.permissionOverwrites.create(
-        guild.roles.cache.find((r) => r.name === "admin"),
-        { SendMessages: true }
-      );
-    } else {
-      discordCategory.permissionOverwrites.create(
-        guild.roles.cache.find((r) => r.name.toLowerCase() === `${currentCourse.name}`),
-        { ViewChannel: true, SendMessages: true }
-      );
+      const rolesThatCanPost = [`${currentCourse.name} ${courseAdminRole}`, facultyRole, "admin"];
+      for (const roleName of rolesThatCanPost) {
+        await discordCategory.permissionOverwrites.create(findRole(roleName), { SendMessages: true });
+      }
     }
   }
 };
 
+const getManagedRoleNames = (courses) =>
+  new Set(["admin", facultyRole, ...courses.flatMap((course) => [course.name, `${course.name} ${courseAdminRole}`])]);
+
 const restoreUsers = async (guild, models) => {
   const users = await getAllUsers(models.User);
-  const adminRoleObject = await guild.roles.cache.find((r) => r.name === "admin");
-  const facultyRoleObject = await guild.roles.cache.find((r) => r.name === facultyRole);
+  const managedRoleNames = getManagedRoleNames(await getAllCourses(models.Course));
+  const adminRoleObject = guild.roles.cache.find((r) => r.name === "admin");
+  const facultyRoleObject = guild.roles.cache.find((r) => r.name === facultyRole);
 
   for (const user in users) {
     const currentUser = users[user];
-    const foundUser = await guild.members.cache.get(currentUser.discordId);
+    const foundUser = guild.members.cache.get(currentUser.discordId);
     if (foundUser) {
-      await foundUser.roles.remove(foundUser.roles.cache);
+      const managedRoles = foundUser.roles.cache.filter((r) => managedRoleNames.has(r.name));
+      if (managedRoles.size > 0) {
+        await foundUser.roles.remove(managedRoles);
+      }
       if (currentUser.admin) {
         await foundUser.roles.add(adminRoleObject);
       }
@@ -245,15 +244,13 @@ const restoreCourseMembers = async (guild, models) => {
     const user = await findUserByDbId(currentMember.userId, models.User);
     const course = await findCourseFromDbById(currentMember.courseId, models.Course);
     const instructor = currentMember.instructor;
-    if (user) {
-      const foundUser = await guild.members.cache.get(user.discordId);
-      if (foundUser) {
-        const courseRole = guild.roles.cache.find((r) => r.name === course.name);
-        await foundUser.roles.add(courseRole);
-        if (instructor) {
-          const instructorRole = guild.roles.cache.find((r) => r.name === `${course.name} ${courseAdminRole}`);
-          await foundUser.roles.add(instructorRole);
-        }
+    const foundUser = user && course && guild.members.cache.get(user.discordId);
+    if (foundUser) {
+      const courseRole = guild.roles.cache.find((r) => r.name === course.name);
+      if (courseRole) await foundUser.roles.add(courseRole);
+      if (instructor) {
+        const instructorRole = guild.roles.cache.find((r) => r.name === `${course.name} ${courseAdminRole}`);
+        if (instructorRole) await foundUser.roles.add(instructorRole);
       }
     }
   }
@@ -297,6 +294,8 @@ module.exports = {
     .setDescription("Recreate Discord server from database")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute,
+  restoreUsers,
+  restorePermissions,
   usage: "/restore_server_from_database",
   description: "Recreate Discord server from database",
   roles: ["admin"]
