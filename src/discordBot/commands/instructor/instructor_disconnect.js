@@ -5,6 +5,7 @@ const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../serv
 const { confirmChoice } = require("../../services/confirm");
 const { findCourseMember } = require("../../../db/services/courseMemberService");
 const { getUserWithUserId } = require("../../services/service");
+const { facultyRole, courseAdminRole } = require("../../../../config.json");
 
 const MENTION_PATTERN = /<@!?(\d+)>/;
 
@@ -52,5 +53,6 @@ module.exports = {
     .addStringOption((option) => option.setName("user").setDescription("User to disconnect.").setRequired(true)),
   execute,
   usage: "/instructor_disconnect",
-  description: "Disconnect user from voice channel.*"
+  description: "Disconnect user from voice channel.*",
+  roles: ["admin", facultyRole, courseAdminRole]
 };

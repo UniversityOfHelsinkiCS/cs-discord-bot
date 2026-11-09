@@ -1,4 +1,5 @@
 const { execute, autocomplete, data } = require("../../../src/discordBot/commands/student/help");
+const { courseAdminRole } = require("../../../config.json");
 
 const {
   adminData,
@@ -100,6 +101,23 @@ describe("slash help command", () => {
     expect(listing).not.toContain("**/auth**");
     expect(listing).not.toContain("**/create_course**");
     expect(listing).not.toContain("**/add_admin_rights**");
+    expect(listing).not.toContain("**/instructor_disconnect**");
+  });
+
+  test("a course instructor sees the instructor commands", async () => {
+    const client = studentInteractionWithoutOptions.client;
+    const interaction = {
+      member: {
+        displayName: "instructor",
+        user: { id: 2 },
+        roles: { cache: [{ name: `wepa ${courseAdminRole}` }] }
+      },
+      options: { getString: () => null }
+    };
+    await execute(interaction, client, models);
+    const messages = [...editEphemeral.mock.calls, ...sendFollowUpEphemeral.mock.calls].map((call) => call[1]);
+    expect(messages.join(" ")).toContain("**/instructor_disconnect**");
+    expect(messages.join(" ")).not.toContain("**/create_course**");
   });
 
   test("admin commands follow the database admin flag, not the Discord role", async () => {

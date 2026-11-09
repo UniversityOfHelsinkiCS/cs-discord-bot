@@ -4,10 +4,14 @@ const { respondWithChoices } = require("../../services/autocomplete");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { facultyRole, courseAdminRole, githubRepo } = require("../../../../config.json");
 
-const getAccessLevel = async (discordId, models) => {
-  const user = await findUserByDiscordId(discordId, models.User);
+const isCourseInstructor = (member) =>
+  Boolean(member.roles?.cache?.some((role) => role.name.endsWith(` ${courseAdminRole}`)));
+
+const getAccessLevel = async (member, models) => {
+  const user = await findUserByDiscordId(member.user.id, models.User);
   if (user?.admin) return "admin";
   if (user?.faculty) return facultyRole;
+  if (isCourseInstructor(member)) return courseAdminRole;
   return undefined;
 };
 
@@ -103,7 +107,8 @@ const getCommandsByCategory = (client, accessLevel) => {
     (command) => seesStaffCommands && command.roles && !isAdminOnly(command) && !command.roles.includes(courseAdminRole)
   );
   const courseAdminData = client.slashCommands.filter(
-    (command) => seesStaffCommands && command.roles && command.roles.includes(courseAdminRole)
+    (command) =>
+      (seesStaffCommands || accessLevel === courseAdminRole) && command.roles && command.roles.includes(courseAdminRole)
   );
   const studentData = client.slashCommands.filter((command) => !command.roles && command.data.name !== "auth");
   return { adminData, facultyData, courseAdminData, studentData };
@@ -112,7 +117,7 @@ const getCommandsByCategory = (client, accessLevel) => {
 const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Hold on...");
   const member = interaction.member;
-  const accessLevel = await getAccessLevel(member.user.id, models);
+  const accessLevel = await getAccessLevel(member, models);
   const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, accessLevel);
   if (!interaction.options.getString("command")) {
     await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
@@ -122,7 +127,7 @@ const execute = async (interaction, client, models) => {
 };
 
 const autocomplete = async (interaction, client, models) => {
-  const accessLevel = await getAccessLevel(interaction.member.user.id, models);
+  const accessLevel = await getAccessLevel(interaction.member, models);
   const categories = getCommandsByCategory(client, accessLevel);
   const names = Object.values(categories)
     .flatMap((commands) => [...commands.keys()])
