@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 
 const CONFIRM_TIMEOUT_MS = 60000;
 
@@ -32,52 +32,6 @@ const confirmChoice = async (interaction, msg) => {
   return confirmed;
 };
 
-const confirmChoiceNoInteraction = async (message, interactionMessage, guild) => {
-  const confirmEmbed = new EmbedBuilder().setColor("#0099ff").setTitle(interactionMessage);
-
-  const row = new ActionRowBuilder();
-  row.addComponents(
-    new ButtonBuilder().setCustomId("confirm").setLabel("Confirm").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId("decline").setLabel("Decline").setStyle(ButtonStyle.Danger)
-  );
-
-  const channel = guild.channels.cache.get(message.channelId);
-  const messageAuthorId = message.author.id;
-  const msgEmbed = await channel.send({ embeds: [confirmEmbed], components: [row] });
-  const collector = msgEmbed.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
-  let stop = false;
-  let confirm = false;
-  collector.on("collect", (i) => {
-    const userId = i.user.id;
-    const buttonId = i.customId;
-    if (userId === messageAuthorId && buttonId === "confirm") {
-      confirm = true;
-      stop = true;
-    } else if (userId === messageAuthorId && buttonId === "decline") {
-      stop = true;
-    } else {
-      i.reply({ content: "Wrong user!" });
-    }
-  });
-
-  for (let i = 0; i < 60000;) {
-    await sleep(1000);
-    i = i + 1000;
-    if (stop) {
-      break;
-    }
-  }
-  msgEmbed.delete();
-  return confirm;
-
-  function sleep(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  }
-};
-
 module.exports = {
-  confirmChoice,
-  confirmChoiceNoInteraction
+  confirmChoice
 };

@@ -1,7 +1,7 @@
 const { ChannelType } = require("discord.js");
 const HONEYPOT_CHANNEL_NAME = "do_not_post";
 const HONEYPOT_MESSAGE = `
-# Tämä on ansa boteille. Älä laitaviestiä tänne tai sinut saatetaan poistaa serveriltä.
+# Tämä on ansa boteille. Älä laita viestiä tänne tai sinut saatetaan poistaa serveriltä.
 
 # Det här är en fälla för bottar. Posta inte här, annars riskerar du att bli utkastad.
 

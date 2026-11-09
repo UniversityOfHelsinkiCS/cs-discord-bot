@@ -10,9 +10,9 @@ const execute = async (interaction, client, models) => {
   const channels = client.guild.channels.cache.filter(
     (c) => c.type === ChannelType.GuildCategory && c.name.includes("🔒")
   );
-  channels.forEach(async (channel) => {
+  for (const channel of channels.values()) {
     await channel.setName(`👻 ${getCourseNameFromCategory(channel)}`);
-  });
+  }
 
   return await editEphemeral(interaction, "Updated category names.");
 };

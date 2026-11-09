@@ -2,7 +2,7 @@ const { ChannelType } = require("discord.js");
 const Discord = require("discord.js");
 const { setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 
-const HONEYPOT_MESSAGE_TRIMMED = `# Tämä on ansa boteille. Älä laitaviestiä tänne tai sinut saatetaan poistaa serveriltä.
+const HONEYPOT_MESSAGE_TRIMMED = `# Tämä on ansa boteille. Älä laita viestiä tänne tai sinut saatetaan poistaa serveriltä.
 
 # Det här är en fälla för bottar. Posta inte här, annars riskerar du att bli utkastad.
 
