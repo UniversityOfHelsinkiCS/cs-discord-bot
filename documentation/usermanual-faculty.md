@@ -11,7 +11,6 @@ The Department of Computer Science has a dedicated Discord server for course sup
 - **Moderated platform.** The server has rules and admins. The bot automatically removes known scam messages from hacked accounts and kicks spam bots.
 - **Chat controls.** You can lock the course chat, for example during an exam, and disconnect people from voice channels.
 - **Help from instructors and peers.** You can give course assistants the instructor role, so students can see who to ask with `/instructors`. Students also help each other.
-- **No Discord setup needed.** The bot handles roles and permissions. You never have to touch Discord's server settings.
 
 ## 2. Getting onto Discord
 
