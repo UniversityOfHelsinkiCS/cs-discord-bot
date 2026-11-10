@@ -59,9 +59,28 @@ const sendFollowUpEphemeral = async (interaction, msg) => {
   await interaction.followUp({ content: `${msg}`, flags: MessageFlags.Ephemeral });
 };
 
-const replyInChunks = async (interaction, text, chunkSize = 1000) => {
-  const chunks = [];
-  for (let i = 0; i < text.length; i += chunkSize) chunks.push(text.substring(i, i + chunkSize));
+const splitLongLine = (line, chunkSize) => {
+  const pieces = [];
+  for (let i = 0; i < line.length; i += chunkSize) pieces.push(line.substring(i, i + chunkSize));
+  return pieces.length ? pieces : [line];
+};
+
+const splitIntoChunks = (text, chunkSize = MESSAGE_LIMIT) =>
+  text
+    .split("\n")
+    .flatMap((line) => splitLongLine(line, chunkSize))
+    .reduce((chunks, line) => {
+      const last = chunks[chunks.length - 1];
+      if (last !== undefined && last.length + 1 + line.length <= chunkSize) {
+        chunks[chunks.length - 1] = `${last}\n${line}`;
+      } else {
+        chunks.push(line);
+      }
+      return chunks;
+    }, []);
+
+const replyInChunks = async (interaction, text, chunkSize = MESSAGE_LIMIT) => {
+  const chunks = text ? splitIntoChunks(text, chunkSize) : [];
   await editEphemeral(interaction, chunks[0] ?? "Done.");
   for (const chunk of chunks.slice(1)) await sendFollowUpEphemeral(interaction, chunk);
 };
@@ -77,5 +96,6 @@ module.exports = {
   editEphemeralClearComponents,
   editErrorEphemeral,
   sendFollowUpEphemeral,
-  replyInChunks
+  replyInChunks,
+  splitIntoChunks
 };

@@ -6,7 +6,8 @@ const {
   editEphemeral,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
-  editErrorEphemeral
+  editErrorEphemeral,
+  splitIntoChunks
 } = require("../../src/discordBot/services/message");
 
 const { defaultAdminInteraction } = require("../mocks/mockInteraction");
@@ -42,6 +43,19 @@ describe("message service", () => {
       content: "**ERROR DETECTED!**\nMember: admin\nCommand: button guide:join:1\nChannel: help-thread"
     });
     expect(commandChannel.send).toHaveBeenCalledWith({ content: "x".repeat(2000) });
+  });
+
+  test("long text is split on line breaks under the Discord limit", () => {
+    const lines = Array.from({ length: 100 }, (_, i) => `<@${i}> ${"x".repeat(40)}`);
+    const chunks = splitIntoChunks(lines.join("\n"));
+    expect(chunks.length).toBeGreaterThan(1);
+    chunks.forEach((chunk) => expect(chunk.length).toBeLessThanOrEqual(2000));
+    expect(chunks.join("\n")).toBe(lines.join("\n"));
+  });
+
+  test("a single line over the limit is cut into pieces", () => {
+    const chunks = splitIntoChunks("y".repeat(4500));
+    expect(chunks.map((chunk) => chunk.length)).toEqual([2000, 2000, 500]);
   });
 
   test("error ephemeral", async () => {
