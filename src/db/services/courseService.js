@@ -1,8 +1,9 @@
 const { Sequelize } = require("sequelize");
+const { escapeLike } = require("./likePattern");
 
 const findCourseFromDb = async (courseName, Course) => {
   return await Course.findOne({
-    where: { name: { [Sequelize.Op.iLike]: courseName } }
+    where: { name: { [Sequelize.Op.iLike]: escapeLike(courseName) } }
   });
 };
 
@@ -55,7 +56,7 @@ const removeCourseFromDb = async (courseName, Course) => {
 
   if (course) {
     await Course.destroy({
-      where: { name: { [Sequelize.Op.iLike]: courseName } }
+      where: { name: { [Sequelize.Op.iLike]: escapeLike(courseName) } }
     });
   }
 };
@@ -136,7 +137,7 @@ const findPublicCoursesFromDb = async (order, Course) => {
 const findCourseFromDbWithFullName = async (courseFullName, Course) => {
   return await Course.findOne({
     where: {
-      fullName: { [Sequelize.Op.iLike]: courseFullName }
+      fullName: { [Sequelize.Op.iLike]: escapeLike(courseFullName) }
     }
   });
 };
@@ -144,7 +145,7 @@ const findCourseFromDbWithFullName = async (courseFullName, Course) => {
 const findCourseNickNameFromDbWithCourseCode = async (courseName, Course) => {
   return await Course.findOne({
     where: {
-      code: { [Sequelize.Op.iLike]: courseName }
+      code: { [Sequelize.Op.iLike]: escapeLike(courseName) }
     }
   });
 };

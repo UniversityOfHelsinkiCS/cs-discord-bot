@@ -13,12 +13,13 @@ const { updateGuide } = require("../../discordBot/services/guide");
 const { findCourseFromDbById } = require("../services/courseService");
 const { courseAdminRole } = require("../../../config.json");
 const { Op } = require("sequelize");
+const { unescapeLike } = require("../services/likePattern");
 
 const initChannelHooks = (guild, models) => {
   const channelModel = models.Channel;
   const courseModel = models.Course;
   channelModel.addHook("afterBulkDestroy", (channel) => {
-    guild.channels.cache.find((c) => c.name === channel.where.name[Op.iLike])?.delete();
+    guild.channels.cache.find((c) => c.name === unescapeLike(channel.where.name[Op.iLike]))?.delete();
   });
 
   channelModel.addHook("afterCreate", async (channel) => {

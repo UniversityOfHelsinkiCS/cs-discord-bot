@@ -35,6 +35,10 @@ const execute = async (interaction, client, models) => {
     return await sendErrorEphemeral(interaction, "Emojis are not allowed!");
   }
 
+  if (courseCode.includes("%") || courseName.includes("%")) {
+    return await sendErrorEphemeral(interaction, "Course code and nick name can't contain %.");
+  }
+
   const courseNameConcat = courseCode + " - " + courseFullName + " - " + courseName;
   if (courseNameConcat.length >= 99) {
     return await sendErrorEphemeral(interaction, "Course code, name and nickname are too long!");

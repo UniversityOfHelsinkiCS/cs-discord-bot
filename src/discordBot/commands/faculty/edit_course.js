@@ -87,6 +87,10 @@ const execute = async (interaction, client, models) => {
     return await editErrorEphemeral(interaction, "Emojis are not allowed!");
   }
 
+  if (choice !== "name" && newValue.includes("%")) {
+    return await editErrorEphemeral(interaction, "Course code and nick name can't contain %.");
+  }
+
   const confirm = await confirmChoice(interaction, "Change course " + choice + " to: " + newValue);
   if (!confirm) {
     return await editEphemeral(interaction, "Command declined");

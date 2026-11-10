@@ -17,11 +17,12 @@ const {
 const { updateGuide } = require("../../discordBot/services/guide");
 const { courseAdminRole, facultyRole } = require("../../../config.json");
 const { Op } = require("sequelize");
+const { unescapeLike } = require("../services/likePattern");
 const { editChannelNames, createDefaultChannelsToDatabase } = require("../../db/services/channelService");
 
 const initCourseHooks = (guild, models) => {
   models.Course.addHook("afterBulkDestroy", async (course) => {
-    const courseName = course.where.name[Op.iLike];
+    const courseName = unescapeLike(course.where.name[Op.iLike]);
     const category = findCategoryWithCourseName(courseName, guild);
 
     await Promise.all(
