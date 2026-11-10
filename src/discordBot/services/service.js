@@ -216,7 +216,7 @@ const updateAnnouncementChannelMessage = async (guild, channelAnnouncement, mode
   let updatedMsg = createCourseInvitationLink(courseName);
   const instructors = await listCourseInstructors(courseName, models);
   if (instructors !== "") {
-    updatedMsg = updatedMsg + "\nInstructors for the course:" + instructors;
+    updatedMsg = updatedMsg + "\nInstructors for the course: " + instructors;
   }
   await invMessage.edit(updatedMsg);
 };
