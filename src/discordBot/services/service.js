@@ -189,7 +189,7 @@ const getWorkshopInfo = async (courseCode) => {
     return msg;
   } catch (error) {
     logError(error);
-    return;
+    return "Could not fetch workshops right now. Please try again later.";
   }
 };
 

@@ -241,6 +241,12 @@ describe("Service", () => {
     const result = await getWorkshopInfo("TKT-101");
     expect(result).toBe("No workshops for this course. Please contact the course admin.");
   });
+
+  test("Get workshops info explains when the workshops service fails", async () => {
+    axios.get.mockImplementationOnce(() => Promise.reject(new Error("timeout")));
+    const result = await getWorkshopInfo("TKT-101");
+    expect(result).toBe("Could not fetch workshops right now. Please try again later.");
+  });
 });
 
 describe("findAndUpdateInstructorRole", () => {
