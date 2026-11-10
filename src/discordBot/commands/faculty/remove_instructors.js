@@ -5,73 +5,97 @@ const {
   updateAnnouncementChannelMessage,
   getUserWithUserId
 } = require("../../services/service");
+const { parseUserMentions, formatMentions } = require("../../services/mentions");
 const { findUserByDiscordId } = require("../../../db/services/userService");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { findCourseMember } = require("../../../db/services/courseMemberService");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { courseAdminRole, facultyRole } = require("../../../../config.json");
 
+const fetchMember = async (guild, userId) => {
+  try {
+    return await getUserWithUserId(guild, userId);
+  } catch {
+    return null;
+  }
+};
+
+const findMembership = async (userId, courseId, models) => {
+  const userInstance = await findUserByDiscordId(userId, models.User);
+  return userInstance && (await findCourseMember(userInstance.id, courseId, models.CourseMember));
+};
+
 const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Removing instructors...");
   if (!(await requireFaculty(interaction, models))) return;
 
-  const courseModel = models.Course;
-  const userModel = models.User;
-  const courseMemberModel = models.CourseMember;
   const guild = client.guild;
-  const channel = await guild.channels.cache.get(interaction.channelId);
-  const roleName = channel.parent ? getCourseNameFromCategory(channel.parent) : "";
+  const channel = guild.channels.cache.get(interaction.channelId);
 
   if (!channel.parent) {
     return await editErrorEphemeral(interaction, "Course not found, execution stopped.");
   }
 
-  const parentCourse = await findCourseFromDb(getCourseNameFromCategory(channel.parent.name), courseModel);
+  const parentCourse = await findCourseFromDb(getCourseNameFromCategory(channel.parent.name), models.Course);
 
   if (!parentCourse) {
-    return editErrorEphemeral(interaction, "Command must be used in a course channel!");
+    return await editErrorEphemeral(interaction, "Command must be used in a course channel!");
   }
 
-  let users = interaction.options.getString("list");
-  const instructorRole = await guild.roles.cache.find((r) => r.name === `${roleName} ${courseAdminRole}`);
-
-  const userIdList = [];
-
-  while (users.match(/(?<=<@!).*?(?=>)/)) {
-    const userID = users.match(/(?<=<@!).*?(?=>)/)[0];
-    userIdList.push(userID);
-    users = users.replace("<@!" + userID + ">", "");
+  const instructorRole = guild.roles.cache.find((r) => r.name === `${parentCourse.name} ${courseAdminRole}`);
+  if (!instructorRole) {
+    return await editErrorEphemeral(interaction, "The instructor role of this course is missing.");
   }
 
-  while (users.match(/(?<=<@).*?(?=>)/)) {
-    const userID = users.match(/(?<=<@).*?(?=>)/)[0];
-    userIdList.push(userID);
-    users = users.replace("<@" + userID + ">", "");
+  const userIds = parseUserMentions(interaction.options.getString("list"));
+  if (userIds.length === 0) {
+    return await editErrorEphemeral(interaction, "Mention the users to remove with @.");
   }
 
-  for (let i = 0; i < userIdList.length; i++) {
-    const memberToDemote = await getUserWithUserId(guild, userIdList[i]);
-    if (memberToDemote.user.bot) {
+  const notOnServer = [];
+  const notMembers = [];
+  const demotions = [];
+  for (const userId of userIds) {
+    const member = await fetchMember(guild, userId);
+    if (!member) {
+      notOnServer.push(userId);
       continue;
     }
-    const userInstance = await findUserByDiscordId(memberToDemote.user.id, userModel);
+    if (member.user.bot) continue;
+    const membership = await findMembership(userId, parentCourse.id, models);
+    if (membership) demotions.push({ member, membership });
+    else notMembers.push(userId);
+  }
 
-    const courseMemberInstance =
-      userInstance && (await findCourseMember(userInstance.id, parentCourse.id, courseMemberModel));
+  if (notMembers.length) {
+    return await editErrorEphemeral(
+      interaction,
+      `All listed users must be members of this course! Not members: ${formatMentions(notMembers)}`
+    );
+  }
 
-    if (!courseMemberInstance) {
-      return await editErrorEphemeral(interaction, "All listed users must be members of this course!");
-    }
+  if (demotions.length === 0) {
+    return await editErrorEphemeral(
+      interaction,
+      `None of the listed users are on the server: ${formatMentions(userIds)}`
+    );
+  }
 
-    courseMemberInstance.instructor = false;
-    await courseMemberInstance.save();
-
-    await memberToDemote.roles.remove(instructorRole);
+  for (const { member, membership } of demotions) {
+    membership.instructor = false;
+    await membership.save();
+    await member.roles.remove(instructorRole);
   }
 
   const announcementChannel = guild.channels.cache.find((c) => c.name === `${parentCourse.name}_announcement`);
   await updateAnnouncementChannelMessage(guild, announcementChannel, models);
 
+  if (notOnServer.length) {
+    return await editEphemeral(
+      interaction,
+      `Removed role '${instructorRole.name}' from ${formatMentions(demotions.map(({ member }) => member.user.id))}.\nNot on the server, skipped: ${formatMentions(notOnServer)}`
+    );
+  }
   return await editEphemeral(interaction, `Removed role '${instructorRole.name}' from all users listed.`);
 };
 
