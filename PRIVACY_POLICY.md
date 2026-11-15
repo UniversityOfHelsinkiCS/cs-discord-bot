@@ -44,6 +44,7 @@ Records that describe the Server's course and channel structure, not individual 
 
 - **Course records** (`course` table): course code (`code`), full name (`fullName`), short name (`name`), the ID of the Discord category the course maps to (`categoryId`), and booleans for whether the course is hidden (`private`) or its chat is locked (`locked`).
 - **Channel records** (`channel` table): for each course channel, its name (`name`), topic text (`topic`), Discord channel ID (`discordId`), the course it belongs to (`courseId`), and booleans marking it as the course's default channel (`defaultChannel`), a voice channel (`voiceChannel`), or hidden from regular users (`hidden`).
+- **Known scam images** (`scam_image` table): perceptual hashes of images that administrators have identified as part of a scam, each with a name for the scam, the image's file name and when it was added. The images themselves are not stored, and nothing in this table identifies who posted them.
 
 We do **not** persistently store raw message content or attachment files in the database. Message/attachment data used for spam detection is held in memory temporarily (up to about one hour) and then discarded. Note that automated-moderation reports posted into the administrator-only Discord channel (section 2.1) can contain message content and persist there as ordinary Discord messages under the retention described in that section.
 

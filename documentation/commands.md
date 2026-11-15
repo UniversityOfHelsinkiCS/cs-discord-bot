@@ -27,6 +27,7 @@ This is only needed for newly added commands; `/reload_commands` and restarting 
 Command | Description | Example
 --- |--- | ---
 `/add_admin_rights` | Add admin rights to given user. | `/add_admin_rights user:@someone`
+`/add_scam_images` | Add the images of one scam as a chain of known scam images. | `/add_scam_images chain:gift-card image1:[image] image2:[image]`
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`

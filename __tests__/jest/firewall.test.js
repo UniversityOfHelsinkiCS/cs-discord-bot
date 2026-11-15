@@ -16,6 +16,8 @@ jest.mock("../../src/discordBot/services/scamImageMatcher", () => ({
   }))
 }));
 
+jest.mock("../../src/db/services/scamImageService", () => ({ getKnownScamImages: jest.fn(async () => []) }));
+
 const hashMatch = (matchedCount, total) => ({
   total,
   matchedCount,

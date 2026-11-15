@@ -118,6 +118,7 @@ Being able to see a command is separate from being allowed to run it. When a com
 Command | Explanation | Arguments
 --------|-------------|----------:
 [/add_admin_rights](./commands/admin/add_admin_rights.md) | Add admin rights to a user. | :heavy_check_mark:
+[/add_scam_images](./commands/admin/add_scam_images.md) | Add the images of one scam as a chain of known scam images. | :heavy_check_mark:
 [/delete_command](./commands/admin/delete_command.md) | Delete the given slash command. | :heavy_check_mark:
 [/delete_course](./commands/admin/delete_course.md) | Delete the given course channel. | :heavy_check_mark:
 [/fix_course_roles](./commands/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:

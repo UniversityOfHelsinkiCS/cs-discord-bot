@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { hashImage, hammingDistance } = require("./perceptualHash");
 const { logError } = require("./logger");
-const knownScamImages = require("../data/scamImageHashes.json");
 
 const MATCH_THRESHOLD = 8;
 const MIN_MATCHED_IMAGES = 2;
@@ -18,8 +17,8 @@ const previewUrl = (attachment) => {
   return url.toString();
 };
 
-const downloadImage = async (url) => {
-  const response = await axios.get(url, {
+const downloadPreview = async (attachment) => {
+  const response = await axios.get(previewUrl(attachment), {
     responseType: "arraybuffer",
     timeout: DOWNLOAD_TIMEOUT_MS,
     maxContentLength: MAX_DOWNLOAD_BYTES
@@ -29,7 +28,7 @@ const downloadImage = async (url) => {
 
 const hashAttachment = async (attachment) => {
   try {
-    return await hashImage(await downloadImage(previewUrl(attachment)));
+    return await hashImage(await downloadPreview(attachment));
   } catch (error) {
     logError(error);
     return null;
@@ -41,7 +40,7 @@ const findKnownImage = (hash, references) =>
 
 const noMatch = (total) => ({ total, matchedCount: 0, chains: [], allMatch: false, partialMatch: false });
 
-const matchScamImages = async (images, references = knownScamImages) => {
+const matchScamImages = async (images, references) => {
   if (references.length === 0 || images.length < MIN_MATCHED_IMAGES) return noMatch(images.length);
   const hashes = await Promise.all(images.map(hashAttachment));
   const matches = hashes.map((hash) => hash && findKnownImage(hash, references)).filter(Boolean);
@@ -56,4 +55,4 @@ const matchScamImages = async (images, references = knownScamImages) => {
   };
 };
 
-module.exports = { matchScamImages, previewUrl, MATCH_THRESHOLD };
+module.exports = { matchScamImages, downloadPreview, previewUrl, MATCH_THRESHOLD };

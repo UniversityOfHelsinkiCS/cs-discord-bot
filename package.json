@@ -13,8 +13,7 @@
     "test": "cross-env NODE_ENV=test jest --coverage --runInBand",
     "lint": "oxlint",
     "format": "oxfmt",
-    "format:check": "oxfmt --check",
-    "add-scam-images": "node scripts/addScamImages.js"
+    "format:check": "oxfmt --check"
   },
   "jest": {
     "setupFiles": [

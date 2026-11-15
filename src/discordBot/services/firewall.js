@@ -1,6 +1,7 @@
 const { sendReportToCommandsChannel } = require("./message");
 const { logError } = require("./logger");
 const { matchScamImages } = require("./scamImageMatcher");
+const { getKnownScamImages } = require("../../db/services/scamImageService");
 const { facultyRole, courseAdminRole } = require("../../../config.json");
 
 const { HONEYPOT_CHANNEL_NAME } = require("./honeypot");
@@ -288,10 +289,19 @@ const isStaff = (member) =>
     )
   );
 
-const checkAttachments = async (message, client) => {
+const loadKnownScamImages = async (models) => {
+  try {
+    return await getKnownScamImages(models.ScamImage);
+  } catch (error) {
+    logError(error);
+    return [];
+  }
+};
+
+const checkAttachments = async (message, client, models) => {
   const images = message.attachments.filter((att) => att.contentType?.startsWith("image/")).map((att) => att);
   if (images.length < 2) return;
-  const hashMatch = await matchScamImages(images);
+  const hashMatch = await matchScamImages(images, await loadKnownScamImages(models));
   const dimensionMatch = images.length === 4 && checkImageMessageFingerprints(images);
   const isConfirmedScam = dimensionMatch || hashMatch.allMatch;
   const notes = describeHashMatch(hashMatch);
@@ -311,10 +321,10 @@ const checkAttachments = async (message, client) => {
   await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
 };
 
-const firewall = async (message, client) => {
+const firewall = async (message, client, models) => {
   if (message.author.bot) return;
   if (!message.member) return;
-  await checkAttachments(message, client);
+  await checkAttachments(message, client, models);
   await checkHoneypot(message, client);
 };
 

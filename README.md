@@ -65,6 +65,7 @@ visible only to the person who ran them.
   courses, roles, and memberships to the database and rebuild them; used for
   recovery and migrations.
 - `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
+- `/add_scam_images` — adds the images of one scam as a chain of known scam images.
 
 ### Membership sync
 
@@ -94,13 +95,15 @@ visible only to the person who ran them.
   match, or four images match nothing, staff get a possible-scam report. That
   report is held for a minute and dropped if the honeypot kicks the account in
   that time.
-- **Adding known scam images:** `npm run add-scam-images -- <chain-name> <image file or URL>...`
-  hashes each image, plus centre crops of it, into
-  `src/discordBot/data/scamImageHashes.json`. Commit the updated file and redeploy.
+- **Adding known scam images:** admins run `/add_scam_images` with a name and up to
+  ten images. The images of one command are stored as one scam chain: each
+  image is hashed, together with centre crops of it, and only the hashes are
+  kept, in the `scam_image` table. New chains are used right away.
 
 ## Data storage
 
-- PostgreSQL tables only for `User`, `Course`, `Channel`, and `CourseMember`.
+- PostgreSQL tables only for `User`, `Course`, `Channel`, `CourseMember`, and
+  `ScamImage` (perceptual hashes of known scam images, with no user data).
 - **No message content is persisted.** Chat text is used transiently for command
   parsing, spam detection (in memory, 1-hour TTL), and staff reports.
 

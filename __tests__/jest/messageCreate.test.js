@@ -5,12 +5,13 @@ const { messageInCommandsChannel, student } = require("../mocks/mockMessages");
 jest.mock("../../src/discordBot/services/firewall");
 
 const client = messageInCommandsChannel.client;
+const models = { ScamImage: {} };
 const send = (content, overrides = {}) => {
   messageInCommandsChannel.content = content;
   messageInCommandsChannel.author = student;
   messageInCommandsChannel.member = student;
   Object.assign(messageInCommandsChannel, overrides);
-  return execute(messageInCommandsChannel, client);
+  return execute(messageInCommandsChannel, client, models);
 };
 
 afterEach(() => {
@@ -21,7 +22,7 @@ describe("messageCreate", () => {
   test("member messages are passed to the firewall", async () => {
     await send("hello there");
     expect(firewall).toHaveBeenCalledTimes(1);
-    expect(firewall).toHaveBeenCalledWith(messageInCommandsChannel, client);
+    expect(firewall).toHaveBeenCalledWith(messageInCommandsChannel, client, models);
   });
 
   test("copy-pasted slash commands get no reply", async () => {
