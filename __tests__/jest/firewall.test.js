@@ -394,21 +394,48 @@ describe("honeypot detection", () => {
     expect(content).toContain("Message: *(no text content)*");
   });
 
-  test("honeypot message report includes attachment URLs", async () => {
+  test("honeypot message report uploads attachments and lists them like scam reports", async () => {
     const att = [
-      { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
+      { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" },
+      { name: "notes.txt", size: 20, contentType: "text/plain", width: null, height: null, url: "http://example.com/t" }
     ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     await firewall(msg, client);
-    const [, content] = sendReportToCommandsChannel.mock.calls[0];
-    expect(content).toContain("http://example.com/s");
+    const [, content, files] = sendReportToCommandsChannel.mock.calls[0];
+    expect(files).toEqual(["http://example.com/s", "http://example.com/t"]);
+    expect(content).toContain("Count: 2\n• spam.png | image/png | 5000B | 100x100\n• notes.txt | text/plain | 20B");
+    expect(content).not.toContain("http://example.com/s");
   });
 
-  test("honeypot message report omits attachments line when there are none", async () => {
+  test("honeypot report is sent before the honeypot channel is cleaned", async () => {
+    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
+    const order = [];
+    sendReportToCommandsChannel.mockImplementationOnce(async () => order.push("report"));
+    msg.channel.messages.fetch.mockImplementationOnce(async () => {
+      order.push("clean");
+      return makeCollection([]);
+    });
+    await firewall(msg, client);
+    expect(order).toEqual(["report", "clean"]);
+  });
+
+  test("honeypot report falls back to links when the upload fails", async () => {
+    const att = [
+      { name: "big.png", size: 9e7, contentType: "image/png", width: 100, height: 100, url: "http://example.com/b" }
+    ];
+    const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
+    sendReportToCommandsChannel.mockRejectedValueOnce(new Error("Request entity too large"));
+    await firewall(msg, client);
+    const [, fallbackContent, fallbackFiles] = sendReportToCommandsChannel.mock.calls[1];
+    expect(fallbackContent).toContain("http://example.com/b");
+    expect(fallbackFiles).toBeUndefined();
+  });
+
+  test("honeypot message report has no attachment list when there are none", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     await firewall(msg, client);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
-    expect(content).not.toContain("Attachments:");
+    expect(content).not.toContain("Count:");
   });
 
   test("repeat honeypot trigger report does not include the message content", async () => {

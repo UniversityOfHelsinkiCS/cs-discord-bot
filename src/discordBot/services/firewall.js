@@ -133,21 +133,36 @@ const banUnbanAndReport = async (message, client, reason, action) => {
   await sendReportToCommandsChannel(client, content);
 };
 
+const formatAttachmentDetail = (att) => {
+  const dimensions = att.width && att.height ? ` | ${att.width}x${att.height}` : "";
+  return `• ${att.name} | ${att.contentType} | ${att.size}B${dimensions}`;
+};
+
+const describeAttachments = (attachments) =>
+  `Count: ${attachments.length}\n${attachments.map(formatAttachmentDetail).join("\n")}`;
+
+const sendReportWithAttachments = async (client, content, attachments) => {
+  const urls = attachments.map((att) => att.url);
+  try {
+    await sendReportToCommandsChannel(client, content, urls);
+  } catch (error) {
+    logError(error);
+    await sendReportToCommandsChannel(client, `${content}\n${urls.join("\n")}`);
+  }
+};
+
 const sendScamReport = async (message, images, isConfirmedScam, client) => {
   const now = Date.now();
   const last = recentlyReported.get(message.author.id);
   if (last && now - last < COOLDOWN_MS) return;
   recentlyReported.set(message.author.id, now);
-  const imageDetails = images
-    .map((att) => `• ${att.name} | ${att.contentType} | ${att.size}B | ${att.width}x${att.height}`)
-    .join("\n");
-  const files = images.map((att) => att.url);
+  const imageList = images.map((att) => att);
   const header = isConfirmedScam
     ? "**SCAM MESSAGE DETECTED AND REMOVED**"
     : "<@&758046962829361262>\n**POSSIBLE SCAM IMAGES DETECTED!**";
   const messageLink = isConfirmedScam ? "" : `\nMessage: ${message.url}`;
-  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nCount: ${images.size}\n${imageDetails}${messageLink}`;
-  await sendReportToCommandsChannel(client, content, files);
+  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\n${describeAttachments(imageList)}${messageLink}`;
+  await sendReportWithAttachments(client, content, imageList);
 };
 
 const attachmentFingerprint = (attachments) => {
@@ -188,9 +203,12 @@ const cleanHoneypotChannel = async (channel) => {
   }
 };
 
-const formatAttachments = (attachments) => {
-  if (!attachments || attachments.size === 0) return null;
-  return [...attachments.values()].map((att) => att.url).join("\n");
+const sendHoneypotReport = async (message, client) => {
+  const messageContent = message.content?.trim() || "*(no text content)*";
+  const content = `**HONEYPOT MESSAGE**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nMessage: ${messageContent}`;
+  const attachments = [...(message.attachments?.values() ?? [])];
+  if (attachments.length === 0) return await sendReportToCommandsChannel(client, content);
+  await sendReportWithAttachments(client, `${content}\n${describeAttachments(attachments)}`, attachments);
 };
 
 const checkHoneypot = async (message, client) => {
@@ -201,13 +219,9 @@ const checkHoneypot = async (message, client) => {
   if (!isHoneypot && !isMonitored) return;
 
   if (isHoneypot) {
+    await sendHoneypotReport(message, client);
     await cleanHoneypotChannel(message.channel);
     const userId = message.author.id;
-    const messageContent = message.content?.trim() || "*(no text content)*";
-    const attachments = formatAttachments(message.attachments);
-    const attachmentLine = attachments ? `\nAttachments: ${attachments}` : "";
-    const initialReport = `**HONEYPOT MESSAGE**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nMessage: ${messageContent}${attachmentLine}`;
-    await sendReportToCommandsChannel(client, initialReport);
     if (postedInHoneypotWithinTtl(userId)) {
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
       const banned = await message.guild.members
