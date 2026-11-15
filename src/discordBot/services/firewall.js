@@ -1,7 +1,10 @@
 const { sendReportToCommandsChannel } = require("./message");
 const { logError } = require("./logger");
+const { matchScamImages } = require("./scamImageMatcher");
+const { facultyRole, courseAdminRole } = require("../../../config.json");
 
 const { HONEYPOT_CHANNEL_NAME } = require("./honeypot");
+const STAFF_ROLE_NAMES = ["admin", "cs-admin", facultyRole];
 const MONITORED_CHANNEL_NAME = "chat";
 const MESSAGE_TTL_MS = 60 * 60 * 1000;
 const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
@@ -155,18 +158,21 @@ const sendReportWithAttachments = async (client, content, attachments) => {
   }
 };
 
-const sendScamReport = async (message, images, isConfirmedScam, client) => {
+const describeHashMatch = ({ matchedCount, total, chains }) =>
+  matchedCount === 0 ? [] : [`Known scam image matches: ${matchedCount}/${total} (${chains.join(", ")})`];
+
+const sendScamReport = async (message, images, isConfirmedScam, client, notes = []) => {
   const now = Date.now();
   const last = recentlyReported.get(message.author.id);
   if (last && now - last < COOLDOWN_MS) return;
   recentlyReported.set(message.author.id, now);
-  const imageList = images.map((att) => att);
   const header = isConfirmedScam
     ? "**SCAM MESSAGE DETECTED AND REMOVED**"
     : "<@&758046962829361262>\n**POSSIBLE SCAM IMAGES DETECTED!**";
   const messageLink = isConfirmedScam ? "" : `\nMessage: ${message.url}`;
-  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\n${describeAttachments(imageList)}${messageLink}`;
-  await sendReportWithAttachments(client, content, imageList);
+  const noteLines = notes.map((note) => `\n${note}`).join("");
+  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\n${describeAttachments(images)}${noteLines}${messageLink}`;
+  await sendReportWithAttachments(client, content, images);
 };
 
 const attachmentFingerprint = (attachments) => {
@@ -260,12 +266,12 @@ const checkHoneypot = async (message, client) => {
   }
 };
 
-const schedulePossibleScamReport = (message, images, client) => {
+const schedulePossibleScamReport = (message, images, client, notes) => {
   const userId = message.author.id;
   if (pendingScamReports.has(userId)) return;
   const timer = setTimeout(() => {
     pendingScamReports.delete(userId);
-    sendScamReport(message, images, false, client).catch(logError);
+    sendScamReport(message, images, false, client, notes).catch(logError);
   }, POSSIBLE_SCAM_REPORT_DELAY_MS);
   pendingScamReports.set(userId, timer);
 };
@@ -275,14 +281,32 @@ const cancelPossibleScamReport = (userId) => {
   pendingScamReports.delete(userId);
 };
 
+const isStaff = (member) =>
+  Boolean(
+    member.roles?.cache?.some(
+      (role) => STAFF_ROLE_NAMES.includes(role.name) || role.name.endsWith(` ${courseAdminRole}`)
+    )
+  );
+
 const checkAttachments = async (message, client) => {
-  const images = message.attachments.filter((att) => att.contentType?.startsWith("image/"));
-  // Filter for messages with 4 images as all the scams contain 4 images (this isn't true anymore probs need a honeypot)
-  if (images.size !== 4) return;
-  const isConfirmedScam = checkImageMessageFingerprints(images);
-  if (!isConfirmedScam) return schedulePossibleScamReport(message, images, client);
+  const images = message.attachments.filter((att) => att.contentType?.startsWith("image/")).map((att) => att);
+  if (images.length < 2) return;
+  const hashMatch = await matchScamImages(images);
+  const dimensionMatch = images.length === 4 && checkImageMessageFingerprints(images);
+  const isConfirmedScam = dimensionMatch || hashMatch.allMatch;
+  const notes = describeHashMatch(hashMatch);
+  if (isConfirmedScam && isStaff(message.member)) {
+    return schedulePossibleScamReport(message, images, client, [
+      ...notes,
+      "Matches a known scam, but the member has a staff role, so nothing was removed."
+    ]);
+  }
+  if (!isConfirmedScam) {
+    if (images.length === 4 || hashMatch.partialMatch) schedulePossibleScamReport(message, images, client, notes);
+    return;
+  }
   cancelPossibleScamReport(message.author.id);
-  await sendScamReport(message, images, true, client);
+  await sendScamReport(message, images, true, client, notes);
   await message.delete();
   await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
 };

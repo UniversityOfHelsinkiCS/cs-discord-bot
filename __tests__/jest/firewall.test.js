@@ -2,8 +2,27 @@ const { firewall, resetHoneypotState } = require("../../src/discordBot/services/
 const { HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 const { sendReportToCommandsChannel } = require("../../src/discordBot/services/message");
 
+const { matchScamImages } = require("../../src/discordBot/services/scamImageMatcher");
+
 jest.mock("../../src/discordBot/services/message");
 jest.mock("../../src/discordBot/services/logger", () => ({ logError: jest.fn() }));
+jest.mock("../../src/discordBot/services/scamImageMatcher", () => ({
+  matchScamImages: jest.fn(async (images) => ({
+    total: images.length,
+    matchedCount: 0,
+    chains: [],
+    allMatch: false,
+    partialMatch: false
+  }))
+}));
+
+const hashMatch = (matchedCount, total) => ({
+  total,
+  matchedCount,
+  chains: ["story"],
+  allMatch: matchedCount === total,
+  partialMatch: matchedCount >= 2 && matchedCount < total
+});
 
 const SCAM_IMAGES = [
   { contentType: "image/jpeg", name: "img1.jpg", size: 1000, width: 1920, height: 2560, url: "http://example.com/1" },
@@ -51,12 +70,20 @@ const makeMessage = ({
   channelName = "chat",
   content = "",
   pinned = false,
-  extraChannelMessages = []
+  extraChannelMessages = [],
+  roleNames = []
 } = {}) => {
   const id = authorId ?? `user-${++authorCounter}`;
+  const roles = roleNames.map((name) => ({ name }));
   const msg = {
     author: { bot: isBot, id, tag: "user#0001", send: jest.fn().mockResolvedValue() },
-    member: hasMember ? { displayName: "Test User", kick: jest.fn().mockResolvedValue() } : null,
+    member: hasMember
+      ? {
+          displayName: "Test User",
+          kick: jest.fn().mockResolvedValue(),
+          roles: { cache: { some: (fn) => roles.some(fn) } }
+        }
+      : null,
     guild: {
       members: { ban: jest.fn().mockResolvedValue({ id }), unban: jest.fn().mockResolvedValue() }
     },
@@ -636,4 +663,66 @@ describe("possible scam report delay", () => {
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(possibleScamReports()).toHaveLength(1);
   });
+});
+
+describe("known scam image matching", () => {
+  const THREE_IMAGES = SUSPICIOUS_IMAGES.slice(0, 3);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("removes the message and kicks when every image matches a known scam image", async () => {
+    matchScamImages.mockResolvedValueOnce(hashMatch(3, 3));
+    const msg = makeMessage({ attachments: THREE_IMAGES });
+    await firewall(msg, client);
+    expect(msg.delete).toHaveBeenCalledTimes(1);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).toContain("SCAM MESSAGE DETECTED AND REMOVED");
+    expect(content).toContain("Known scam image matches: 3/3 (story)");
+  });
+
+  test("holds a possible scam report when only some images match", async () => {
+    matchScamImages.mockResolvedValueOnce(hashMatch(2, 3));
+    const msg = makeMessage({ attachments: THREE_IMAGES });
+    await firewall(msg, client);
+    expect(msg.delete).not.toHaveBeenCalled();
+    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    const [, content] = sendReportToCommandsChannel.mock.calls[0];
+    expect(content).toContain("POSSIBLE SCAM IMAGES DETECTED");
+    expect(content).toContain("Known scam image matches: 2/3 (story)");
+  });
+
+  test("does nothing for images that match nothing", async () => {
+    const msg = makeMessage({ attachments: THREE_IMAGES });
+    await firewall(msg, client);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    expect(msg.delete).not.toHaveBeenCalled();
+    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
+  });
+
+  test("does not check a single image", async () => {
+    await firewall(makeMessage({ attachments: THREE_IMAGES.slice(0, 1) }), client);
+    expect(matchScamImages).not.toHaveBeenCalled();
+  });
+
+  test.each([["faculty"], ["admin"], ["tira instructor"]])(
+    "only reports a known scam from a member with the %s role",
+    async (roleName) => {
+      const msg = makeMessage({ roleNames: [roleName] });
+      await firewall(msg, client);
+      expect(msg.delete).not.toHaveBeenCalled();
+      expect(msg.guild.members.ban).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+      const [, content] = sendReportToCommandsChannel.mock.calls[0];
+      expect(content).toContain("POSSIBLE SCAM IMAGES DETECTED");
+      expect(content).toContain("the member has a staff role");
+    }
+  );
 });

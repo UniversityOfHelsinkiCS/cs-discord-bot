@@ -84,12 +84,19 @@ visible only to the person who ran them.
   is reported to staff, and posting the same content in both the honeypot and the
   public chat channel triggers an automatic kick (ban immediately followed by an
   unban, which also purges ~24 h of that account's recent messages).
-- **Compromised-account image scams:** messages carrying four images are checked
-  against known scam image-dimension fingerprints; on a match the message is
-  deleted, the account is kicked, and the user is DM'd recovery instructions.
-  Staff receive a report in `#commands` either way. A report for four images that
-  don't match is held for a minute and dropped if the honeypot kicks the account
-  in that time.
+- **Compromised-account image scams:** messages carrying two or more images are
+  compared with known scam images by perceptual hash (a small preview of each
+  image is downloaded and hashed in memory), and four-image messages are also
+  checked against known image-dimension fingerprints. When every image matches,
+  the message is deleted, the account is kicked, and the user is DM'd recovery
+  instructions. Members with the `admin`, `cs-admin`, faculty or instructor role
+  are never kicked for this; staff get a report instead. When only some images
+  match, or four images match nothing, staff get a possible-scam report. That
+  report is held for a minute and dropped if the honeypot kicks the account in
+  that time.
+- **Adding known scam images:** `npm run add-scam-images -- <chain-name> <image file or URL>...`
+  hashes each image, plus centre crops of it, into
+  `src/discordBot/data/scamImageHashes.json`. Commit the updated file and redeploy.
 
 ## Data storage
 
@@ -103,7 +110,7 @@ visible only to the person who ran them.
 | --- | --- |
 | Guilds | Channel, role, and guild state. |
 | **Guild Members** (privileged) | Leave events delete the user's data; the startup member list removes data of members who left while the bot was offline; `/fix_course_roles`, `/server_status`, `/update_database` and server restore compare every member's roles with the database. |
-| **Message Content** (privileged) | Spam/scam detection only: image attachment fingerprints, and honeypot/`#chat` message comparison. The bot has no text or prefix commands. |
+| **Message Content** (privileged) | Spam/scam detection only: image attachment fingerprints and perceptual hashes of attached images, and honeypot/`#chat` message comparison. The bot has no text or prefix commands. |
 | Guild Messages | Spam firewall. |
 | Guild Voice States | Voice-channel state used by course channels. |
 

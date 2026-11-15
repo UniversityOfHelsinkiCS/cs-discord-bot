@@ -1,6 +1,6 @@
 # Privacy Policy — CS Discord Bot
 
-*Last updated: 7 November 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
+*Last updated: 15 November 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
 
 This Privacy Policy describes what data the CS Discord Bot ("the Bot") collects, why, and how it is handled. The Bot is a private bot developed and operated for one specific Discord server, that of the Department of Computer Science, University of Helsinki ("the Server"). It is not offered to, or run in, any other server. Source code: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot
 
@@ -23,9 +23,9 @@ The Bot is developed and run by the University of Helsinki's software developmen
 - **Server (guild) membership data** - via the Server Members intent, so the Bot can detect when members leave and delete their data, find members who left while it was offline, and manage course roles.
 - **Message content** - the Bot receives message content through Discord's privileged Message Content intent for every channel it can see, but only *inspects* it as follows:
   - In the general chat channel and the "honeypot" spam-trap channel, message text is checked against known spam/scam patterns.
-  - On messages that carry exactly four image attachments, in **any** channel, the images' dimensions are checked against known compromised-account scam fingerprints. Messages with any other number of images are received but their attachment metadata is not inspected.
+  - On messages that carry two or more image attachments, in **any** channel, a small preview of each image is downloaded and reduced to a perceptual hash (a short fingerprint of how the image looks), which is compared with the hashes of known compromised-account scam images. On messages with exactly four images, the images' dimensions are also checked against known scam fingerprints. Messages with fewer than two images are received but their attachments are not inspected.
 
-  The message text and image dimensions used for these checks are not written to the database; text checked in the honeypot and chat channels is held only briefly in memory (see section 6).
+  The message text, image dimensions, downloaded image previews and their hashes used for these checks are not written to the database or kept after the check, except as part of a staff report (below); text checked in the honeypot and chat channels is held only briefly in memory (see section 6).
 - **Moderation actions** - kicks and bans issued by the Bot, and the reason/context for them, tied to the affected user ID. These are **not** written to any table in our database - there is no moderation-log table - so the automatic deletion that happens when you leave the Server (see section 6) does not reach them. The record of a moderation action lives in two other places instead:
   - **The administrator-only channel.** When the Bot acts automatically (see section 2.5), and also when it flags a message as *possibly* a scam without taking action, it posts a report into a private, administrator-only channel on the Server. For honeypot hits that report includes the triggering message's text and any attachment links; for image-scam hits it includes the attachment metadata and images. An administrator reviews these reports. Reports an administrator judges to be false positives are deleted within about 24 hours of that review. Reports for confirmed scam or spam activity are kept indefinitely in that channel as a security log and to help improve the detection rules.
   - **Logs and error monitoring.** A moderation event, or an error while carrying one out, may also produce a line in the Bot's console and operational logs, and - if it involved an error - an event in our Sentry instance (see section 2.4). The console and operational logs are short-lived; Sentry events are kept per that instance's retention settings.
@@ -64,7 +64,7 @@ Logging in sets a session cookie, and your session is stored server-side in our 
 
 To protect members from compromised-account scams and spam bots, the Bot can remove a member **automatically, without prior human review**. Removal is carried out as a ban immediately followed by an unban - in effect a kick that also deletes up to about 24 hours of that account's recent messages from the Server. This happens when:
 
-- a message carrying exactly four image attachments matches a known compromised-account scam fingerprint (the match is on the images' dimensions);
+- every image in a message carrying two or more images matches a known compromised-account scam image (by perceptual hash), or a message carrying exactly four images matches a known scam fingerprint by the images' dimensions. Members with a staff role (administrator, faculty or instructor) are not removed this way; staff are notified instead;
 - the same message is posted in both the honeypot channel and the general chat channel within about an hour; or
 - an account posts in the honeypot channel more than once within about an hour.
 
