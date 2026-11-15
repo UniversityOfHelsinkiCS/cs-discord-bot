@@ -87,7 +87,9 @@ visible only to the person who ran them.
 - **Compromised-account image scams:** messages carrying four images are checked
   against known scam image-dimension fingerprints; on a match the message is
   deleted, the account is kicked, and the user is DM'd recovery instructions.
-  Staff receive a report in `#commands` either way.
+  Staff receive a report in `#commands` either way. A report for four images that
+  don't match is held for a minute and dropped if the honeypot kicks the account
+  in that time.
 
 ## Data storage
 

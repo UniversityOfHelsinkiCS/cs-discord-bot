@@ -14,6 +14,9 @@ const honeypotPosters = new Map();
 const recentlyReported = new Map();
 const COOLDOWN_MS = 2 * 60 * 1000;
 
+const pendingScamReports = new Map();
+const POSSIBLE_SCAM_REPORT_DELAY_MS = 60 * 1000;
+
 // This will be moved to the database in the future
 const SCAM_FINGERPRINT_SETS = [
   [
@@ -128,6 +131,7 @@ const banAndUnban = async (message, reason, action) => {
 };
 
 const banUnbanAndReport = async (message, client, reason, action) => {
+  cancelPossibleScamReport(message.author.id);
   await banAndUnban(message, reason, action);
   const content = `**HONEYPOT TRIGGERED**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
   await sendReportToCommandsChannel(client, content);
@@ -223,6 +227,7 @@ const checkHoneypot = async (message, client) => {
     await cleanHoneypotChannel(message.channel);
     const userId = message.author.id;
     if (postedInHoneypotWithinTtl(userId)) {
+      cancelPossibleScamReport(userId);
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
       const banned = await message.guild.members
         .ban(userId, { deleteMessageSeconds: 86400, reason: "Sent multiple messages in honeypot channel" })
@@ -255,16 +260,31 @@ const checkHoneypot = async (message, client) => {
   }
 };
 
+const schedulePossibleScamReport = (message, images, client) => {
+  const userId = message.author.id;
+  if (pendingScamReports.has(userId)) return;
+  const timer = setTimeout(() => {
+    pendingScamReports.delete(userId);
+    sendScamReport(message, images, false, client).catch(logError);
+  }, POSSIBLE_SCAM_REPORT_DELAY_MS);
+  pendingScamReports.set(userId, timer);
+};
+
+const cancelPossibleScamReport = (userId) => {
+  clearTimeout(pendingScamReports.get(userId));
+  pendingScamReports.delete(userId);
+};
+
 const checkAttachments = async (message, client) => {
   const images = message.attachments.filter((att) => att.contentType?.startsWith("image/"));
   // Filter for messages with 4 images as all the scams contain 4 images (this isn't true anymore probs need a honeypot)
   if (images.size !== 4) return;
   const isConfirmedScam = checkImageMessageFingerprints(images);
-  await sendScamReport(message, images, isConfirmedScam, client);
-  if (isConfirmedScam) {
-    await message.delete();
-    await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
-  }
+  if (!isConfirmedScam) return schedulePossibleScamReport(message, images, client);
+  cancelPossibleScamReport(message.author.id);
+  await sendScamReport(message, images, true, client);
+  await message.delete();
+  await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
 };
 
 const firewall = async (message, client) => {
@@ -279,6 +299,8 @@ const resetHoneypotState = () => {
   chatMessages.clear();
   honeypotPosters.clear();
   recentlyReported.clear();
+  for (const timer of pendingScamReports.values()) clearTimeout(timer);
+  pendingScamReports.clear();
 };
 
 module.exports = { firewall, resetHoneypotState, startFirewallPruning };

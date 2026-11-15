@@ -12,6 +12,14 @@ const SCAM_IMAGES = [
   { contentType: "image/png", name: "img4.png", size: 500, width: 828, height: 1012, url: "http://example.com/4" }
 ];
 
+const SUSPICIOUS_IMAGES = [
+  { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
+  { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
+  { contentType: "image/jpeg", name: "c.jpg", size: 100, width: 500, height: 600, url: "http://example.com/c" },
+  { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
+];
+const REPORT_DELAY_MS = 60 * 1000;
+
 const makeAttachments = (allAttachments) => ({
   filter: jest.fn((fn) => {
     const filtered = allAttachments.filter(fn);
@@ -78,6 +86,14 @@ afterEach(() => {
 });
 
 describe("firewall", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   test("ignores bot messages", async () => {
     const msg = makeMessage({ isBot: true });
     await firewall(msg, client);
@@ -128,14 +144,9 @@ describe("firewall", () => {
   });
 
   test("reports 4 images that do not match a known scam fingerprint", async () => {
-    const suspiciousImages = [
-      { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
-      { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
-      { contentType: "image/jpeg", name: "c.jpg", size: 100, width: 500, height: 600, url: "http://example.com/c" },
-      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
-    ];
-    const msg = makeMessage({ attachments: suspiciousImages });
+    const msg = makeMessage({ attachments: SUSPICIOUS_IMAGES });
     await firewall(msg, client);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(msg.delete).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
@@ -164,14 +175,9 @@ describe("firewall", () => {
   });
 
   test("possible scam report includes message link", async () => {
-    const suspiciousImages = [
-      { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
-      { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
-      { contentType: "image/jpeg", name: "c.jpg", size: 100, width: 500, height: 600, url: "http://example.com/c" },
-      { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
-    ];
-    const msg = makeMessage({ attachments: suspiciousImages });
+    const msg = makeMessage({ attachments: SUSPICIOUS_IMAGES });
     await firewall(msg, client);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).toContain(msg.url);
   });
@@ -564,5 +570,70 @@ describe("honeypot poster expiry", () => {
     const third = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "third", attachments: [] });
     await firewall(third, client);
     expect(third.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("possible scam report delay", () => {
+  const possibleScamReports = () =>
+    sendReportToCommandsChannel.mock.calls.filter(([, content]) => content.includes("POSSIBLE SCAM IMAGES DETECTED"));
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("is not sent before a minute has passed", async () => {
+    await firewall(makeMessage({ attachments: SUSPICIOUS_IMAGES }), client);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS - 1);
+    expect(possibleScamReports()).toHaveLength(0);
+    await jest.advanceTimersByTimeAsync(1);
+    expect(possibleScamReports()).toHaveLength(1);
+  });
+
+  test("is not sent when the same images also land in the honeypot", async () => {
+    const authorId = "scam-then-honeypot";
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(
+      makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, attachments: SUSPICIOUS_IMAGES }),
+      client
+    );
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    expect(possibleScamReports()).toHaveLength(0);
+    expect(sendReportToCommandsChannel.mock.calls.some(([, content]) => content.includes("HONEYPOT TRIGGERED"))).toBe(
+      true
+    );
+  });
+
+  test("is not sent when the user is kicked for posting twice in the honeypot", async () => {
+    const authorId = "scam-then-honeypot-twice";
+    const postHoneypot = (content) =>
+      firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await postHoneypot("first");
+    await postHoneypot("second");
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    expect(possibleScamReports()).toHaveLength(0);
+  });
+
+  test("is still sent when the user only posts once in the honeypot without being kicked", async () => {
+    const authorId = "scam-and-single-honeypot";
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(
+      makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "hello", attachments: [] }),
+      client
+    );
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    expect(possibleScamReports()).toHaveLength(1);
+  });
+
+  test("several suspicious messages from one user give one report", async () => {
+    const authorId = "many-suspicious";
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    expect(possibleScamReports()).toHaveLength(1);
   });
 });
