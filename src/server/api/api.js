@@ -15,14 +15,34 @@ const getChannels = async () => {
   return response.json();
 };
 
-const getRoles = async () => {
+const ROLE_CACHE_MS = 60 * 1000;
+let rolesRequest = null;
+let rolesRequestedAt = 0;
+
+const fetchRoles = async () => {
   const response = await fetch(`${DISCORD_API}/roles`, {
     method: "GET",
     headers: {
       Authorization: `${authorization_type} ${authorization_token}`
     }
   });
+  if (!response.ok) throw new Error(`Fetching roles failed with status ${response.status}`);
   return response.json();
+};
+
+const getRoles = () => {
+  if (!rolesRequest || Date.now() - rolesRequestedAt >= ROLE_CACHE_MS) {
+    rolesRequestedAt = Date.now();
+    rolesRequest = fetchRoles().catch((error) => {
+      rolesRequest = null;
+      throw error;
+    });
+  }
+  return rolesRequest;
+};
+
+const clearRoleCache = () => {
+  rolesRequest = null;
 };
 
 const addRole = async (user, role) => {
@@ -60,6 +80,7 @@ const addMember = async (user, role) => {
 module.exports = {
   getChannels,
   getRoles,
+  clearRoleCache,
   addRole,
   getMember,
   addMember

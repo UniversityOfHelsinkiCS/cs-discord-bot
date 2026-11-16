@@ -4,6 +4,7 @@ const SequelizeMock = require("sequelize-mock");
 const dbMock = new SequelizeMock();
 
 const makeApp = require("../../src/server/app");
+const { clearRoleCache } = require("../../src/server/api/api");
 
 const fetch = jest.spyOn(global, "fetch").mockImplementation(() => Promise.reject(new Error("unexpected fetch")));
 
@@ -14,6 +15,7 @@ jest.mock("../../src/server/strategies/discordstrategy", () => jest.fn((req, res
 
 afterEach(() => {
   jest.clearAllMocks();
+  clearRoleCache();
 });
 
 describe("Endpoint urls", () => {

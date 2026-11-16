@@ -16,6 +16,7 @@ const SequelizeStore = require("connect-session-sequelize")(session.Store);
 
 module.exports = (sequelize) => {
   const app = express();
+  app.set("trust proxy", 1);
   const store = new SequelizeStore({
     db: sequelize
   });
@@ -26,7 +27,8 @@ module.exports = (sequelize) => {
       secret: process.env.SESSION_SECRET,
       store: store,
       saveUninitialized: false,
-      resave: false
+      resave: false,
+      cookie: { secure: "auto", httpOnly: true, sameSite: "lax" }
     })
   );
 
