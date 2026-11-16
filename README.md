@@ -47,7 +47,7 @@ roles are allowed for them in Discord's Integrations settings.
   (volunteer TA) roles.
 - `/status` — course summary (code, full name, invite link, instructors, member
   count). `/create_poll` — reaction poll.
-- `/auth` — issues a one-time link to the companion website, where a faculty
+- `/auth` — replies with the link to the companion website, where a faculty
   member logs in with Discord OAuth and the university single sign-on
   (employee-number check) to be granted the faculty role.
 
@@ -138,7 +138,7 @@ The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
 
 ## Running locally
 
-Node.js 24 or newer is required (the Docker image uses `ubi9/nodejs-24-minimal`).
+Node.js 24 or newer is required (the Docker image uses `node:24-alpine`).
 
 Clone the repository and install dependencies:
 
