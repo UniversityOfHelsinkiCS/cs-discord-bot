@@ -4,12 +4,11 @@ const { matchScamImages } = require("./scamImageMatcher");
 const { getKnownScamImages } = require("../../db/services/scamImageService");
 const { facultyRole, courseAdminRole } = require("../../../config.json");
 
-const { HONEYPOT_CHANNEL_NAME } = require("./honeypot");
+const { HONEYPOT_CHANNEL_NAME, cleanHoneypotChannel } = require("./honeypot");
 const STAFF_ROLE_NAMES = ["admin", "cs-admin", facultyRole];
 const MONITORED_CHANNEL_NAME = "chat";
 const MESSAGE_TTL_MS = 60 * 60 * 1000;
 const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
-const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 const honeypotMessages = new Map();
 const chatMessages = new Map();
@@ -191,27 +190,6 @@ const buildMessageKeys = (message) => {
   const fp = attachmentFingerprint(message.attachments);
   if (fp) keys.push(fp);
   return keys;
-};
-
-const cleanHoneypotChannel = async (channel) => {
-  const fetched = await channel.messages.fetch({ limit: 100 }).catch(logError);
-  if (!fetched) return;
-  const toDelete = fetched.filter((m) => !m.pinned);
-  if (toDelete.size === 0) return;
-
-  const now = Date.now();
-  const recent = toDelete.filter((m) => now - m.createdTimestamp < TWO_WEEKS_MS);
-  const old = toDelete.filter((m) => now - m.createdTimestamp >= TWO_WEEKS_MS);
-
-  if (recent.size > 1) {
-    await channel.bulkDelete(recent).catch(logError);
-  } else if (recent.size === 1) {
-    await recent.first().delete().catch(logError);
-  }
-
-  for (const msg of old.values()) {
-    await msg.delete().catch(logError);
-  }
 };
 
 const sendHoneypotReport = async (message, client) => {
