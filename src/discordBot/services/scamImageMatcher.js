@@ -38,7 +38,7 @@ const hashAttachment = async (attachment) => {
 const findKnownImage = (hash, references) =>
   references.find((reference) => reference.hashes.some((known) => hammingDistance(known, hash) <= MATCH_THRESHOLD));
 
-const noMatch = (total) => ({ total, matchedCount: 0, chains: [], allMatch: false, partialMatch: false });
+const noMatch = (total) => ({ total, matchedCount: 0, scamNames: [], allMatch: false, partialMatch: false });
 
 const matchScamImages = async (images, references) => {
   if (references.length === 0 || images.length < MIN_MATCHED_IMAGES) return noMatch(images.length);
@@ -49,7 +49,7 @@ const matchScamImages = async (images, references) => {
   return {
     total: images.length,
     matchedCount,
-    chains: [...new Set(matches.map((match) => match.chain))],
+    scamNames: [...new Set(matches.map((match) => match.scamName))],
     allMatch,
     partialMatch: !allMatch && matchedCount >= MIN_MATCHED_IMAGES
   };

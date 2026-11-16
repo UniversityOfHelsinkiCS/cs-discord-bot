@@ -159,8 +159,8 @@ const sendReportWithAttachments = async (client, content, attachments) => {
   }
 };
 
-const describeHashMatch = ({ matchedCount, total, chains }) =>
-  matchedCount === 0 ? [] : [`Known scam image matches: ${matchedCount}/${total} (${chains.join(", ")})`];
+const describeHashMatch = ({ matchedCount, total, scamNames }) =>
+  matchedCount === 0 ? [] : [`Known scam image matches: ${matchedCount}/${total} (${scamNames.join(", ")})`];
 
 const sendScamReport = async (message, images, isConfirmedScam, client, notes = []) => {
   const now = Date.now();

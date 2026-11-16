@@ -65,7 +65,7 @@ visible only to the person who ran them.
   courses, roles, and memberships to the database and rebuild them; used for
   recovery and migrations.
 - `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
-- `/add_scam_images` — adds the images of one scam as a chain of known scam images.
+- `/add_scam_fingerprint`, `/list_scam_fingerprints`, `/remove_scam_fingerprint` — manage the known scam images.
 
 ### Membership sync
 
@@ -95,10 +95,11 @@ visible only to the person who ran them.
   match, or four images match nothing, staff get a possible-scam report. That
   report is held for a minute and dropped if the honeypot kicks the account in
   that time.
-- **Adding known scam images:** admins run `/add_scam_images` with a name and up to
-  ten images. The images of one command are stored as one scam chain: each
+- **Known scam images:** admins run `/add_scam_fingerprint` with a scam name and up
+  to ten images. The images of one command are stored under that scam name: each
   image is hashed, together with centre crops of it, and only the hashes are
-  kept, in the `scam_image` table. New chains are used right away.
+  kept, in the `scam_image` table. `/list_scam_fingerprints` shows the known scams
+  and `/remove_scam_fingerprint` removes one. Changes apply right away.
 
 ## Data storage
 

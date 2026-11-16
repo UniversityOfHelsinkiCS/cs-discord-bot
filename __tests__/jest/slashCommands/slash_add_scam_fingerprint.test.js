@@ -1,5 +1,9 @@
-const { execute, data } = require("../../../src/discordBot/commands/admin/add_scam_images");
-const { getKnownScamImages, scamChainExists, addScamImageChain } = require("../../../src/db/services/scamImageService");
+const { execute, data } = require("../../../src/discordBot/commands/admin/add_scam_fingerprint");
+const {
+  getKnownScamImages,
+  scamNameExists,
+  addScamFingerprints
+} = require("../../../src/db/services/scamImageService");
 const { hashReferenceImage } = require("../../../src/discordBot/services/perceptualHash");
 const { downloadPreview } = require("../../../src/discordBot/services/scamImageMatcher");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
@@ -16,16 +20,16 @@ const models = { ScamImage: {} };
 
 const image = (name, contentType = "image/png") => ({ name, contentType, url: `https://cdn.example.com/${name}` });
 
-const makeInteraction = (chain, attachments) => ({
+const makeInteraction = (scamName, attachments) => ({
   options: {
-    getString: jest.fn(() => chain),
+    getString: jest.fn(() => scamName),
     getAttachment: jest.fn((name) => attachments[Number(name.replace("image", "")) - 1] ?? null)
   }
 });
 
 beforeEach(() => {
   requireAdmin.mockResolvedValue(true);
-  scamChainExists.mockResolvedValue(false);
+  scamNameExists.mockResolvedValue(false);
   getKnownScamImages.mockResolvedValue([]);
   downloadPreview.mockImplementation(async (attachment) => Buffer.from(attachment.name));
   hashReferenceImage.mockImplementation(async (buffer) => [`hash-${buffer.toString()}`]);
@@ -35,26 +39,26 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe("slash add_scam_images", () => {
-  test("takes a chain name and up to ten images", () => {
+describe("slash add_scam_fingerprint", () => {
+  test("takes a scam name and up to ten images", () => {
     const options = data.toJSON().options;
     expect(options.map((option) => option.name)).toEqual([
-      "chain",
+      "scam_name",
       ...Array.from({ length: 10 }, (_slot, index) => `image${index + 1}`)
     ]);
-    expect(options.filter((option) => option.required).map((option) => option.name)).toEqual(["chain", "image1"]);
+    expect(options.filter((option) => option.required).map((option) => option.name)).toEqual(["scam_name", "image1"]);
   });
 
   test("only admins can use the command", async () => {
     requireAdmin.mockResolvedValueOnce(false);
     await execute(makeInteraction("story", [image("1.png")]), {}, models);
-    expect(addScamImageChain).not.toHaveBeenCalled();
+    expect(addScamFingerprints).not.toHaveBeenCalled();
   });
 
-  test("adds every image of the command as one chain", async () => {
+  test("adds every image of the command under one scam name", async () => {
     const interaction = makeInteraction(" story ", [image("1.png"), image("2.png"), image("3.png")]);
     await execute(interaction, {}, models);
-    expect(addScamImageChain).toHaveBeenCalledWith(
+    expect(addScamFingerprints).toHaveBeenCalledWith(
       "story",
       [
         { name: "1.png", hashes: ["hash-1.png"] },
@@ -63,29 +67,29 @@ describe("slash add_scam_images", () => {
       ],
       models.ScamImage
     );
-    expect(editEphemeral).toHaveBeenCalledWith(interaction, 'Added 3 images to the scam chain "story".');
+    expect(editEphemeral).toHaveBeenCalledWith(interaction, 'Added 3 images to the scam "story".');
   });
 
-  test("refuses a chain name that is already used", async () => {
-    scamChainExists.mockResolvedValueOnce(true);
+  test("refuses a scam name that is already used", async () => {
+    scamNameExists.mockResolvedValueOnce(true);
     const interaction = makeInteraction("story", [image("1.png")]);
     await execute(interaction, {}, models);
-    expect(addScamImageChain).not.toHaveBeenCalled();
+    expect(addScamFingerprints).not.toHaveBeenCalled();
     expect(editErrorEphemeral).toHaveBeenCalledWith(
       interaction,
-      'A scam chain called "story" already exists. Pick another name.'
+      'A scam called "story" already exists. Pick another name.'
     );
   });
 
   test("refuses files that are not images", async () => {
     const interaction = makeInteraction("story", [image("1.png"), image("notes.txt", "text/plain")]);
     await execute(interaction, {}, models);
-    expect(addScamImageChain).not.toHaveBeenCalled();
+    expect(addScamFingerprints).not.toHaveBeenCalled();
     expect(editErrorEphemeral).toHaveBeenCalledWith(interaction, "These files are not images: notes.txt");
   });
 
   test("skips known, blank and unreadable images and says why", async () => {
-    getKnownScamImages.mockResolvedValueOnce([{ chain: "old", image: "x.png", hashes: ["hash-known.png"] }]);
+    getKnownScamImages.mockResolvedValueOnce([{ scamName: "old", image: "x.png", hashes: ["hash-known.png"] }]);
     hashReferenceImage.mockImplementation(async (buffer) =>
       buffer.toString() === "blank.png" ? [] : [`hash-${buffer}`]
     );
@@ -100,14 +104,14 @@ describe("slash add_scam_images", () => {
       image("broken.png")
     ]);
     await execute(interaction, {}, models);
-    expect(addScamImageChain).toHaveBeenCalledWith(
+    expect(addScamFingerprints).toHaveBeenCalledWith(
       "story",
       [{ name: "1.png", hashes: ["hash-1.png"] }],
       models.ScamImage
     );
     expect(editEphemeral).toHaveBeenCalledWith(
       interaction,
-      'Added 1 image to the scam chain "story".\nSkipped:' +
+      'Added 1 image to the scam "story".\nSkipped:' +
         "\n• known.png: already a known scam image" +
         "\n• blank.png: too little detail to recognise" +
         "\n• broken.png: could not be downloaded or read"
@@ -118,7 +122,7 @@ describe("slash add_scam_images", () => {
     hashReferenceImage.mockResolvedValue([]);
     const interaction = makeInteraction("story", [image("blank.png")]);
     await execute(interaction, {}, models);
-    expect(addScamImageChain).not.toHaveBeenCalled();
+    expect(addScamFingerprints).not.toHaveBeenCalled();
     expect(editErrorEphemeral).toHaveBeenCalledWith(
       interaction,
       "No images were added.\n• blank.png: too little detail to recognise"

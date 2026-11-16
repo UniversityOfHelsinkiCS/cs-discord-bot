@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
     "scam_image",
     {
-      chain: {
+      scamName: {
         type: DataTypes.STRING,
         allowNull: false
       },

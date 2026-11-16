@@ -1,5 +1,5 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
-const { getKnownScamImages, scamChainExists, addScamImageChain } = require("../../../db/services/scamImageService");
+const { getKnownScamImages, scamNameExists, addScamFingerprints } = require("../../../db/services/scamImageService");
 const { hashReferenceImage } = require("../../services/perceptualHash");
 const { downloadPreview } = require("../../services/scamImageMatcher");
 const { requireAdmin } = require("../../services/permissions");
@@ -30,13 +30,13 @@ const describeSkipped = (results) =>
     .join("");
 
 const execute = async (interaction, client, models) => {
-  await sendEphemeral(interaction, "Adding scam images...");
+  await sendEphemeral(interaction, "Adding scam fingerprints...");
   if (!(await requireAdmin(interaction, models))) return;
 
-  const chain = interaction.options.getString("chain").trim();
-  if (!chain) return await editErrorEphemeral(interaction, "Give the scam chain a name.");
-  if (await scamChainExists(chain, models.ScamImage)) {
-    return await editErrorEphemeral(interaction, `A scam chain called "${chain}" already exists. Pick another name.`);
+  const scamName = interaction.options.getString("scam_name").trim();
+  if (!scamName) return await editErrorEphemeral(interaction, "Give the scam a name.");
+  if (await scamNameExists(scamName, models.ScamImage)) {
+    return await editErrorEphemeral(interaction, `A scam called "${scamName}" already exists. Pick another name.`);
   }
 
   const attachments = IMAGE_OPTION_NAMES.map((name) => interaction.options.getAttachment(name)).filter(Boolean);
@@ -53,23 +53,23 @@ const execute = async (interaction, client, models) => {
     return await editErrorEphemeral(interaction, `No images were added.${describeSkipped(results)}`);
   }
 
-  await addScamImageChain(
-    chain,
+  await addScamFingerprints(
+    scamName,
     added.map((result) => ({ name: result.attachment.name, hashes: result.hashes })),
     models.ScamImage
   );
   const skippedNote = added.length < results.length ? `\nSkipped:${describeSkipped(results)}` : "";
   const imageCount = added.length === 1 ? "1 image" : `${added.length} images`;
-  await editEphemeral(interaction, `Added ${imageCount} to the scam chain "${chain}".${skippedNote}`);
+  await editEphemeral(interaction, `Added ${imageCount} to the scam "${scamName}".${skippedNote}`);
 };
 
 const buildCommand = () => {
   const command = new SlashCommandBuilder()
-    .setName("add_scam_images")
-    .setDescription("Add the images of one scam as a chain of known scam images")
+    .setName("add_scam_fingerprint")
+    .setDescription("Add a scam's images as known scam fingerprints.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
-      option.setName("chain").setDescription("Name for this scam").setRequired(true).setMaxLength(100)
+      option.setName("scam_name").setDescription("Name for this scam").setRequired(true).setMaxLength(100)
     );
   IMAGE_OPTION_NAMES.forEach((name, index) =>
     command.addAttachmentOption((option) =>
@@ -85,7 +85,7 @@ const buildCommand = () => {
 module.exports = {
   data: buildCommand(),
   execute,
-  usage: "/add_scam_images chain:[name] image1:[image] image2:[image]...",
-  description: "Add the images of one scam as a chain of known scam images",
+  usage: "/add_scam_fingerprint [scam name] [images]",
+  description: "Add a scam's images as known scam fingerprints.",
   roles: ["admin"]
 };

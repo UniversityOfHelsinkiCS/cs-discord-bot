@@ -27,16 +27,18 @@ This is only needed for newly added commands; `/reload_commands` and restarting 
 Command | Description | Example
 --- |--- | ---
 `/add_admin_rights` | Add admin rights to given user. | `/add_admin_rights user:@someone`
-`/add_scam_images` | Add the images of one scam as a chain of known scam images. | `/add_scam_images chain:gift-card image1:[image] image2:[image]`
+`/add_scam_fingerprint` | Add a scam's images as known scam fingerprints. | `/add_scam_fingerprint scam_name:gift-card image1:[image] image2:[image]`
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
 `/list_admins` | List all users with the admin flag in the database. | `/list_admins`
 `/list_courses` | List all courses and channels. | `/list_courses`
+`/list_scam_fingerprints` | List the known scams. | `/list_scam_fingerprints`
 `/prune_users` | Delete user records with no courses and no admin or faculty rights. | `/prune_users`
 `/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
 `/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`
 `/remove_faculty_rights` | Remove faculty rights from given user. | `/remove_faculty_rights user:@someone`
+`/remove_scam_fingerprint` | Remove a known scam. | `/remove_scam_fingerprint scam_name:gift-card`
 `/restore_server_from_database` | Recreate the Discord server from the database. | `/restore_server_from_database`
 `/server_status` | Check if the Discord server and database are in sync. | `/server_status`
 `/sort_courses` | Sort courses alphabetically. | `/sort_courses`

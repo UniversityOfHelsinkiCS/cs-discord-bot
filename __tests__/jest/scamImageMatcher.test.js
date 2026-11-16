@@ -31,7 +31,7 @@ beforeAll(async () => {
   const originals = await Promise.all([0, 1, 2].map((index) => patternImage(index)));
   references = await Promise.all(
     originals.map(async (image, index) => ({
-      chain: "story",
+      scamName: "story",
       image: `${index}.png`,
       hashes: await hashReferenceImage(image)
     }))
@@ -65,7 +65,7 @@ describe("matchScamImages", () => {
   test("every image matching a known scam image is a full match", async () => {
     serveImages(images);
     const result = await matchScamImages([attachment("a.png"), attachment("b.png"), attachment("c.png")], references);
-    expect(result).toEqual({ total: 3, matchedCount: 3, chains: ["story"], allMatch: true, partialMatch: false });
+    expect(result).toEqual({ total: 3, matchedCount: 3, scamNames: ["story"], allMatch: true, partialMatch: false });
   });
 
   test("two known images next to an unknown one is a partial match", async () => {
