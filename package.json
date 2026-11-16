@@ -8,7 +8,9 @@
   },
   "scripts": {
     "start": "cross-env NODE_ENV=production node src/index.js",
-    "dev": "cross-env NODE_ENV=development nodemon src/index.js",
+    "dev": "docker compose up --build",
+    "dev:debug": "cross-env SCAM_IMAGE_DEBUG=true docker compose up --build",
+    "dev:local": "cross-env NODE_ENV=development nodemon src/index.js",
     "jest": "cross-env NODE_ENV=test jest --coverage --verbose --runInBand --detectOpenHandles",
     "test": "cross-env NODE_ENV=test jest --coverage --runInBand",
     "lint": "oxlint",

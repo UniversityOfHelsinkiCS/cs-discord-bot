@@ -182,20 +182,21 @@ encryption migration, run automatically on startup.
 Start the bot:
 
 ```
-npm run dev     # development
-npm start       # staging
-npm test        # run all tests
+npm run dev:local   # development, against your own PostgreSQL
+npm start           # staging
+npm test            # run all tests
 ```
 
 ### Running with Docker
 
 `docker-compose.yml` starts the bot together with its own PostgreSQL 17 (user, password and database `postgres`,
 default `public` schema) on the `cs-discord-bot-net` network. The Docker image runs in the Europe/Helsinki time zone
-(`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; only `DATABASE_URL` is overridden to
-point at the database container.
+(`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; `DATABASE_URL` is overridden to point
+at the database container, and `SCAM_IMAGE_DEBUG` is set by the npm script.
 
 ```
-docker compose up --build
+npm run dev         # docker compose up --build
+npm run dev:debug   # the same, with SCAM_IMAGE_DEBUG=true
 ```
 
 ## Field encryption
