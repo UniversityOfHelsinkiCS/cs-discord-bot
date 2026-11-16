@@ -192,7 +192,8 @@ npm test            # run all tests
 `docker-compose.yml` starts the bot together with its own PostgreSQL 17 (user, password and database `postgres`,
 default `public` schema) on the `cs-discord-bot-net` network. The Docker image runs in the Europe/Helsinki time zone
 (`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; `DATABASE_URL` is overridden to point
-at the database container, and `SCAM_IMAGE_DEBUG` is set by the npm script.
+at the database container, `SCAM_IMAGE_DEBUG` is set by the npm script, and Sentry is turned off
+(`SENTRY_DISABLED=true`) so local testing doesn't report to the production Sentry project.
 
 ```
 npm run dev         # docker compose up --build

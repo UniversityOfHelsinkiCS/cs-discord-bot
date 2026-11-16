@@ -2,6 +2,8 @@ const { sendErrorReport, sendErrorEphemeral } = require("../services/message");
 const { logError, logInteractionError } = require("../services/logger");
 const { isGuideButton, handleGuideButton } = require("../services/guideButton");
 
+const UNKNOWN_INTERACTION_CODE = 10062;
+
 const handleAutocomplete = async (interaction, client, models) => {
   const command = client.slashCommands.get(interaction.commandName);
   if (!command?.autocomplete) return;
@@ -34,6 +36,7 @@ const execute = async (interaction, client, models) => {
     console.error(error);
     logInteractionError(error, client, interaction);
     await sendErrorReport(interaction, client, error.toString()).catch(logError);
+    if (error.code === UNKNOWN_INTERACTION_CODE) return;
     await sendErrorEphemeral(
       interaction,
       "There was an error while executing this command - Error report sent to administrators!"

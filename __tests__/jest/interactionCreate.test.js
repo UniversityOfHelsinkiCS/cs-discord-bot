@@ -5,7 +5,7 @@ const { logError, logInteractionError } = require("../../src/discordBot/services
 jest.mock("../../src/discordBot/services/message");
 jest.mock("../../src/discordBot/services/logger");
 
-const unknownInteraction = new Error("DiscordAPIError[10062]: Unknown interaction");
+const unknownInteraction = Object.assign(new Error("Unknown interaction"), { code: 10062 });
 
 const buildCommandInteraction = () => ({
   commandName: "remove_faculty_rights",
@@ -40,15 +40,26 @@ describe("interactionCreate error handling", () => {
     expect(sendErrorEphemeral).toHaveBeenCalledTimes(1);
   });
 
-  test("an expired interaction does not make the error handler throw", async () => {
+  test("an expired interaction is reported but not answered, since it can no longer be replied to", async () => {
     const commandExecute = jest.fn().mockRejectedValue(unknownInteraction);
     sendErrorReport.mockResolvedValue();
-    sendErrorEphemeral.mockRejectedValue(unknownInteraction);
 
     await expect(execute(buildCommandInteraction(), buildClient(commandExecute), {})).resolves.toBeUndefined();
 
+    expect(logInteractionError).toHaveBeenCalledTimes(1);
     expect(sendErrorReport).toHaveBeenCalledTimes(1);
-    expect(logError).toHaveBeenCalledWith(unknownInteraction);
+    expect(sendErrorEphemeral).not.toHaveBeenCalled();
+  });
+
+  test("a failing error reply is logged instead of thrown", async () => {
+    const commandExecute = jest.fn().mockRejectedValue(new Error("boom"));
+    const replyError = new Error("reply failed");
+    sendErrorReport.mockResolvedValue();
+    sendErrorEphemeral.mockRejectedValue(replyError);
+
+    await expect(execute(buildCommandInteraction(), buildClient(commandExecute), {})).resolves.toBeUndefined();
+
+    expect(logError).toHaveBeenCalledWith(replyError);
   });
 
   test("a failing error report still answers the user", async () => {
