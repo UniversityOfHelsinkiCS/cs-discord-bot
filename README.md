@@ -161,7 +161,12 @@ FIELD_ENCRYPTION_KEY=32-random-bytes-base64
 BACKEND_SERVER_URL=backend-server-url-without-port
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 WORKSHOPS_API=pajat-api-url
+SCAM_IMAGE_DEBUG=false
 ```
+
+`SCAM_IMAGE_DEBUG=true` logs, for every message with two or more images, each image's perceptual hash, the closest
+known scam image and the Hamming distance to it (matches are at most 8). Use it to see how close similar images get
+before changing the threshold.
 
 Add a `config.json` file:
 

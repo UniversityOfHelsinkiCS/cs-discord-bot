@@ -102,3 +102,29 @@ describe("matchScamImages", () => {
     expect(axios.get).not.toHaveBeenCalled();
   });
 });
+
+describe("SCAM_IMAGE_DEBUG", () => {
+  afterEach(() => {
+    delete process.env.SCAM_IMAGE_DEBUG;
+    jest.restoreAllMocks();
+  });
+
+  test("logs the closest known image and distance for each image when enabled", async () => {
+    process.env.SCAM_IMAGE_DEBUG = "true";
+    const log = jest.spyOn(console, "log").mockReturnValue(undefined);
+    serveImages(images);
+    await matchScamImages([attachment("a.png"), attachment("other.png"), attachment("missing.png")], references);
+    const output = log.mock.calls.map((call) => call[0]).join("\n");
+    expect(output).toContain("match threshold 8");
+    expect(output).toMatch(/a\.png [0-9a-f]{16}: distance \d+ to story\/0\.png \(MATCH\)/);
+    expect(output).toMatch(/other\.png [0-9a-f]{16}: distance \d+ to story\/\d\.png \(no match\)/);
+    expect(output).toContain("missing.png: not hashed");
+  });
+
+  test("logs nothing when disabled", async () => {
+    const log = jest.spyOn(console, "log").mockReturnValue(undefined);
+    serveImages(images);
+    await matchScamImages([attachment("a.png"), attachment("b.png")], references);
+    expect(log).not.toHaveBeenCalled();
+  });
+});

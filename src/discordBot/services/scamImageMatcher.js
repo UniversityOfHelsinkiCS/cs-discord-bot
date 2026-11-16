@@ -35,15 +35,42 @@ const hashAttachment = async (attachment) => {
   }
 };
 
-const findKnownImage = (hash, references) =>
-  references.find((reference) => reference.hashes.some((known) => hammingDistance(known, hash) <= MATCH_THRESHOLD));
+const findClosestKnownImage = (hash, references) => {
+  let closest = null;
+  for (const reference of references) {
+    for (const known of reference.hashes) {
+      const distance = hammingDistance(known, hash);
+      if (!closest || distance < closest.distance) closest = { distance, reference };
+    }
+  }
+  return closest;
+};
+
+const isMatch = (closest) => Boolean(closest) && closest.distance <= MATCH_THRESHOLD;
+
+const isDebugEnabled = () => process.env.SCAM_IMAGE_DEBUG === "true";
+
+const describeComparison = (image, hash, closest) => {
+  if (!hash) return `  ${image.name}: not hashed (too little detail, or could not be downloaded)`;
+  if (!closest) return `  ${image.name} ${hash}: no known hashes to compare against`;
+  const { scamName, image: imageName } = closest.reference;
+  const verdict = isMatch(closest) ? "MATCH" : "no match";
+  return `  ${image.name} ${hash}: distance ${closest.distance} to ${scamName}/${imageName} (${verdict})`;
+};
+
+const logComparisons = (images, hashes, closestImages) => {
+  const lines = images.map((image, index) => describeComparison(image, hashes[index], closestImages[index]));
+  console.log(`Scam image comparison, match threshold ${MATCH_THRESHOLD}:\n${lines.join("\n")}`);
+};
 
 const noMatch = (total) => ({ total, matchedCount: 0, scamNames: [], allMatch: false, partialMatch: false });
 
 const matchScamImages = async (images, references) => {
   if (references.length === 0 || images.length < MIN_MATCHED_IMAGES) return noMatch(images.length);
   const hashes = await Promise.all(images.map(hashAttachment));
-  const matches = hashes.map((hash) => hash && findKnownImage(hash, references)).filter(Boolean);
+  const closestImages = hashes.map((hash) => hash && findClosestKnownImage(hash, references));
+  if (isDebugEnabled()) logComparisons(images, hashes, closestImages);
+  const matches = closestImages.filter(isMatch).map((closest) => closest.reference);
   const matchedCount = matches.length;
   const allMatch = matchedCount === images.length;
   return {
