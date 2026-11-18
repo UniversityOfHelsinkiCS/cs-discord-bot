@@ -731,6 +731,7 @@ describe("known scam image matching", () => {
       const [dm] = msg.author.send.mock.calls[0];
       expect(dm).toContain("reset your Discord password");
       expect(dm).toContain("you were not kicked");
+      expect(dm).not.toContain("Malwarebytes");
       expect(dm).not.toContain("You were kicked");
       await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
       expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);

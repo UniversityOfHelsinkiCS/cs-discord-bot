@@ -62,18 +62,24 @@ You have sent multiple messages in our honeypot channel. This channel is a trap 
 You were kicked from the server. You are free to rejoin.
 `;
 
-const KICKED_NOTICE =
-  "You were kicked from the server. You are free to rejoin the server after resetting your password.";
-const STAFF_NOTICE =
-  "Because you have a staff role you were not kicked, but the message was removed and the admins were notified. Please reset your password as soon as possible.";
+const STAFF_SCAM_MESSAGE = `Hey!
 
-const buildRecoveryMessage = (action, notice = KICKED_NOTICE) => `Hey!
+A message sent from your account in our server (Department of Computer Science, University of Helsinki) matched a known scam. It was removed and the admins were notified. This usually means someone else has access to your Discord account.
+
+**Please reset your Discord password now.** Changing the password signs your account out everywhere else. Turning on two-factor authentication makes it harder to take over again.
+
+Because you have a staff role you were not kicked.
+
+If scam messages are still sent from your account after the password reset, contact the server admins, and have your computer checked for malware. For a university computer, contact the University IT Helpdesk.
+`;
+
+const buildRecoveryMessage = (action) => `Hey!
 
 We are sorry to inform you that we detected **suspicious activity on your account**. Your account was caught ${action} in our server (Department of Computer Science, University of Helsinki). This almost certainly means your Discord account has been compromised, and there's a chance your computer is infected with malware as well. The most common way Discord credentials get stolen is through an unofficial login portal or an info-stealer virus. If there is a virus then your computer has likely been compromised for many months and your Discord isn't the only compromised account.
 
 **We recommend** that you reset your Discord password. Use an offline malware scan tool like Microsoft Defender Offline Scan, Malwarebytes or ClamAV. If you find a info-stealer virus, you should reset your passwords on all platforms you use on that device.
 
-${notice}
+You were kicked from the server. You are free to rejoin the server after resetting your password.
 `;
 
 const addToStore = (store, userId, content) => {
@@ -292,7 +298,7 @@ const removeStaffScamMessage = async (message, images, client, notes) => {
     "Matches a known scam, but the member has a staff role, so they were not kicked. Their account may be compromised."
   ]);
   await message.delete().catch(logError);
-  await message.author.send(buildRecoveryMessage("sending a scam message", STAFF_NOTICE)).catch(logError);
+  await message.author.send(STAFF_SCAM_MESSAGE).catch(logError);
 };
 
 const checkAttachments = async (message, client, models) => {
