@@ -15,13 +15,14 @@ const {
   setCoursePositionABC
 } = require("../../discordBot/services/service");
 const { updateGuide } = require("../../discordBot/services/guide");
-const { courseAdminRole } = require("../../../config.json");
+const { courseAdminRole, facultyRole } = require("../../../config.json");
 const { Op } = require("sequelize");
+const { unescapeLike } = require("../services/likePattern");
 const { editChannelNames, createDefaultChannelsToDatabase } = require("../../db/services/channelService");
 
 const initCourseHooks = (guild, models) => {
   models.Course.addHook("afterBulkDestroy", async (course) => {
-    const courseName = course.where.name[Op.iLike];
+    const courseName = unescapeLike(course.where.name[Op.iLike]);
     const category = findCategoryWithCourseName(courseName, guild);
 
     await Promise.all(
@@ -77,21 +78,20 @@ const initCourseHooks = (guild, models) => {
       if (changedValue.has("locked")) {
         if (locked) {
           await setEmojisLock(category, hidden, courseName, models);
-          category.permissionOverwrites.create(
+          await category.permissionOverwrites.create(
             guild.roles.cache.find((r) => r.name === course.name),
             { ViewChannel: true, SendMessages: false }
           );
-          category.permissionOverwrites.create(
-            guild.roles.cache.find((r) => r.name === "faculty"),
-            { SendMessages: true }
-          );
-          category.permissionOverwrites.create(
-            guild.roles.cache.find((r) => r.name === "admin"),
-            { SendMessages: true }
-          );
+          const rolesThatCanPost = [`${course.name} ${courseAdminRole}`, facultyRole, "admin"];
+          for (const roleName of rolesThatCanPost) {
+            await category.permissionOverwrites.create(
+              guild.roles.cache.find((r) => r.name === roleName),
+              { SendMessages: true }
+            );
+          }
         } else {
           await setEmojisUnlock(category, hidden, courseName, models);
-          category.permissionOverwrites.create(
+          await category.permissionOverwrites.create(
             guild.roles.cache.find((r) => r.name === course.name),
             { ViewChannel: true, SendMessages: true }
           );
@@ -110,7 +110,7 @@ const initCourseHooks = (guild, models) => {
         await changeCourseRoles(previousCourseName, courseName, guild);
         await setCoursePositionABC(guild, `${categoryEmojis} ${courseName}`, models.Course);
         await editChannelNames(course.id, previousCourseName, courseName, models.Channel);
-        await updateAnnouncementChannelMessage(guild, channelAnnouncement);
+        await updateAnnouncementChannelMessage(guild, channelAnnouncement, models);
       }
       await updateGuide(guild, models);
     }

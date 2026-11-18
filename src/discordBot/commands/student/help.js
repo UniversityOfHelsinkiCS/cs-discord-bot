@@ -1,55 +1,80 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { editEphemeral, editErrorEphemeral, sendEphemeral, sendFollowUpEphemeral } = require("../../services/message");
 const { respondWithChoices } = require("../../services/autocomplete");
+const { findUserByDiscordId } = require("../../../db/services/userService");
 const { facultyRole, courseAdminRole, githubRepo } = require("../../../../config.json");
 
-const getBestRole = (member) => {
-  let highestRole = member.roles.highest.name;
-  if (highestRole !== "admin" && highestRole !== `${facultyRole}`) {
-    highestRole = member.roles.cache.find((r) => r.name.includes(courseAdminRole)) ? courseAdminRole : undefined;
-  }
-  return highestRole;
+const isCourseInstructor = (member) =>
+  Boolean(member.roles?.cache?.some((role) => role.name.endsWith(` ${courseAdminRole}`)));
+
+const getAccessLevel = async (member, models) => {
+  const user = await findUserByDiscordId(member.user.id, models.User);
+  if (user?.admin) return "admin";
+  if (user?.faculty) return facultyRole;
+  if (isCourseInstructor(member)) return courseAdminRole;
+  return undefined;
 };
 
-const handleAllCommands = async (interaction, member, adminData, facultyData, courseAdminData, studentData) => {
-  const data = [];
-  const data2 = [];
-  data.push(`Hi **${member.displayName}**!\n`);
+const MESSAGE_LIMIT = 2000;
 
-  data.push("Here's a list of commands you can use:\n");
-  data.push("Category: **default**");
-  data.push(studentData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-  data.push(`[User manual for students](<${githubRepo}/blob/main/documentation/usermanual-student.md>)`);
-  data.push("\n");
+const formatCommands = (commands) =>
+  commands.map((command) => `**${command.usage}** - ${command.description}`).join("\n");
+
+const splitOversized = (section) => {
+  const text = section.join("\n");
+  return text.length > MESSAGE_LIMIT ? text.split("\n") : [text];
+};
+
+const packIntoMessages = (sections) =>
+  sections.flatMap(splitOversized).reduce((messages, piece) => {
+    const last = messages[messages.length - 1];
+    if (last !== undefined && last.length + 1 + piece.length <= MESSAGE_LIMIT) {
+      messages[messages.length - 1] = `${last}\n${piece}`;
+    } else {
+      messages.push(piece);
+    }
+    return messages;
+  }, []);
+
+const handleAllCommands = async (interaction, member, adminData, facultyData, courseAdminData, studentData) => {
+  const userSections = [
+    [`Hi **${member.displayName}**!\n`, "Here's a list of commands you can use:\n"],
+    [
+      "Category: **default**",
+      formatCommands(studentData),
+      `[User manual for students](<${githubRepo}/blob/main/documentation/usermanual-student.md>)`,
+      "\n"
+    ]
+  ];
+  const staffSections = [];
 
   if (adminData.size) {
-    data.push("Category: **admin**");
-    data.push(adminData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-    data.push("\n");
+    userSections.push(["Category: **admin**", formatCommands(adminData), "\n"]);
   }
 
   if (facultyData.size) {
-    data2.push(`Category: **${facultyRole}**`);
-    data2.push(facultyData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-    data2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation//usermanual-faculty.md>)`);
-    data2.push("\n");
+    staffSections.push([
+      `Category: **${facultyRole}**`,
+      formatCommands(facultyData),
+      `[User manual for faculty](<${githubRepo}/blob/main/documentation/usermanual-faculty.md>)`,
+      "\n"
+    ]);
   }
 
   if (courseAdminData.size) {
-    data2.push(`Category: **${courseAdminRole}**`);
-    data2.push(courseAdminData.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-    data2.push("\n");
+    staffSections.push([`Category: **${courseAdminRole}**`, formatCommands(courseAdminData), "\n"]);
   }
 
-  if (data2.length > 0) {
-    data2.push("*Commands can be used only in course channels");
-    data2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
-    await editEphemeral(interaction, data.join("\n"));
-    return await sendFollowUpEphemeral(interaction, data2.join("\n"));
-  } else {
-    data.push("*Commands can be used only in course channels");
-    data.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
-    return await editEphemeral(interaction, data.join("\n"));
+  const footer = [
+    "*Commands can be used only in course channels",
+    `\nYou can send \`/help [command name]\` to get info on a specific command!`
+  ];
+  (staffSections.length > 0 ? staffSections : userSections).push(footer);
+
+  const [first, ...rest] = [...packIntoMessages(userSections), ...packIntoMessages(staffSections)];
+  await editEphemeral(interaction, first);
+  for (const message of rest) {
+    await sendFollowUpEphemeral(interaction, message);
   }
 };
 
@@ -75,35 +100,35 @@ const isAdminOnly = (command) =>
   !command.roles.includes(facultyRole) &&
   !command.roles.includes(courseAdminRole);
 
-const getCommandsByCategory = (client, member) => {
-  const highestRole = getBestRole(member);
-  const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && highestRole === "admin");
-  const seesStaffCommands = highestRole === "admin" || highestRole === facultyRole;
+const getCommandsByCategory = (client, accessLevel) => {
+  const adminData = client.slashCommands.filter((command) => isAdminOnly(command) && accessLevel === "admin");
+  const seesStaffCommands = accessLevel === "admin" || accessLevel === facultyRole;
   const facultyData = client.slashCommands.filter(
     (command) => seesStaffCommands && command.roles && !isAdminOnly(command) && !command.roles.includes(courseAdminRole)
   );
   const courseAdminData = client.slashCommands.filter(
-    (command) => seesStaffCommands && command.roles && command.roles.includes(courseAdminRole)
+    (command) =>
+      (seesStaffCommands || accessLevel === courseAdminRole) && command.roles && command.roles.includes(courseAdminRole)
   );
   const studentData = client.slashCommands.filter((command) => !command.roles && command.data.name !== "auth");
   return { adminData, facultyData, courseAdminData, studentData };
 };
 
-const execute = async (interaction, client) => {
+const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Hold on...");
-  const guild = client.guild;
-  const member = guild.members.cache.get(interaction.member.user.id);
-  const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, member);
+  const member = interaction.member;
+  const accessLevel = await getAccessLevel(member, models);
+  const { adminData, facultyData, courseAdminData, studentData } = getCommandsByCategory(client, accessLevel);
   if (!interaction.options.getString("command")) {
     await handleAllCommands(interaction, member, adminData, facultyData, courseAdminData, studentData);
   } else {
-    handleSingleCommand(interaction, member, client.slashCommands);
+    await handleSingleCommand(interaction, member, client.slashCommands);
   }
 };
 
-const autocomplete = async (interaction, client) => {
-  const member = client.guild.members.cache.get(interaction.member.user.id);
-  const categories = getCommandsByCategory(client, member);
+const autocomplete = async (interaction, client, models) => {
+  const accessLevel = await getAccessLevel(interaction.member, models);
+  const categories = getCommandsByCategory(client, accessLevel);
   const names = Object.values(categories)
     .flatMap((commands) => [...commands.keys()])
     .sort((a, b) => a.localeCompare(b));

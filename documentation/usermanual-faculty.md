@@ -1,140 +1,166 @@
 # User manual for faculty
 
+This guide is for course lecturers who want a Discord chat for their course. It goes through the steps in order: why to use it, getting onto Discord, getting faculty rights, creating your course, and then running it.
+
+## 1. Why use the CS Discord for your course
+
+The Department of Computer Science has a dedicated Discord server for course support. Each course gets its own space on the server, and students only see the courses they have joined.
+
+- **Ready-made course space.** One command creates a course with an announcement channel that only staff can post in, a general chat, and a voice channel. You can add more channels, including channels that only staff can see.
+- **Students join with one click.** Put the course link on your Moodle or MOOC page. Students who click it are added to the server and your course in one step. They can also join from the `#guide` channel or with the `/join` command.
+- **Moderated platform.** The server has rules and admins. The bot automatically removes known scam messages from hacked accounts and kicks spam bots.
+- **Chat controls.** You can lock the course chat, for example during an exam, and disconnect people from voice channels.
+- **Help from instructors and peers.** You can give course assistants the instructor role, so students can see who to ask with `/instructors`. Students also help each other.
+
+## 2. Getting onto Discord
+
 ### About Discord
 
-To learn more about Discord in general, head over to their [official website](https://discord.com/). You can also check the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord#h_d33e3809-909b-4720-899d-db26c17bafa9).
+To learn more about Discord in general, see their [official website](https://discord.com/) and the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord).
 
-The Department of Computer Science has a Discord server for course support. The server contains categories for courses where students can ask for help and offer peer support for other students. The server also has a bot that can help you with several things, including creating course categories, adding instructors for a course, editing course visibility, and more.
-
-We recommend that you use the Discord application (desktop app or mobile app). If you can't or don't want to download the application, you can use a browser-based version of Discord instead.
+We recommend the Discord app ([desktop or mobile](https://discord.com/download)). If you can't or don't want to install it, you can use Discord in your browser instead.
 
 ### Create your Discord account
 
-Create yourself a Discord account. You can do this on [Discord Website](https://discord.com/). If you already have the account, you can login [here](https://discord.com/login).
+Create an account on the [Discord website](https://discord.com/). If you already have one, [log in](https://discord.com/login) with your email address or phone number.
 
-If you’re on a desktop or mobile device, you can directly open the Discord app on your device (You can learn more information on downloading the app [here](https://support.discord.com/hc/en-us/articles/360033931551)).
+### Join the server
 
-Once you’re at the login page, type in either _your email address_ or _phone number_ that has been officially verified to your Discord account. 
+Join the server with this link: <https://study.cs.helsinki.fi/discord>.
 
-Note: You will need to verify your phone number to your Discord account before using phone number login! [Click here](https://support.discord.com/hc/en-us/articles/360033931551) to learn how to verify your phone number to your Discord account.
+## 3. Get faculty rights with `/auth`
 
-### Joining to the Discord
+Faculty rights let you create and manage courses. You only need to do this once.
 
-You can join to the Helsinki University Discord server in two different ways. Join directly to the server using this [link]( https://study.cs.helsinki.fi/discord). Join directly using the course´s own link (MOOC, Moodle, etc.).
+1. In any channel on the server, type `/auth` and pick it from the list that opens. The bot replies with a link that only you can see.
+2. Open the link and log in with your **University of Helsinki account**. Only university staff accounts are accepted.
+3. Discord asks you to allow the login. Accept it.
+4. You are sent back to Discord with the **faculty** role.
 
-![commands](./images/courselink.png)
+What this does:
+- You get the faculty role, and the bot marks you as faculty in its database. The bot checks this mark every time you use a faculty command.
+- Faculty commands, such as `/create_course`, appear in your command list.
 
-### How to use the bot
+**If faculty commands don't show up after `/auth`, ask an admin.** A server admin has to allow the faculty role for new commands in Discord's settings, and until then they stay hidden.
 
-The Discord server has a bot that can help you with many things. Interaction with bot is achieved with Discord's slash commands.
+### Using the bot's commands
 
-Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to manually type the commands; the bot rarely understands copy-pasted commands!**
+All commands are used by typing `/` followed by the command name in the message box, then picking the command from the list that opens. **Pasting a command as a normal message does not work. Type it and pick it from the list.** Use `/help` to see every command you can use.
 
-**If you have the faculty role but the faculty commands do not show up in the list, ask an admin.** Faculty commands stay hidden until a server admin has allowed the faculty role for them in Discord's Integrations settings. Using a command also requires the faculty flag in the bot's database, which the `/auth` step below sets for you.
+## 4. Create your course
 
-### Authentication
+Use `/create_course` with these options:
 
-To be able to use all the faculty commands, you need to authenticate yourself. Use command `/auth` and you receive an authentication link. Click the link and go through the verfication steps. Now you have the faculty role and you can use all the faculty commands.
+- **coursecode**: the course code, e.g. TKT10001.
+- **full_name**: the full name of the course, e.g. Web-palvelinohjelmointi. It must be unique.
+- **nick_name** (optional): a short name, e.g. wepa. If you leave it out, the course code is used.
 
-### Creating a new course
+The nickname is what students see in the channel list on the left, so we recommend a short one. It must be unique. If your course is an open university course, add **MOOC** to the full name.
 
-You can create new course with command `/create_course`. Give the command and after that give the _course code_, course´s _full name_ and course´s _nickname_. Nickname is optional and if not given then the coursecode will be also course´s nickname. **Note** that nickname is the value that is used as course´s name that users see on the Discord´s left column. So, we prefer that you give your course a short nickname because it is more readable on Discord for the users. **Note** also that nickname is a unique value.
+The bot then:
+- Creates a course category, shown as `📚 wepa` in the channel list, with three channels:
+  - `wepa_announcement`: only you and the course instructors can post here.
+  - `wepa_general`: the course chat.
+  - `wepa_voice`: a voice channel.
+- Makes you an instructor of the course.
+- Adds the course to the list in `#guide`, where students can join it with the **Join** button.
+- Pins the **course invitation link** in `wepa_announcement`. The link looks like `https://study.cs.helsinki.fi/discord/join/wepa`.
 
-#### Open university course
+### Share the course link
 
-If your course is an open university course, use the abbreviation **MOOC** in the _full name_ field next to your course name.
+Put the invitation link on your course page in Moodle, MOOC or wherever your students look. When a student clicks it, they are added to the server and to your course at once, even if they were not on the server before. Here is an example from a course page:
 
-After the course is created there is an invitation link for the course on the course´s guide channel. Share this on the needed platforms, so the students can join this channel. Another option for joining is using the `/join` command.
+![Course page with the Discord link](./images/courselink.png)
 
-## How to create more text channels
+## 5. Running your course
 
-The `/create_course` command automatically creates three sub-channels for the course. The sub-channels are: announcements (text channel), general (text channel) and one voice channel. To create more text channels for a course go inside the wanted course. Inside this course use `/create_channel` command followed by the desired text channel name to create new text channel.
+Most of these commands are used inside one of your course's channels.
 
-Note that the channel name you give is the end part of the name. For example, in the picture new channel will be created with name _wepa_feedback_.
+### Add or remove instructors
 
-To remove added text channel use `/delete_channel` command followed by the name of the text channel to be removed e.g., `/delete_channel feedback` removes _wepa_feedback_ when run inside _wepa_ course. This command must also be used inside the course you want the channel to be removed. Note that announcements or general channels can not be removed.
+Instructors are, for example, course assistants who help students. Use `/add_instructors @user1 @user2` in a course channel to give people the instructor role. Students can see the instructors with `/instructors`, and they are also listed in the pinned message in the announcement channel.
 
-You can also rename non-default text channels that were created with `/create_channel`. To rename a channel, use `/rename_channel` inside the channel you want to rename. Give the command the new name as a parameter, e.g. if you want to rename _wepa_feedback_ channel to _wepa_critique_, type `/rename_channel critique` inside _wepa_feedback_ channel.
+To remove the role, use `/remove_instructors @user1 @user2`. Instructors can't leave the course themselves while they have the instructor role.
 
-## How to make course hidden
-Once the course is created, it can be made hidden. This means joining the course channel is only possible via link. To make a secret course use the `/hide_course` command followed by the course name, e.g. `/hide_course wepa`. The secret courses can be identified by the ghost emoji. 
+### More channels
 
-To make the course public again use the `/unhide_course` command followed by the course name, e.g. `/unhide_course wepa`. Public courses can be found with `/courses` command and with `/join` command, unlike secret courses.
+Use `/create_channel feedback` inside your course to add a text channel. The name you give is added to the course name, so in the wepa course this creates `wepa_feedback`.
 
-## How to lock chat on course
-Once the course is created, it can be locked. This means that only instructors and faculty can write in the course channels. This can be used e.g. when a course exam is on and you don't want students to post their answers. To lock_chat a course, use the `/lock_chat` command followed by the course name, e.g. `/lock_chat wepa`. The locked courses can be identified by the lock emoji.
+- `/rename_channel critique`, used inside `wepa_feedback`, renames it to `wepa_critique`.
+- `/delete_channel feedback`, used inside the course, deletes `wepa_feedback`.
+- `/hide_channel`, used inside the channel, hides it from students, e.g. for a private chat for course staff. `/unhide_channel` shows it again.
 
-To make the course unlocked again use the `/unlock_chat` command followed by the course name, e.g. `/unlock_chat wepa`.
+Only channels you added yourself can be renamed, deleted or hidden. The default announcement, general and voice channels can't.
 
-## How to add instructors to a course
-Students can use the `/instructors` command on a course and see all the instructors on that course. _Faculty_ members can give other users this course instructor role. To give instructor role to users, use `/add_instructors` command on a course channel. You can give the course instructor role to multiple people at once; e.g. `/add_instructors @user1 @user2`.
+### Channel topics
 
-## How to remove instructors from a course
-To remove instructor role from users, use `/remove_instructors` command on a course channel. You can remove the course instructor role from multiple people at once; e.g. `/remove_instructors @user1 @user2`.
+Use `/edit_topic` inside a channel to set the text shown at the top of the channel.
 
-## How to edit course information
+### Hide the course
 
-The `/edit_course` command allows you to edit the information for the course you are in. You can change the _course code_, _full name_ and _nickname_. If you change the value users see on the Discord´s left column, this value is either the course code or nickname depending on which values the course is based on, you have 15 minutes cooldown until you can use the command again.
+`/hide_course wepa` hides the course from the `#guide` list, `/courses` and `/join`. Students can then only join with the course link. Hidden courses are shown with 👻 in the channel list. `/unhide_course wepa` makes it public again.
 
-## How to create or edit course channel topics
+### Lock the chat
 
-The `/edit_topic` command allows you to create or edit the information in the topic field of a channel. You can use this to customize channel appearance.
+`/lock_chat wepa` stops students from posting in the course channels, so only the course instructors, faculty and admins can write. This is useful during an exam. Locked courses are shown with 🔐. `/unlock_chat wepa` opens the chat again.
 
-## How to create a poll
+### Edit the course
 
-The `/create_poll` command allows you to create a poll that is placed in the same channel that you use the command in. It has 3 required arguments _title_, _duration_ and _answers_. Duration is given in minutes (14 minutes at most), for example "3" means 3 minutes. After the duration the poll closes automatically. _answers_ is the list of all possible answers to the poll, separated by " | ". For example "Java | Python" creates 2 answer options "Java" and "Python". Optional argument _description_ let's you create additional description for the poll, like additional instructions. You can close the poll manually by clicking the **Close Poll** -button that appears to the original `/create_poll` message. After the poll closes it shows the results, including how much each option was voted and which option/options got the most amount of votes.
+Use `/edit_course` inside the course to change the course code, full name or nickname. After an edit, you have to wait 5 minutes before you can edit the course again. The same wait applies to locking, hiding and changing channel topics on that course.
 
-## Hiding a text channel from regular users
+### Polls
 
-Users with faculty rights can hide a text channel from regular users inside a course. This can be used to e.g. make a private chat for course instructors. Note that a channel can be hidden only if it is a non-default channel, that is a channel which was created individually with `/create_channel` after the course was created. To hide a text channel, write the command `/hide_channel` on that channel.
+`/create_poll` creates a poll in the channel you use it in. Give it a **title**, a **duration** in minutes (at most 14), and the **answers** separated by ` | `, for example `Java | Python`. You can also add a **description**. The poll closes by itself after the duration, or when you click its **Close Poll** button, and then shows the results.
 
-To reveal the channel to regular users, write the command `/unhide_channel` on that channel.
+### Course status
 
-### Disconnecting users from voice chat
+`/status` inside a course shows its information, such as the number of members and the instructors.
 
-You can disconnect another user from any voice chat with the command `/instructor_disconnect`. Simply type `/instructor_disconnect @user1` in any chat.
+### Disconnect someone from voice
 
-#### Faculty specific commands ####
+`/instructor_disconnect @user` disconnects a user from the voice channel they are in.
 
-Command | Explanation | Arguments
---------|-------------|----------:
-[/add_instructors](./commands/faculty/add_instructors.md) | Give instructor role to (multiple) users, e.g., /add_instructors @user1 @user2. | :heavy_check_mark:
-[/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | :heavy_check_mark:
-[/create_course](./commands/faculty/create_course.md) | Create a new course | :heavy_check_mark:
-[/create_poll](./commands/faculty/create_poll.md) | Create a new poll | :heavy_check_mark:
-[/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | :heavy_check_mark:
-[/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | :heavy_check_mark:
-[/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | :heavy_check_mark:
-[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | :x:
-[/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course weba. | :heavy_check_mark:
-[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors and faculty can post messages) of a given course | :heavy_check_mark:
-[/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | :heavy_check_mark:
-[/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | :heavy_check_mark:
-[/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | :heavy_check_mark:
-[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | :x:
-[/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course weba. | :heavy_check_mark:
-[/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | :heavy_check_mark:
+## Command reference
 
-#### Instructor specific commands ####
+#### Faculty commands
 
 Command | Explanation | Arguments
 --------|-------------|----------:
-[/instructor_disconnect](./commands/instructor/instructor_disconnect.md) | Disconnect another user from a voice chat, e.g., /instructor_disconnect @user1. | :heavy_check_mark:
+[/add_instructors](./commands/faculty/add_instructors.md) | Give instructor role to (multiple) users, e.g., /add_instructors @user1 @user2. | Required
+[/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | Required
+[/create_course](./commands/faculty/create_course.md) | Create a new course | Required
+[/create_poll](./commands/faculty/create_poll.md) | Create a new poll | Required
+[/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | Required
+[/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | Required
+[/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | Required
+[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | None
+[/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course wepa. | Required
+[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors, faculty and admins can post messages) of a given course | Required
+[/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | Required
+[/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | Required
+[/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | None
+[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | None
+[/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course wepa. | Required
+[/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | Required
 
-#### General commands ####
+#### Instructor commands
 
 Command | Explanation | Arguments
 --------|-------------|----------:
-[/auth](./commands/general/auth.md) | Returns the URL from which the faculty role can be obtained. | :x:
-[/courses](./commands/general/courses.md) | Returns a list of all courses. | :x:
-[/help](./commands/general/help.md) | Returns a list of commands with info or info about a specific command. | :o:
-[/instructors](./commands/general/instructors.md) | Used in course channel returns a list of course instructors. Can be used anywhere when a parameter is given. | :o:
-[/join](./commands/general/join.md) | Joins you into the course given, e.g., /join ohpe. | :heavy_check_mark:
-[/leave](./commands/general/leave.md) | Remove you from the course given, e.g., /leave ohpe. | :heavy_check_mark:
-[/workshops](./commands/general/workshops.md) | Get workshop info for the course. | :x:
+[/instructor_disconnect](./commands/instructor/instructor_disconnect.md) | Disconnect another user from a voice chat, e.g., /instructor_disconnect @user1. | Required
 
-:o: means that the command can be used with or without arguments
+#### General commands
 
-### Material
+Command | Explanation | Arguments
+--------|-------------|----------:
+[/auth](./commands/general/auth.md) | Returns the URL from which the faculty role can be obtained. | None
+[/courses](./commands/general/courses.md) | Returns a list of all courses. | None
+[/help](./commands/general/help.md) | Returns a list of commands with info or info about a specific command. | Optional
+[/instructors](./commands/general/instructors.md) | Used in a course channel, returns a list of the course instructors. | None
+[/join](./commands/general/join.md) | Joins you into the course given, e.g., /join ohpe. | Required
+[/leave](./commands/general/leave.md) | Remove you from the course given, e.g., /leave ohpe. | Required
+[/workshops](./commands/general/workshops.md) | Get workshop info for the course. | None
 
-[Source code for the Bot](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)
+## Material
+
+[Source code for the bot](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)

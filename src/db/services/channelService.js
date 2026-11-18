@@ -1,8 +1,9 @@
 const { Sequelize } = require("sequelize");
+const { escapeLike } = require("./likePattern");
 
 const findChannelFromDbByName = async (channelName, Channel) => {
   return await Channel.findOne({
-    where: { name: { [Sequelize.Op.iLike]: channelName } }
+    where: { name: { [Sequelize.Op.iLike]: escapeLike(channelName) } }
   });
 };
 
@@ -14,7 +15,7 @@ const findChannelFromDbByDiscordId = async (discordId, Channel) => {
 
 const createChannelToDatabase = async (channelAttributes, Channel) => {
   const alreadyinuse = await Channel.findOne({
-    where: { name: { [Sequelize.Op.iLike]: channelAttributes.name } }
+    where: { name: { [Sequelize.Op.iLike]: escapeLike(channelAttributes.name) } }
   });
   if (!alreadyinuse) {
     await Channel.create(channelAttributes);
@@ -27,11 +28,11 @@ const createDefaultChannelsToDatabase = async (channelObjects, Channel) => {
 
 const removeChannelFromDb = async (channelName, Channel) => {
   const channel = await Channel.findOne({
-    where: { name: { [Sequelize.Op.iLike]: channelName } }
+    where: { name: { [Sequelize.Op.iLike]: escapeLike(channelName) } }
   });
   if (channel) {
     await Channel.destroy({
-      where: { name: { [Sequelize.Op.iLike]: channelName } }
+      where: { name: { [Sequelize.Op.iLike]: escapeLike(channelName) } }
     });
   }
 };
@@ -61,12 +62,12 @@ const countChannelsByCourse = async (id, Channel) => {
 
 const editChannelNames = async (courseId, previousCourseName, newCourseName, Channel) => {
   const channels = await findChannelsByCourse(courseId, Channel);
-  channels.map(async (channel) => {
-    const newChannelName = channel.name.replace(previousCourseName, newCourseName);
-    channel.name = newChannelName;
-    await channel.save();
-  });
-  await Promise.all(channels);
+  await Promise.all(
+    channels.map(async (channel) => {
+      channel.name = channel.name.replace(previousCourseName, newCourseName);
+      await channel.save();
+    })
+  );
 };
 
 const saveChannelTopicToDb = async (channelName, newTopic, Channel) => {

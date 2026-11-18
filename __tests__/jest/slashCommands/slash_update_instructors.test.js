@@ -35,6 +35,8 @@ describe("slash update_instructors command", () => {
     expect(findAllCourseNames).toHaveBeenCalledTimes(1);
     expect(findAllCourseNames).toHaveBeenCalledWith(models.Course);
     expect(findAndUpdateInstructorRole).toHaveBeenCalledTimes(1);
-    expect(findAndUpdateInstructorRole).toHaveBeenCalledWith(courseString, client.guild, courseAdminRole);
+    expect(findAndUpdateInstructorRole).toHaveBeenCalledWith(courseString, client.guild, courseAdminRole, [
+      courseString
+    ]);
   });
 });

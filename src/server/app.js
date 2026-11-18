@@ -6,7 +6,6 @@ const passport = require("passport");
 const discordAuthRoute = require("./routes/discordAuth");
 const discordJoinRoute = require("./routes/join");
 const facultyAuthRoute = require("./routes/authenticateFaculty");
-const webhookProxyRoute = require("./routes/webhookProxy");
 const defaultRouteHandler = require("./routes/defaultRouteHandler");
 const defaultRouteErrorHandler = require("./routes/defaultRouteErrorHandler");
 const flash = require("connect-flash");
@@ -17,6 +16,7 @@ const SequelizeStore = require("connect-session-sequelize")(session.Store);
 
 module.exports = (sequelize) => {
   const app = express();
+  app.set("trust proxy", 1);
   const store = new SequelizeStore({
     db: sequelize
   });
@@ -27,7 +27,8 @@ module.exports = (sequelize) => {
       secret: process.env.SESSION_SECRET,
       store: store,
       saveUninitialized: false,
-      resave: false
+      resave: false,
+      cookie: { secure: "auto", httpOnly: true, sameSite: "lax" }
     })
   );
 
@@ -42,9 +43,6 @@ module.exports = (sequelize) => {
   app.use("/discordAuth", discordAuthRoute);
   app.use("/join", discordJoinRoute);
   app.use("/authenticate_faculty", facultyAuthRoute);
-
-  app.use(express.json());
-  app.use("/webhooks", webhookProxyRoute);
 
   app.use(Sentry.expressErrorHandler());
 

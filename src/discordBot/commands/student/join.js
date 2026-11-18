@@ -1,94 +1,33 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { editEphemeral, editErrorEphemeral, sendEphemeral, sendReplyMessage } = require("../../services/message");
+const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { respondWithCourses } = require("../../services/autocomplete");
 const { findCourseFromDb, findPublicCoursesFromDb } = require("../../../db/services/courseService");
-const { findUserByDiscordId, createUserToDatabase } = require("../../../db/services/userService");
+const { createUserToDatabase } = require("../../../db/services/userService");
 const {
   createCourseMemberToDatabase,
   findAllCourseMembersByUser
 } = require("../../../db/services/courseMemberService");
 
 const execute = async (interaction, client, models) => {
-  let roleString = "";
-  const guild = client.guild;
-  const guideChannel = guild.channels.cache.find((c) => c.name === "guide");
-  const copyPasteGuideReply =
-    "You can try typing `/join` and I'll offer you a helpful list of courses to click from.\n" +
-    "Please also read <#" +
-    guideChannel +
-    "> for more info on commands and available courses.\n" +
-    "You can also type `/help` to view a helpful *(pun intended)* list of commands.\n" +
-    "Note that you have to **manually** type the commands; I rarely understand copy-pasted commands!";
-  const channel = interaction.channel;
+  await sendEphemeral(interaction, "Joining course...");
+  const roleString = interaction.options.getString("course").trim();
 
-  if (interaction.options) {
-    // Interaction was a slash command
-    await sendEphemeral(interaction, "Joining course...");
-    roleString = interaction.options.getString("course").trim();
-  } else {
-    // Command was copypasted or failed to register as an interaction
-    roleString = interaction.roleString;
-  }
   const course = await findCourseFromDb(roleString, models.Course);
   if (!course || course.private) {
-    if (interaction.options) {
-      return await editErrorEphemeral(interaction, `Invalid course name: ${roleString}`);
-    } else {
-      return await sendReplyMessage(
-        interaction,
-        channel,
-        "Hey, <@" +
-          interaction.author +
-          ">. The course name **" +
-          roleString +
-          "** you gave was invalid.\n" +
-          copyPasteGuideReply
-      );
-    }
+    return await editErrorEphemeral(interaction, `Invalid course name: ${roleString}`);
   }
 
-  let user = await findUserByDiscordId(interaction.member.user.id, models.User);
-  if (!user) {
-    await createUserToDatabase(interaction.member.user.id, interaction.member.user.username, models.User);
-    user = await findUserByDiscordId(interaction.member.user.id, models.User);
-  }
+  const user = await createUserToDatabase(interaction.member.user.id, interaction.member.user.username, models.User);
 
   const courseMembers = await findAllCourseMembersByUser(user.id, models.CourseMember);
   const coursesJoinedByUser = courseMembers.map((cm) => cm.courseId);
 
   if (coursesJoinedByUser.includes(course.id)) {
-    if (interaction.options) {
-      return await editErrorEphemeral(interaction, `You are already on the ${roleString} course.`);
-    } else {
-      return await sendReplyMessage(
-        interaction,
-        channel,
-        "Hey, <@" +
-          interaction.author +
-          ">, you are already on the **" +
-          roleString +
-          "** course.\n" +
-          copyPasteGuideReply
-      );
-    }
+    return await editErrorEphemeral(interaction, `You are already on the ${roleString} course.`);
   }
 
   await createCourseMemberToDatabase(user.id, course.id, models.CourseMember);
-
-  let message = "";
-  if (interaction.options) {
-    message = `You have been added to the ${roleString} course.`;
-    await editEphemeral(interaction, message);
-  } else {
-    message =
-      "Hey, <@" +
-      interaction.author +
-      ">, I added you to **" +
-      course.fullName +
-      "**, hopefully I got that correct.\n" +
-      copyPasteGuideReply;
-    await sendReplyMessage(interaction, channel, message);
-  }
+  await editEphemeral(interaction, `You have been added to the ${roleString} course.`);
 };
 
 const autocomplete = async (interaction, client, models) => {

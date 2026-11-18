@@ -11,9 +11,8 @@ const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../serv
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Creating text channel...");
+  if (!(await requireFaculty(interaction, models))) return;
 
   const courseModel = models.Course;
   const channelModel = models.Channel;

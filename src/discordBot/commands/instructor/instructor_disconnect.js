@@ -5,57 +5,45 @@ const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../serv
 const { confirmChoice } = require("../../services/confirm");
 const { findCourseMember } = require("../../../db/services/courseMemberService");
 const { getUserWithUserId } = require("../../services/service");
+const { facultyRole, courseAdminRole } = require("../../../../config.json");
+
+const MENTION_PATTERN = /<@!?(\d+)>/;
+
+const canDisconnect = async (discordId, courseId, models) => {
+  const user = await findUserByDiscordId(discordId, models.User);
+  if (!user) return false;
+  if (user.admin || user.faculty) return true;
+  if (!courseId) return false;
+  const courseMember = await findCourseMember(user.id, courseId, models.CourseMember);
+  return Boolean(courseMember?.instructor);
+};
 
 const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Disconnecting user from voice channel...");
 
-  const channelModel = models.Channel;
-  const courseMemberModel = models.CourseMember;
-
   const parameter = interaction.options.getString("user");
-  if (!parameter.match(/(?<=<@!).*?(?=>)/)) {
+  const mention = parameter.match(MENTION_PATTERN);
+  if (!mention) {
     return await editErrorEphemeral(interaction, "Invalid parameters.");
   }
-  const userToDisconnectID = parameter.match(/(?<=<@!).*?(?=>)/)[0];
-  const commandUser = await findUserByDiscordId(interaction.member.user.id, models.User);
-  const userToDc = await getUserWithUserId(client.guild, userToDisconnectID);
-  const userToDcVoiceChannel = await getChannelByDiscordId(userToDc.voice.channelId, channelModel);
-  console.log(userToDcVoiceChannel);
 
-  // inside a course voice channel
-  if (userToDcVoiceChannel?.courseId) {
-    const commandUserCourseMember = await findCourseMember(
-      commandUser.id,
-      userToDcVoiceChannel.courseId,
-      courseMemberModel
-    );
-    console.log(commandUserCourseMember);
-    if (!commandUser.admin && !commandUser.faculty && !commandUserCourseMember.instructor) {
-      return await editErrorEphemeral(interaction, "You don't have the permissions to do that.");
-    }
-    const confirm = await confirmChoice(
-      interaction,
-      `Confirm command: Disconnect user ${parameter} from voice channel`
-    );
-
-    if (!confirm) {
-      return await editEphemeral(interaction, "Command declined");
-    }
-    userToDc.voice.setChannel(null);
-    return await editEphemeral(interaction, `Disconnected user ${parameter} from voice channel`);
+  const userToDc = await getUserWithUserId(client.guild, mention[1]).catch(() => null);
+  if (!userToDc?.voice.channelId) {
+    return await editErrorEphemeral(interaction, "That user is not in a voice channel.");
   }
 
-  // inside a non-course voice channel
-  if (!commandUser.admin && !commandUser.faculty) {
+  const voiceChannel = await getChannelByDiscordId(userToDc.voice.channelId, models.Channel);
+  if (!(await canDisconnect(interaction.user.id, voiceChannel?.courseId, models))) {
     return await editErrorEphemeral(interaction, "You don't have the permissions to do that.");
   }
-  const confirm = await confirmChoice(interaction, `Confirm command: Disconnect user ${parameter} from voice channel`);
 
+  const confirm = await confirmChoice(interaction, `Confirm command: Disconnect user ${mention[0]} from voice channel`);
   if (!confirm) {
     return await editEphemeral(interaction, "Command declined");
   }
-  userToDc.voice.disconnect();
-  await editEphemeral(interaction, `Disconnected user ${parameter} from voice channel`);
+
+  await userToDc.voice.disconnect();
+  return await editEphemeral(interaction, `Disconnected user ${mention[0]} from voice channel`);
 };
 
 module.exports = {
@@ -65,5 +53,6 @@ module.exports = {
     .addStringOption((option) => option.setName("user").setDescription("User to disconnect.").setRequired(true)),
   execute,
   usage: "/instructor_disconnect",
-  description: "Disconnect user from voice channel.*"
+  description: "Disconnect user from voice channel.*",
+  roles: ["admin", facultyRole, courseAdminRole]
 };

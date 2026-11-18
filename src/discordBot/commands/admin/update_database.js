@@ -8,15 +8,14 @@ const {
   saveChannelIdWithName,
   findChannelFromDbByName
 } = require("../../../db/services/channelService");
-const { createUserToDatabase } = require("../../../db/services/userService");
+const { createUserToDatabase, findUserByDiscordId } = require("../../../db/services/userService");
 const { facultyRole } = require("../../../../config.json");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Updating database...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const guild = client.guild;
   const members = await guild.members.fetch();
@@ -129,10 +128,16 @@ const saveUsersToDb = async (models, guild, members) => {
   await Promise.all(
     notBots.map(async (m) => {
       const u = m.user;
-      const user = await createUserToDatabase(u.id, u.username, models.User);
-      user.admin = m.roles.cache.has(adminRoleId);
-      user.faculty = m.roles.cache.has(facultyRoleId);
-      user.save();
+      const admin = m.roles.cache.has(adminRoleId);
+      const faculty = m.roles.cache.has(facultyRoleId);
+      const user =
+        admin || faculty
+          ? await createUserToDatabase(u.id, u.username, models.User)
+          : await findUserByDiscordId(u.id, models.User);
+      if (!user) return;
+      user.admin = admin;
+      user.faculty = faculty;
+      await user.save();
     })
   );
 };
@@ -160,6 +165,7 @@ const saveCourseMembersToDb = async (models, guild, members) => {
       const instructorIn = m.roles.cache
         .filter((role) => instructorRoles.has(role.id))
         .map((role) => role.name.replace(" instructor", ""));
+      if (coursesJoined.length === 0) return;
 
       const user = m.user;
       const userFromDb = await createUserToDatabase(user.id, user.username, models.User);

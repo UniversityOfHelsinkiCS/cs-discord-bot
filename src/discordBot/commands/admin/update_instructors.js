@@ -6,15 +6,14 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Updating instructor roles...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const guild = client.guild;
   const courseNames = await findAllCourseNames(models.Course);
 
-  for (const course in courseNames) {
-    findAndUpdateInstructorRole(courseNames[course], guild, courseAdminRole);
+  for (const courseName of courseNames) {
+    await findAndUpdateInstructorRole(courseName, guild, courseAdminRole, courseNames);
   }
 
   return await editEphemeral(interaction, "Updated instructor roles.");

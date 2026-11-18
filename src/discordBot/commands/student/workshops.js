@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { editEphemeral, sendEphemeral, editErrorEphemeral } = require("../../services/message");
+const { replyInChunks, sendEphemeral, editErrorEphemeral } = require("../../services/message");
 const { getWorkshopInfo, getCourseNameFromCategory } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 
@@ -19,7 +19,7 @@ const execute = async (interaction, client, models) => {
   }
 
   const messageText = await getWorkshopInfo(parentCourse.code);
-  await editEphemeral(interaction, messageText);
+  await replyInChunks(interaction, messageText);
 };
 
 module.exports = {

@@ -1,10 +1,19 @@
 const router = require("express").Router();
 const passport = require("passport");
 const { getRoles } = require("../api/api");
+const { findCourseFromDb } = require("../../db/services/courseService");
+const models = require("../../db/dbInit");
+
+const findCourseRole = async (courseName) => {
+  const roles = await getRoles();
+  const role = roles.find((r) => r.name === courseName);
+  if (!role) return null;
+  const course = await findCourseFromDb(role.name, models.Course);
+  return course?.name === role.name ? role : null;
+};
 
 router.get("/:id", async (req, res, next) => {
-  const roles = await getRoles();
-  const role = roles.find((r) => r.name === req.params.id);
+  const role = await findCourseRole(req.params.id);
   if (!role) {
     res
       .status(400)

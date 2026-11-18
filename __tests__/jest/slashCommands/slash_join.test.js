@@ -1,17 +1,11 @@
 const { execute } = require("../../../src/discordBot/commands/student/join");
-const {
-  editEphemeral,
-  editErrorEphemeral,
-  sendEphemeral,
-  sendReplyMessage
-} = require("../../../src/discordBot/services/message");
+const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
-const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { createUserToDatabase } = require("../../../src/db/services/userService");
 const {
   createCourseMemberToDatabase,
   findAllCourseMembersByUser
 } = require("../../../src/db/services/courseMemberService");
-const { messageInCommandsChannel, student } = require("../../mocks/mockMessages");
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
@@ -28,7 +22,7 @@ const course = { id: 1, name: "tester", fullName: "test course", code: "101", pr
 findCourseFromDb.mockImplementation((role) => (role === course.name ? course : undefined));
 
 const user = { name: "test", id: 1 };
-findUserByDiscordId.mockImplementation(() => user);
+createUserToDatabase.mockImplementation(() => user);
 
 findAllCourseMembersByUser.mockImplementation(() => []);
 
@@ -63,26 +57,6 @@ describe("slash join command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
     expect(editErrorEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
-  });
-
-  test("copypasted join command works", async () => {
-    messageInCommandsChannel.content = "/join test";
-    messageInCommandsChannel.member = student;
-    const client = messageInCommandsChannel.client;
-    messageInCommandsChannel.roleString = "tester";
-    await execute(messageInCommandsChannel, client, models);
-    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(1);
-    expect(sendReplyMessage).toHaveBeenCalledTimes(1);
-  });
-
-  test("invalid course name copypasted returns error", async () => {
-    messageInCommandsChannel.content = "/join invalid";
-    messageInCommandsChannel.member = student;
-    const client = messageInCommandsChannel.client;
-    messageInCommandsChannel.roleString = "invalid";
-    await execute(messageInCommandsChannel, client, models);
-    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(0);
-    expect(sendReplyMessage).toHaveBeenCalledTimes(1);
   });
 
   test("command responds with correct ephemeral when trying to join a course twice", async () => {

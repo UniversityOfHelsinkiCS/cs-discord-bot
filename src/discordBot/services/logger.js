@@ -47,15 +47,23 @@ const logInfo = (message) => {
   if (logger) logger.info(message);
 };
 
+const describeInteraction = (client, interaction) => {
+  const channel = client.guild.channels.cache.get(interaction.channelId) ?? interaction.channel;
+  return {
+    action: interaction.commandName ?? `button ${interaction.customId}`,
+    channelName: channel?.name ?? interaction.channelId
+  };
+};
+
 const logInteractionError = (error, client, interaction) => {
-  const member = client.guild.members.cache.get(interaction.member.user.id);
-  const channel = client.guild.channels.cache.get(interaction.channelId);
-  const msg = `ERROR DETECTED!\nMember: ${member.displayName}\nCommand: ${interaction.commandName}\nChannel: ${channel.name}}`;
+  const member = interaction.member;
+  const { action, channelName } = describeInteraction(client, interaction);
+  const msg = `ERROR DETECTED!\nMember: ${member?.displayName}\nCommand: ${action}\nChannel: ${channelName}`;
   logger.error(msg);
   logger.error(error);
   Sentry.withScope((scope) => {
-    scope.setTag("command", interaction.commandName);
-    scope.setUser({ id: interaction.member.user.id, username: member.displayName });
+    scope.setTag("command", action);
+    scope.setUser({ id: interaction.user?.id, username: member?.displayName });
     Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
   });
 };
@@ -63,5 +71,6 @@ const logInteractionError = (error, client, interaction) => {
 module.exports = {
   logError,
   logInteractionError,
+  describeInteraction,
   logInfo
 };

@@ -16,6 +16,7 @@ const faculty = client.slashCommands
   .filter((command) => command.roles)
   .filter((command) => !isAdminOnly(command))
   .filter((command) => !command.roles.includes(courseAdminRole));
+const instructorD = client.slashCommands.filter((command) => command.roles?.includes(courseAdminRole));
 const studentD = client.slashCommands.filter((command) => !command.roles && command.data.name !== "auth");
 
 const teacherData = [];
@@ -28,7 +29,10 @@ teacherData.push(`[User manual for students](<${githubRepo}/blob/main/documentat
 teacherData.push("\n");
 teacherData2.push(`Category: **${facultyRole}**`);
 teacherData2.push(faculty.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-teacherData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation//usermanual-faculty.md>)`);
+teacherData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation/usermanual-faculty.md>)`);
+teacherData2.push("\n");
+teacherData2.push(`Category: **${courseAdminRole}**`);
+teacherData2.push(instructorD.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
 teacherData2.push("\n");
 teacherData2.push("*Commands can be used only in course channels");
 teacherData2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
@@ -56,7 +60,10 @@ adminData.push(adminD.map((command) => `**${command.usage}** - ${command.descrip
 adminData.push("\n");
 adminData2.push(`Category: **${facultyRole}**`);
 adminData2.push(faculty.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
-adminData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation//usermanual-faculty.md>)`);
+adminData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentation/usermanual-faculty.md>)`);
+adminData2.push("\n");
+adminData2.push(`Category: **${courseAdminRole}**`);
+adminData2.push(instructorD.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
 adminData2.push("\n");
 adminData2.push("*Commands can be used only in course channels");
 adminData2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
@@ -233,8 +240,10 @@ const defaultTeacherInteraction = {
   channelId: 1,
   member: {
     user: teacher,
+    displayName: teacher.displayName,
     roles: {
-      cache: teacher.roles.cache
+      cache: teacher.roles.cache,
+      highest: teacher.roles.highest
     },
     permissions: {
       list: [],
@@ -252,8 +261,10 @@ const defaultStudentInteraction = {
   channelId: 2,
   member: {
     user: student,
+    displayName: student.displayName,
     roles: {
-      cache: student.roles.cache
+      cache: student.roles.cache,
+      highest: student.roles.highest
     },
     permissions: {
       list: [],
@@ -273,6 +284,11 @@ const studentInteractionWithoutOptions = {
     user: {
       id: 2
     },
+    displayName: student.displayName,
+    roles: {
+      cache: student.roles.cache,
+      highest: student.roles.highest
+    },
     permissions: {
       list: [],
       has(perm) {
@@ -288,8 +304,10 @@ const defaultAdminInteraction = {
   channelId: 2,
   member: {
     user: admin,
+    displayName: admin.displayName,
     roles: {
-      cache: admin.roles.cache
+      cache: admin.roles.cache,
+      highest: admin.roles.highest
     },
     permissions: {
       list: [PermissionFlagsBits.Administrator],

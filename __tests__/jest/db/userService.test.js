@@ -5,7 +5,10 @@ const {
   saveFacultyRoleToDb,
   findUserByDbId,
   getAdminUsers,
-  pruneUsersNotInGuild
+  pruneUsersNotInGuild,
+  findUnusedUserIds,
+  removeUsersByDbIds,
+  removeUserIfUnused
 } = require("../../../src/db/services/userService");
 const { blindIndex, encrypt } = require("../../../src/db/crypto");
 
@@ -157,5 +160,54 @@ describe("userService", () => {
     await pruneUsersNotInGuild(guild, userModelMock);
 
     expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
+  });
+  test("unused users are those with no courses and no admin or faculty flag", async () => {
+    const courseMemberModelMock = { findAll: jest.fn().mockResolvedValueOnce([{ userId: 1 }]) };
+    userModelMock.findAll.mockResolvedValueOnce([
+      { id: 1, admin: false, faculty: false },
+      { id: 2, admin: true, faculty: false },
+      { id: 3, admin: false, faculty: true },
+      { id: 4, admin: false, faculty: false },
+      { id: 5, admin: null, faculty: null }
+    ]);
+
+    const ids = await findUnusedUserIds(userModelMock, courseMemberModelMock);
+
+    expect(ids).toEqual([4, 5]);
+  });
+
+  test("a user with no courses and no staff flags is removed", async () => {
+    userModelMock.findOne.mockResolvedValueOnce({ id: 4, admin: false, faculty: false });
+    const courseMemberModelMock = { count: jest.fn().mockResolvedValueOnce(0) };
+
+    await removeUserIfUnused(4, userModelMock, courseMemberModelMock);
+
+    expect(courseMemberModelMock.count).toHaveBeenCalledWith({ where: { userId: 4 } });
+    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: 4 } });
+  });
+
+  test("a user still on a course is kept", async () => {
+    userModelMock.findOne.mockResolvedValueOnce({ id: 4, admin: false, faculty: false });
+    const courseMemberModelMock = { count: jest.fn().mockResolvedValueOnce(1) };
+
+    await removeUserIfUnused(4, userModelMock, courseMemberModelMock);
+
+    expect(userModelMock.destroy).not.toHaveBeenCalled();
+  });
+
+  test("a user with a staff flag is kept", async () => {
+    userModelMock.findOne.mockResolvedValueOnce({ id: 4, admin: false, faculty: true });
+    const courseMemberModelMock = { count: jest.fn() };
+
+    await removeUserIfUnused(4, userModelMock, courseMemberModelMock);
+
+    expect(courseMemberModelMock.count).not.toHaveBeenCalled();
+    expect(userModelMock.destroy).not.toHaveBeenCalled();
+  });
+
+  test("remove users by database ids", async () => {
+    await removeUsersByDbIds([4, 5], userModelMock);
+
+    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: [4, 5] } });
   });
 });

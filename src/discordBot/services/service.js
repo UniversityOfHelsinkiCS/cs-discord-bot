@@ -1,16 +1,14 @@
 const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const axios = require("axios");
 const { logError } = require("./logger");
+const { backendUrl } = require("./backendUrl");
 const { findAllCourseNames, findCourseFromDb } = require("../../db/services/courseService");
-const { courseAdminRole, facultyRole } = require("../../../config.json");
+const { findCourseInstructors } = require("../../db/services/courseMemberService");
+const { findUsersByDbIds } = require("../../db/services/userService");
+const { courseAdminRole } = require("../../../config.json");
 
 require("dotenv").config({ quiet: true });
 const GUIDE_CHANNEL_NAME = "guide";
-
-const invite_url =
-  process.env.NODE_ENV === "production"
-    ? `${process.env.BACKEND_SERVER_URL}`
-    : `${process.env.BACKEND_SERVER_URL}:${process.env.PORT}`;
 
 const cooldownMap = new Map();
 
@@ -31,7 +29,7 @@ const findOrCreateRoleWithName = async (name, guild) => {
 
 const createCourseInvitationLink = (courseName) => {
   courseName = courseName.replace(/ /g, "%20").trim();
-  return `Invitation link for the course <${invite_url}/join/${courseName}>`;
+  return `Invitation link for the course <${backendUrl}/join/${courseName}>`;
 };
 
 const createInvitation = async (guild, args) => {
@@ -46,7 +44,7 @@ const createInvitation = async (guild, args) => {
   if (args === GUIDE_CHANNEL_NAME) {
     course = guild.channels.cache.find((c) => c.parent === category);
     await guide.createInvite({ maxAge: 0, unique: true, reason: args });
-    invitationlink = `Invitation link for the server <${invite_url}>`;
+    invitationlink = `Invitation link for the server <${backendUrl}>`;
   } else {
     course = guild.channels.cache.find((c) => c.parent === category && c.name === `${name}_announcement`);
     invitationlink = createCourseInvitationLink(args);
@@ -153,10 +151,17 @@ const getCourseNameFromCategory = (category) => {
   return trimmedName;
 };
 
-const findAndUpdateInstructorRole = async (name, guild, adminRole) => {
-  const oldInstructorRole = guild.roles.cache.find((role) => role.name !== name && role.name.includes(name));
+const findAndUpdateInstructorRole = async (name, guild, adminRole, courseNames) => {
+  const instructorRoleName = `${name} ${adminRole}`;
+  const otherCourseRoleNames = courseNames
+    .filter((courseName) => courseName !== name)
+    .flatMap((courseName) => [courseName, `${courseName} ${adminRole}`]);
+  const oldInstructorRole = guild.roles.cache.find(
+    (role) =>
+      role.name.startsWith(`${name} `) && role.name !== instructorRoleName && !otherCourseRoleNames.includes(role.name)
+  );
   if (oldInstructorRole) {
-    oldInstructorRole.setName(`${name} ${adminRole}`);
+    await oldInstructorRole.setName(instructorRoleName);
   }
 };
 
@@ -184,41 +189,23 @@ const getWorkshopInfo = async (courseCode) => {
     return msg;
   } catch (error) {
     logError(error);
-    return;
+    return "Could not fetch workshops right now. Please try again later.";
   }
 };
 
-const listCourseInstructors = async (guild, roleString) => {
-  const facultyRoleObject = await guild.roles.cache.find((r) => r.name === facultyRole);
-  const instructorRole = await guild.roles.cache.find((r) => r.name === `${roleString} ${courseAdminRole}`);
-  const members = guild.members.cache;
-  let adminsString = "";
-
-  members.forEach((m) => {
-    const roles = m.roles.cache;
-    if (roles.has(facultyRoleObject.id) && roles.has(instructorRole.id)) {
-      if (adminsString === "") {
-        adminsString = "<@" + m.user.id + ">";
-      } else {
-        adminsString = adminsString + ", <@" + m.user.id + ">";
-      }
-    }
-  });
-
-  members.forEach((m) => {
-    const roles = m.roles.cache;
-    if (!roles.has(facultyRoleObject.id) && roles.has(instructorRole.id)) {
-      if (adminsString === "") {
-        adminsString = "<@" + m.user.id + ">";
-      } else {
-        adminsString = adminsString + ", <@" + m.user.id + ">";
-      }
-    }
-  });
-  return adminsString;
+const listCourseInstructors = async (courseName, models) => {
+  const course = await findCourseFromDb(courseName, models.Course);
+  if (!course) return "";
+  const instructorMemberships = await findCourseInstructors(course.id, models.CourseMember);
+  const users = await findUsersByDbIds(
+    instructorMemberships.map((cm) => cm.userId),
+    models.User
+  );
+  const facultyFirst = [...users.filter((u) => u.faculty), ...users.filter((u) => !u.faculty)];
+  return facultyFirst.map((u) => `<@${u.discordId}>`).join(", ");
 };
 
-const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
+const updateAnnouncementChannelMessage = async (guild, channelAnnouncement, models) => {
   if (!channelAnnouncement) return;
   const pins = await channelAnnouncement.messages.fetchPins();
   const invMessage = pins.items
@@ -227,18 +214,18 @@ const updateAnnouncementChannelMessage = async (guild, channelAnnouncement) => {
   if (!invMessage) return;
   const courseName = getCourseNameFromCategory(channelAnnouncement.parent);
   let updatedMsg = createCourseInvitationLink(courseName);
-  const instructors = await listCourseInstructors(guild, courseName);
+  const instructors = await listCourseInstructors(courseName, models);
   if (instructors !== "") {
-    updatedMsg = updatedMsg + "\nInstructors for the course:" + instructors;
+    updatedMsg = updatedMsg + "\nInstructors for the course: " + instructors;
   }
   await invMessage.edit(updatedMsg);
 };
 
-const updateInviteLinks = async (guild) => {
+const updateInviteLinks = async (guild, models) => {
   const announcementChannels = guild.channels.cache.filter((c) => c.name.includes("announcement"));
   await Promise.all(
     announcementChannels.map(async (aChannel) => {
-      await updateAnnouncementChannelMessage(guild, aChannel);
+      await updateAnnouncementChannelMessage(guild, aChannel, models);
     })
   );
 };
@@ -338,7 +325,7 @@ const getCategoryObject = (categoryName, permissionOverwrites) => ({
 });
 
 const getUserWithUserId = async (guild, userId) => {
-  return await guild.members.cache.get(userId);
+  return await guild.members.fetch(userId);
 };
 
 const changeCourseRoles = async (courseName, newValue, guild) => {

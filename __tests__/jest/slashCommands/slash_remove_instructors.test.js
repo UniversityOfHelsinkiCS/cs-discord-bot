@@ -26,7 +26,7 @@ findUserByDiscordId.mockImplementation(() => {
   return { id: 1 };
 });
 findCourseFromDb.mockImplementation(() => {
-  return { id: 1 };
+  return { id: 1, name: "test" };
 });
 findCourseFromDb.mockImplementationOnce(() => null);
 findCourseMember.mockImplementation(() => {
@@ -88,7 +88,7 @@ describe("slash remove instructor command", () => {
   test("Cannot use command if given user is not a course member", async () => {
     const roleString = "test";
     const client = defaultTeacherInteraction.client;
-    const response = "All listed users must be members of this course!";
+    const response = "All listed users must be members of this course! Not members: <@3>";
     client.guild.roles.create({ name: `${roleString} ${courseAdminRole}`, members: [] });
     await execute(defaultAdminInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
@@ -122,6 +122,32 @@ describe("slash remove instructor command", () => {
     requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
     expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
-    expect(sendEphemeral).not.toHaveBeenCalled();
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
+  });
+
+  test("a listed user without a user record is treated as not a course member", async () => {
+    findUserByDiscordId.mockImplementationOnce(() => null);
+    const client = defaultAdminInteraction.client;
+    await execute(defaultAdminInteraction, client, models);
+    expect(findCourseMember).not.toHaveBeenCalled();
+    expect(editErrorEphemeral).toHaveBeenCalledWith(
+      defaultAdminInteraction,
+      "All listed users must be members of this course! Not members: <@3>"
+    );
+  });
+
+  test("nobody is demoted when one listed user is not a course member", async () => {
+    const client = defaultAdminInteraction.client;
+    client.guild.roles.create({ name: `test ${courseAdminRole}`, members: [] });
+    const save = jest.fn();
+    findCourseMember.mockImplementationOnce(() => ({ instructor: true, save }));
+    findCourseMember.mockImplementationOnce(() => null);
+    const interaction = { ...defaultAdminInteraction, options: { getString: () => "<@3> <@!2>" } };
+    await execute(interaction, client, models);
+    expect(save).not.toHaveBeenCalled();
+    expect(editErrorEphemeral).toHaveBeenCalledWith(
+      interaction,
+      "All listed users must be members of this course! Not members: <@2>"
+    );
   });
 });

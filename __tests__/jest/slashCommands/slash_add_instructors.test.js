@@ -1,7 +1,7 @@
 const { execute } = require("../../../src/discordBot/commands/faculty/add_instructors");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../../src/discordBot/services/message");
 const { getCourseNameFromCategory, getUserWithUserId } = require("../../../src/discordBot/services/service");
-const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { createUserToDatabase } = require("../../../src/db/services/userService");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const { createCourseMemberToDatabase } = require("../../../src/db/services/courseMemberService");
 const { courseAdminRole } = require("../../../config.json");
@@ -22,7 +22,7 @@ jest.mock("../../../src/db/services/courseService");
 jest.mock("../../../src/db/services/courseMemberService");
 
 getCourseNameFromCategory.mockImplementation(() => "test");
-findUserByDiscordId.mockImplementation(() => {
+createUserToDatabase.mockImplementation(() => {
   return { id: 1 };
 });
 findCourseFromDb.mockImplementation(() => {
@@ -120,6 +120,30 @@ describe("slash add instructor command", () => {
     requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, models);
     expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, models);
-    expect(sendEphemeral).not.toHaveBeenCalled();
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
+  });
+
+  test("role mentions are ignored", async () => {
+    const client = defaultAdminInteraction.client;
+    client.guild.roles.create({ name: `test ${courseAdminRole}`, members: [] });
+    const interaction = { ...defaultAdminInteraction, options: { getString: () => "<@&99>" } };
+    await execute(interaction, client, models);
+    expect(getUserWithUserId).not.toHaveBeenCalled();
+    expect(editErrorEphemeral).toHaveBeenCalledWith(interaction, "Mention the users to add with @.");
+  });
+
+  test("users who are not on the server are skipped", async () => {
+    const client = defaultAdminInteraction.client;
+    client.guild.roles.create({ name: `test ${courseAdminRole}`, members: [] });
+    getUserWithUserId.mockImplementationOnce(() => defaultAdminInteraction.member.user);
+    getUserWithUserId.mockImplementationOnce(() => Promise.reject(new Error("Unknown Member")));
+    const interaction = { ...defaultAdminInteraction, options: { getString: () => "<@3> <@404>" } };
+    await execute(interaction, client, models);
+    expect(createCourseMemberToDatabase).toHaveBeenCalledTimes(1);
+    expect(editEphemeral).toHaveBeenCalledWith(
+      interaction,
+      `Gave role 'test ${courseAdminRole}' to <@3>.
+Not on the server, skipped: <@404>`
+    );
   });
 });

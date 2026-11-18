@@ -4,10 +4,10 @@ const {
   sendErrorEphemeral,
   sendEphemeral,
   editEphemeral,
-  sendErrorReportNoInteraction,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
-  editErrorEphemeral
+  editErrorEphemeral,
+  splitIntoChunks
 } = require("../../src/discordBot/services/message");
 
 const { defaultAdminInteraction } = require("../mocks/mockInteraction");
@@ -29,17 +29,33 @@ describe("message service", () => {
     expect(commandChannel.send).toHaveBeenCalledWith({ content: error });
   });
 
-  test("errors without interaction sent to commands channel", async () => {
-    const member = { name: "Error generator" };
-    const error = "faked error";
+  test("error report from a button in an uncached channel", async () => {
     const client = defaultAdminInteraction.client;
     const commandChannel = client.guild.channels.cache.find((c) => c.name === "commands");
-    const channel = client.guild.channels.cache.get(defaultAdminInteraction.channelId);
-    const msg = `**ERROR DETECTED!**\nMember: ${member}\nChannel: ${channel}`;
-    await sendErrorReportNoInteraction(0, member, channel, client, error);
-    expect(commandChannel.send).toHaveBeenCalledTimes(2);
-    expect(commandChannel.send).toHaveBeenCalledWith({ content: msg });
-    expect(commandChannel.send).toHaveBeenCalledWith({ content: error });
+    const interaction = {
+      member: { displayName: "admin" },
+      customId: "guide:join:1",
+      channelId: "thread-1",
+      channel: { name: "help-thread" }
+    };
+    await sendErrorReport(interaction, client, "x".repeat(3000));
+    expect(commandChannel.send).toHaveBeenCalledWith({
+      content: "**ERROR DETECTED!**\nMember: admin\nCommand: button guide:join:1\nChannel: help-thread"
+    });
+    expect(commandChannel.send).toHaveBeenCalledWith({ content: "x".repeat(2000) });
+  });
+
+  test("long text is split on line breaks under the Discord limit", () => {
+    const lines = Array.from({ length: 100 }, (_, i) => `<@${i}> ${"x".repeat(40)}`);
+    const chunks = splitIntoChunks(lines.join("\n"));
+    expect(chunks.length).toBeGreaterThan(1);
+    chunks.forEach((chunk) => expect(chunk.length).toBeLessThanOrEqual(2000));
+    expect(chunks.join("\n")).toBe(lines.join("\n"));
+  });
+
+  test("a single line over the limit is cut into pieces", () => {
+    const chunks = splitIntoChunks("y".repeat(4500));
+    expect(chunks.map((chunk) => chunk.length)).toEqual([2000, 2000, 500]);
   });
 
   test("error ephemeral", async () => {

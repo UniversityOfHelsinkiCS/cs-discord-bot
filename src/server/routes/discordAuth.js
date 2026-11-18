@@ -4,9 +4,8 @@ const passport = require("passport");
 const { getRoles, addRole, getMember, addMember } = require("../api/api");
 const { createCourseMemberToDatabase } = require("../../db/services/courseMemberService");
 const { findCourseFromDb } = require("../../db/services/courseService");
-const { findUserByDiscordId, saveFacultyRoleToDb, createUserToDatabase } = require("../../db/services/userService");
+const { saveFacultyRoleToDb, createUserToDatabase } = require("../../db/services/userService");
 const models = require("../../db/dbInit");
-const { facultyRole } = require("../../../config.json");
 
 router.get(
   "/",
@@ -15,20 +14,17 @@ router.get(
     failureFlash: true
   }),
   async (req, res) => {
+    const { roleID, faculty } = req.authInfo.state;
     const roles = await getRoles();
-    const role = roles.find((r) => r.id === req.authInfo.state.roleID);
-    const teacherRole = roles.find((r) => r.name === facultyRole);
+    const role = roles.find((r) => r.id === roleID);
     const member = await getMember(req.user.id);
     if (member.user) {
       await addRole(member.user, role);
     } else {
       await addMember(req.user, role);
-      const id = req.user.id;
-      const username = req.user.username;
-      await createUserToDatabase(id, username, models.User);
     }
-    const user = await findUserByDiscordId(req.user.id, models.User);
-    if (role.id === teacherRole.id) {
+    const user = await createUserToDatabase(req.user.id, req.user.username, models.User);
+    if (faculty) {
       await saveFacultyRoleToDb(user.discordId, models.User);
     }
     const course = await findCourseFromDb(role.name, models.Course);

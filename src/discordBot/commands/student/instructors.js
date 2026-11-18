@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { getCourseNameFromCategory, listCourseInstructors } = require("../../services/service");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
-const { courseAdminRole, facultyRole } = require("../../../../config.json");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 
 const execute = async (interaction, client, models) => {
@@ -15,7 +14,7 @@ const execute = async (interaction, client, models) => {
     return await editErrorEphemeral(interaction, "Use the command in a course channel.");
   }
 
-  const adminsString = await listCourseInstructors(guild, courseName, courseAdminRole, facultyRole);
+  const adminsString = await listCourseInstructors(courseName, models);
 
   if (adminsString === "") return await editErrorEphemeral(interaction, `No instructors for ${courseName}`);
 

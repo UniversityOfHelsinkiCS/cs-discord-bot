@@ -26,6 +26,6 @@ describe("slash update_invitelinks command", () => {
     const client = defaultAdminInteraction.client;
     await execute(defaultAdminInteraction, client, models);
     expect(updateInviteLinks).toHaveBeenCalledTimes(1);
-    expect(updateInviteLinks).toHaveBeenCalledWith(client.guild);
+    expect(updateInviteLinks).toHaveBeenCalledWith(client.guild, models);
   });
 });

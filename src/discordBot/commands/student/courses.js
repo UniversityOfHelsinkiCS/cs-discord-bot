@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { findCoursesFromDb } = require("../../../db/services/courseService");
-const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
+const { replyInChunks, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Fetching courses...");
@@ -10,7 +10,7 @@ const execute = async (interaction, client, models) => {
     return `${fullname} - \`/join ${c.name}\``;
   });
   if (data.length === 0) await editErrorEphemeral(interaction, "No courses available");
-  else await editEphemeral(interaction, data.join(" \n"));
+  else await replyInChunks(interaction, data.join("\n"));
 };
 
 module.exports = {

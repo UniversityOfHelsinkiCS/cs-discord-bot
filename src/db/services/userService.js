@@ -16,6 +16,14 @@ const findUserByDbId = async (id, User) => {
   });
 };
 
+const findUsersByDbIds = async (ids, User) => {
+  return await User.findAll({
+    where: {
+      id: ids
+    }
+  });
+};
+
 const createUserToDatabase = async (discordId, username, User) => {
   const alreadyinuse = await findUserByDiscordId(discordId, User);
   if (!alreadyinuse) {
@@ -62,12 +70,32 @@ const pruneUsersNotInGuild = async (guild, User) => {
   await Promise.all(staleUsers.map((u) => removeUserFromDb(u.discordId, User)));
 };
 
+const findUnusedUserIds = async (User, CourseMember) => {
+  const memberships = await CourseMember.findAll({ attributes: ["userId"], raw: true });
+  const userIdsWithCourses = new Set(memberships.map((m) => m.userId));
+  const users = await User.findAll({ attributes: ["id", "admin", "faculty"], raw: true });
+  return users.filter((u) => !u.admin && !u.faculty && !userIdsWithCourses.has(u.id)).map((u) => u.id);
+};
+
+const removeUserIfUnused = async (userId, User, CourseMember) => {
+  const user = await findUserByDbId(userId, User);
+  if (!user || user.admin || user.faculty) return;
+  const membershipCount = await CourseMember.count({ where: { userId } });
+  if (membershipCount === 0) await User.destroy({ where: { id: userId } });
+};
+
+const removeUsersByDbIds = async (ids, User) => await User.destroy({ where: { id: ids } });
+
 module.exports = {
   findUserByDiscordId,
   createUserToDatabase,
   removeUserFromDb,
   saveFacultyRoleToDb,
   findUserByDbId,
+  findUsersByDbIds,
+  findUnusedUserIds,
+  removeUsersByDbIds,
+  removeUserIfUnused,
   getAllUsers,
   getAdminUsers,
   pruneUsersNotInGuild

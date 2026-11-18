@@ -79,6 +79,6 @@ describe("slash hide command", () => {
     requireFaculty.mockImplementationOnce(() => false);
     await execute(defaultStudentInteraction, client, Course);
     expect(requireFaculty).toHaveBeenCalledWith(defaultStudentInteraction, Course);
-    expect(sendEphemeral).not.toHaveBeenCalled();
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
   });
 });

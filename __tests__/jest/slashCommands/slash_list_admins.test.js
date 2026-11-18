@@ -20,7 +20,7 @@ describe("slash list_admins", () => {
   test("Only admins can use the command", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(getAdminUsers).toHaveBeenCalledTimes(0);
     expect(replyInChunks).toHaveBeenCalledTimes(0);
   });

@@ -4,11 +4,10 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
+  await sendEphemeral(interaction, "Updating invite links...");
   if (!(await requireAdmin(interaction, models))) return;
 
-  await sendEphemeral(interaction, "Updating invite links...");
-
-  await updateInviteLinks(client.guild);
+  await updateInviteLinks(client.guild, models);
 
   return await editEphemeral(interaction, "Updated invite links.");
 };

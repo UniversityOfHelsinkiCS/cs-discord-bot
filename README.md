@@ -28,7 +28,9 @@ Invite: https://discord.gg/V5R9dZFCkD
 - `/courses` lists public courses, `/instructors` lists a course's instructors,
   `/help` shows a role-aware command list.
 - A **guide** channel is generated automatically and kept in sync with the
-  current course list so newcomers can find channels without commands.
+  current course list, sorted by full name. Each course has **Join** and **Leave**
+  buttons, so newcomers can join channels without commands. The member counts
+  refresh every hour and whenever a course changes.
 - Course-page links on the companion website route through `/join/:course` and
   drop the user straight into that course.
 
@@ -45,7 +47,7 @@ roles are allowed for them in Discord's Integrations settings.
   (volunteer TA) roles.
 - `/status` — course summary (code, full name, invite link, instructors, member
   count). `/create_poll` — reaction poll.
-- `/auth` — issues a one-time link to the companion website, where a faculty
+- `/auth` — replies with the link to the companion website, where a faculty
   member logs in with Discord OAuth and the university single sign-on
   (employee-number check) to be granted the faculty role.
 
@@ -63,11 +65,16 @@ visible only to the person who ran them.
   courses, roles, and memberships to the database and rebuild them; used for
   recovery and migrations.
 - `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
+- `/add_scam_fingerprint`, `/list_scam_fingerprints`, `/remove_scam_fingerprint` — manage the known scam images.
 
 ### Membership sync
 
-- On join, the bot creates the user's database record and refreshes the guide; on
-  leave, it deletes the user record and their course-membership rows.
+- A user's database record is created the first time they need one: joining a
+  course, being made an instructor, faculty verification or admin rights. Joining
+  the server alone creates nothing.
+- On leave, the bot deletes the user record and their course-membership rows and
+  refreshes the guide. On startup it also deletes records of anyone who left while
+  it was offline.
 - Identity fields (`name`, Discord ID) are encrypted at rest with AES-256-GCM,
   with an HMAC blind-index column for exact-match lookups. See
   [Field encryption](#field-encryption).
@@ -78,14 +85,27 @@ visible only to the person who ran them.
   is reported to staff, and posting the same content in both the honeypot and the
   public chat channel triggers an automatic kick (ban immediately followed by an
   unban, which also purges ~24 h of that account's recent messages).
-- **Compromised-account image scams:** messages carrying four images are checked
-  against known scam image-dimension fingerprints; on a match the message is
-  deleted, the account is kicked, and the user is DM'd recovery instructions.
-  Staff receive a report in `#commands` either way.
+- **Compromised-account image scams:** messages carrying two or more images are
+  compared with known scam images by perceptual hash (a small preview of each
+  image is downloaded and hashed in memory), and four-image messages are also
+  checked against known image-dimension fingerprints. When every image matches,
+  the message is deleted, the account is kicked, and the user is DM'd recovery
+  instructions. Members with the `admin`, `cs-admin`, faculty or instructor role
+  are never kicked for this; their message is still removed, they are DM'd a
+  password-reset recommendation, and a report pings the admins. When only some images
+  match, or four images match nothing, staff get a possible-scam report. That
+  report is held for a minute and dropped if the honeypot kicks the account in
+  that time.
+- **Known scam images:** admins run `/add_scam_fingerprint` with a scam name and up
+  to ten images. The images of one command are stored under that scam name: each
+  image is hashed, together with centre crops of it, and only the hashes are
+  kept, in the `scam_image` table. `/list_scam_fingerprints` shows the known scams
+  and `/remove_scam_fingerprint` removes one. Changes apply right away.
 
 ## Data storage
 
-- PostgreSQL tables only for `User`, `Course`, `Channel`, and `CourseMember`.
+- PostgreSQL tables only for `User`, `Course`, `Channel`, `CourseMember`, and
+  `ScamImage` (perceptual hashes of known scam images, with no user data).
 - **No message content is persisted.** Chat text is used transiently for command
   parsing, spam detection (in memory, 1-hour TTL), and staff reports.
 
@@ -94,9 +114,9 @@ visible only to the person who ran them.
 | Intent | Why |
 | --- | --- |
 | Guilds | Channel, role, and guild state. |
-| **Guild Members** (privileged) | Join/leave events drive database sync and role management; `/fix_course_roles` and server restore enumerate all members; spam protection acts on member accounts. |
-| **Message Content** (privileged) | Read copy-pasted `/join` and compare message text for spam/scam detection. |
-| Guild Messages, Guild Message Reactions | Spam firewall and copy-pasted `/join` (messages); joining and leaving courses from the guide channel (reactions). |
+| **Guild Members** (privileged) | Leave events delete the user's data; the startup member list removes data of members who left while the bot was offline; `/fix_course_roles`, `/server_status`, `/update_database` and server restore compare every member's roles with the database. |
+| **Message Content** (privileged) | Spam/scam detection only: image attachment fingerprints and perceptual hashes of attached images, and honeypot/`#chat` message comparison. The bot has no text or prefix commands. |
+| Guild Messages | Spam firewall. |
 | Guild Voice States | Voice-channel state used by course channels. |
 
 The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
@@ -119,7 +139,7 @@ The Guild Presences, Guild Webhooks and Guild Invites intents are **not** used.
 
 ## Running locally
 
-Node.js 24 or newer is required (the Docker image uses `ubi9/nodejs-24-minimal`).
+Node.js 24 or newer is required (the Docker image uses `node:24-alpine`).
 
 Clone the repository and install dependencies:
 
@@ -136,15 +156,18 @@ BOT_ID=id-of-your-bot
 CLIENT_SECRET=your-client-secret
 DISCORD_REDIRECT_URL=your-client-oauth2-redirect-url-with-identify-guilds.join
 DISCORD_SERVER_INVITE=your-discord-server-invite
-DISCORD_WEBHOOK_URL=base-discord-webhook-url-without-id-or-token (e.g. https://discord.com/api/webhooks)
-DISCORD_WEBHOOK_TOKEN=token-of-that-webhook (used by the /webhooks proxy route to post embeds into a channel)
 PORT=your-custom-backend-port
 SESSION_SECRET=server-session-secret
 FIELD_ENCRYPTION_KEY=32-random-bytes-base64
 BACKEND_SERVER_URL=backend-server-url-without-port
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 WORKSHOPS_API=pajat-api-url
+SCAM_IMAGE_DEBUG=false
 ```
+
+`SCAM_IMAGE_DEBUG=true` logs, for every message with two or more images, each image's perceptual hash, the closest
+known scam image and the Hamming distance to it (matches are at most 8). Use it to see how close similar images get
+before changing the threshold.
 
 Add a `config.json` file:
 
@@ -160,20 +183,22 @@ encryption migration, run automatically on startup.
 Start the bot:
 
 ```
-npm run dev     # development
-npm start       # staging
-npm test        # run all tests
+npm run dev:local   # development, against your own PostgreSQL
+npm start           # staging
+npm test            # run all tests
 ```
 
 ### Running with Docker
 
 `docker-compose.yml` starts the bot together with its own PostgreSQL 17 (user, password and database `postgres`,
 default `public` schema) on the `cs-discord-bot-net` network. The Docker image runs in the Europe/Helsinki time zone
-(`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; only `DATABASE_URL` is overridden to
-point at the database container.
+(`TZ` in the `Dockerfile`). The bot reads the rest of its settings from `.env`; `DATABASE_URL` is overridden to point
+at the database container, `SCAM_IMAGE_DEBUG` is set by the npm script, and Sentry is turned off
+(`SENTRY_DISABLED=true`) so local testing doesn't report to the production Sentry project.
 
 ```
-docker compose up --build
+npm run dev         # docker compose up --build
+npm run dev:debug   # the same, with SCAM_IMAGE_DEBUG=true
 ```
 
 ## Field encryption

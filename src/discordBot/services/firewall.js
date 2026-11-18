@@ -1,11 +1,14 @@
 const { sendReportToCommandsChannel } = require("./message");
 const { logError } = require("./logger");
+const { matchScamImages } = require("./scamImageMatcher");
+const { getKnownScamImages } = require("../../db/services/scamImageService");
+const { facultyRole, courseAdminRole } = require("../../../config.json");
 
-const { HONEYPOT_CHANNEL_NAME } = require("./honeypot");
+const { HONEYPOT_CHANNEL_NAME, cleanHoneypotChannel } = require("./honeypot");
+const STAFF_ROLE_NAMES = ["admin", "cs-admin", facultyRole];
 const MONITORED_CHANNEL_NAME = "chat";
 const MESSAGE_TTL_MS = 60 * 60 * 1000;
 const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
-const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 const honeypotMessages = new Map();
 const chatMessages = new Map();
@@ -13,6 +16,10 @@ const honeypotPosters = new Map();
 
 const recentlyReported = new Map();
 const COOLDOWN_MS = 2 * 60 * 1000;
+
+const pendingScamReports = new Map();
+const POSSIBLE_SCAM_REPORT_DELAY_MS = 60 * 1000;
+const ADMIN_ROLE_MENTION = "<@&758046962829361262>";
 
 // This will be moved to the database in the future
 const SCAM_FINGERPRINT_SETS = [
@@ -55,13 +62,26 @@ You have sent multiple messages in our honeypot channel. This channel is a trap 
 You were kicked from the server. You are free to rejoin.
 `;
 
-const buildRecoveryMessage = (action) => `Hey!
+const STAFF_SCAM_MESSAGE = `Hey!
 
-We are sorry to inform you that we detected **suspicious activity on your account**. Your account was caught ${action} in our server (Department of Computer Science, University of Helsinki). This almost certainly means your Discord account has been compromised, and there's a chance your computer is infected with malware as well. The most common way Discord credentials get stolen is through an unofficial login portal or an info-stealer virus. If there is a virus then your computer has likely been compromised for many months and your Discord isn't the only compromised account.
+A message sent from your account in our server (Department of Computer Science, University of Helsinki) matched a known scam. It was removed and the admins were notified. Your Discord account has most likely been compromised.
 
-**We recommend** that you reset your Discord password. Use an offline malware scan tool like Microsoft Defender Offline Scan, Malwarebytes or ClamAV. If you find a info-stealer virus, you should reset your passwords on all platforms you use on that device.
+**Please reset your Discord password now.** Changing the password signs your account out everywhere else.
 
-You were kicked from the server. You are free to rejoin the server after resetting your password.
+Because you have a staff role you were not kicked.
+
+If scam messages are still sent from your account after the password reset, contact the server admins, and have every device you use Discord on checked for malware. For university devices, contact the University IT Helpdesk.
+`;
+
+const buildRecoveryMessage = (finding) => `Hey!
+
+A message sent from your account in our server (Department of Computer Science, University of Helsinki) ${finding}. Your Discord account has most likely been compromised.
+
+**Please reset your Discord password now.** Changing the password signs your account out everywhere else.
+
+You were kicked from the server. You are free to rejoin after resetting your password.
+
+If scam messages are still sent from your account after the password reset, have every device you use Discord on checked for malware.
 `;
 
 const addToStore = (store, userId, content) => {
@@ -119,35 +139,58 @@ const checkImageMessageFingerprints = (images) => {
   });
 };
 
-const banAndUnban = async (message, reason, action) => {
-  await message.author.send(buildRecoveryMessage(action)).catch(logError);
+const banAndUnban = async (message, reason, finding) => {
+  await message.author.send(buildRecoveryMessage(finding)).catch(logError);
   const banned = await message.guild.members
     .ban(message.author.id, { deleteMessageSeconds: 86400, reason })
     .catch(logError);
   if (banned) await message.guild.members.unban(message.author.id).catch(logError);
 };
 
-const banUnbanAndReport = async (message, client, reason, action) => {
-  await banAndUnban(message, reason, action);
+const banUnbanAndReport = async (message, client, reason, finding) => {
+  cancelPossibleScamReport(message.author.id);
+  await banAndUnban(message, reason, finding);
   const content = `**HONEYPOT TRIGGERED**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
   await sendReportToCommandsChannel(client, content);
 };
 
-const sendScamReport = async (message, images, isConfirmedScam, client) => {
+const formatAttachmentDetail = (att) => {
+  const dimensions = att.width && att.height ? ` | ${att.width}x${att.height}` : "";
+  return `• ${att.name} | ${att.contentType} | ${att.size}B${dimensions}`;
+};
+
+const describeAttachments = (attachments) =>
+  `Count: ${attachments.length}\n${attachments.map(formatAttachmentDetail).join("\n")}`;
+
+const sendReportWithAttachments = async (client, content, attachments) => {
+  const urls = attachments.map((att) => att.url);
+  try {
+    await sendReportToCommandsChannel(client, content, urls);
+  } catch (error) {
+    logError(error);
+    await sendReportToCommandsChannel(client, `${content}\n${urls.join("\n")}`);
+  }
+};
+
+const describeHashMatch = ({ matchedCount, total, scamNames }) =>
+  matchedCount === 0 ? [] : [`Known scam image matches: ${matchedCount}/${total} (${scamNames.join(", ")})`];
+
+const SCAM_REPORT_HEADERS = {
+  removed: "**SCAM MESSAGE DETECTED AND REMOVED**",
+  staffRemoved: `${ADMIN_ROLE_MENTION}\n**SCAM MESSAGE FROM A STAFF ACCOUNT REMOVED**`,
+  possible: `${ADMIN_ROLE_MENTION}\n**POSSIBLE SCAM IMAGES DETECTED!**`
+};
+
+const sendScamReport = async (message, images, kind, client, notes = []) => {
   const now = Date.now();
   const last = recentlyReported.get(message.author.id);
   if (last && now - last < COOLDOWN_MS) return;
   recentlyReported.set(message.author.id, now);
-  const imageDetails = images
-    .map((att) => `• ${att.name} | ${att.contentType} | ${att.size}B | ${att.width}x${att.height}`)
-    .join("\n");
-  const files = images.map((att) => att.url);
-  const header = isConfirmedScam
-    ? "**SCAM MESSAGE DETECTED AND REMOVED**"
-    : "<@&758046962829361262>\n**POSSIBLE SCAM IMAGES DETECTED!**";
-  const messageLink = isConfirmedScam ? "" : `\nMessage: ${message.url}`;
-  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nCount: ${images.size}\n${imageDetails}${messageLink}`;
-  await sendReportToCommandsChannel(client, content, files);
+  const header = SCAM_REPORT_HEADERS[kind];
+  const messageLink = kind === "possible" ? `\nMessage: ${message.url}` : "";
+  const noteLines = notes.map((note) => `\n${note}`).join("");
+  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\n${describeAttachments(images)}${noteLines}${messageLink}`;
+  await sendReportWithAttachments(client, content, images);
 };
 
 const attachmentFingerprint = (attachments) => {
@@ -167,30 +210,12 @@ const buildMessageKeys = (message) => {
   return keys;
 };
 
-const cleanHoneypotChannel = async (channel) => {
-  const fetched = await channel.messages.fetch({ limit: 100 }).catch(logError);
-  if (!fetched) return;
-  const toDelete = fetched.filter((m) => !m.pinned);
-  if (toDelete.size === 0) return;
-
-  const now = Date.now();
-  const recent = toDelete.filter((m) => now - m.createdTimestamp < TWO_WEEKS_MS);
-  const old = toDelete.filter((m) => now - m.createdTimestamp >= TWO_WEEKS_MS);
-
-  if (recent.size > 1) {
-    await channel.bulkDelete(recent).catch(logError);
-  } else if (recent.size === 1) {
-    await recent.first().delete().catch(logError);
-  }
-
-  for (const msg of old.values()) {
-    await msg.delete().catch(logError);
-  }
-};
-
-const formatAttachments = (attachments) => {
-  if (!attachments || attachments.size === 0) return null;
-  return [...attachments.values()].map((att) => att.url).join("\n");
+const sendHoneypotReport = async (message, client) => {
+  const messageContent = message.content?.trim() || "*(no text content)*";
+  const content = `**HONEYPOT MESSAGE**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nMessage: ${messageContent}`;
+  const attachments = [...(message.attachments?.values() ?? [])];
+  if (attachments.length === 0) return await sendReportToCommandsChannel(client, content);
+  await sendReportWithAttachments(client, `${content}\n${describeAttachments(attachments)}`, attachments);
 };
 
 const checkHoneypot = async (message, client) => {
@@ -201,14 +226,11 @@ const checkHoneypot = async (message, client) => {
   if (!isHoneypot && !isMonitored) return;
 
   if (isHoneypot) {
+    await sendHoneypotReport(message, client);
     await cleanHoneypotChannel(message.channel);
     const userId = message.author.id;
-    const messageContent = message.content?.trim() || "*(no text content)*";
-    const attachments = formatAttachments(message.attachments);
-    const attachmentLine = attachments ? `\nAttachments: ${attachments}` : "";
-    const initialReport = `**HONEYPOT MESSAGE**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>\nMessage: ${messageContent}${attachmentLine}`;
-    await sendReportToCommandsChannel(client, initialReport);
     if (postedInHoneypotWithinTtl(userId)) {
+      cancelPossibleScamReport(userId);
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
       const banned = await message.guild.members
         .ban(userId, { deleteMessageSeconds: 86400, reason: "Sent multiple messages in honeypot channel" })
@@ -236,27 +258,73 @@ const checkHoneypot = async (message, client) => {
       message,
       client,
       "Honeypot triggered: message sent in both honeypot and chat channel",
-      "posting a message in a honeypot channel"
+      "was also posted in a channel meant to catch spam bots"
     );
   }
 };
 
-const checkAttachments = async (message, client) => {
-  const images = message.attachments.filter((att) => att.contentType?.startsWith("image/"));
-  // Filter for messages with 4 images as all the scams contain 4 images (this isn't true anymore probs need a honeypot)
-  if (images.size !== 4) return;
-  const isConfirmedScam = checkImageMessageFingerprints(images);
-  await sendScamReport(message, images, isConfirmedScam, client);
-  if (isConfirmedScam) {
-    await message.delete();
-    await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
+const schedulePossibleScamReport = (message, images, client, notes) => {
+  const userId = message.author.id;
+  if (pendingScamReports.has(userId)) return;
+  const timer = setTimeout(() => {
+    pendingScamReports.delete(userId);
+    sendScamReport(message, images, "possible", client, notes).catch(logError);
+  }, POSSIBLE_SCAM_REPORT_DELAY_MS);
+  pendingScamReports.set(userId, timer);
+};
+
+const cancelPossibleScamReport = (userId) => {
+  clearTimeout(pendingScamReports.get(userId));
+  pendingScamReports.delete(userId);
+};
+
+const isStaff = (member) =>
+  Boolean(
+    member.roles?.cache?.some(
+      (role) => STAFF_ROLE_NAMES.includes(role.name) || role.name.endsWith(` ${courseAdminRole}`)
+    )
+  );
+
+const loadKnownScamImages = async (models) => {
+  try {
+    return await getKnownScamImages(models.ScamImage);
+  } catch (error) {
+    logError(error);
+    return [];
   }
 };
 
-const firewall = async (message, client) => {
+const removeStaffScamMessage = async (message, images, client, notes) => {
+  await sendScamReport(message, images, "staffRemoved", client, [
+    ...notes,
+    "Matches a known scam, but the member has a staff role, so they were not kicked. Their account may be compromised."
+  ]);
+  await message.delete().catch(logError);
+  await message.author.send(STAFF_SCAM_MESSAGE).catch(logError);
+};
+
+const checkAttachments = async (message, client, models) => {
+  const images = message.attachments.filter((att) => att.contentType?.startsWith("image/")).map((att) => att);
+  if (images.length < 2) return;
+  const hashMatch = await matchScamImages(images, await loadKnownScamImages(models));
+  const dimensionMatch = images.length === 4 && checkImageMessageFingerprints(images);
+  const isConfirmedScam = dimensionMatch || hashMatch.allMatch;
+  const notes = describeHashMatch(hashMatch);
+  if (!isConfirmedScam) {
+    if (images.length === 4 || hashMatch.partialMatch) schedulePossibleScamReport(message, images, client, notes);
+    return;
+  }
+  cancelPossibleScamReport(message.author.id);
+  if (isStaff(message.member)) return await removeStaffScamMessage(message, images, client, notes);
+  await sendScamReport(message, images, "removed", client, notes);
+  await message.delete();
+  await banAndUnban(message, "Compromized account, scam message detected", "matched a known scam");
+};
+
+const firewall = async (message, client, models) => {
   if (message.author.bot) return;
   if (!message.member) return;
-  await checkAttachments(message, client);
+  await checkAttachments(message, client, models);
   await checkHoneypot(message, client);
 };
 
@@ -265,6 +333,8 @@ const resetHoneypotState = () => {
   chatMessages.clear();
   honeypotPosters.clear();
   recentlyReported.clear();
+  for (const timer of pendingScamReports.values()) clearTimeout(timer);
+  pendingScamReports.clear();
 };
 
 module.exports = { firewall, resetHoneypotState, startFirewallPruning };

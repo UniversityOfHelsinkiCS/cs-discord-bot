@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require("discord.js");
 const { findCourseFromDb, findCoursesFromDb } = require("../../../db/services/courseService");
 const { editEphemeral, editErrorEphemeral, sendEphemeral } = require("../../services/message");
 const { respondWithCourses } = require("../../services/autocomplete");
-const { findUserByDiscordId } = require("../../../db/services/userService");
+const { findUserByDiscordId, removeUserIfUnused } = require("../../../db/services/userService");
 const { removeCourseMemberFromDb, findAllCourseMembersByUser } = require("../../../db/services/courseMemberService");
 
 const execute = async (interaction, client, models) => {
@@ -30,6 +30,7 @@ const execute = async (interaction, client, models) => {
   }
 
   await removeCourseMemberFromDb(user.id, course.id, models.CourseMember);
+  await removeUserIfUnused(user.id, models.User, models.CourseMember);
 
   await editEphemeral(interaction, `You have been removed from the ${roleString} course.`);
 };

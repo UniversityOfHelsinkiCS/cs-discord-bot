@@ -8,13 +8,12 @@ const {
 } = require("../../services/service");
 const { findCourseFromDb } = require("../../../db/services/courseService");
 const { editErrorEphemeral, sendEphemeral, editEphemeral } = require("../../services/message");
-const { facultyRole, courseAdminRole } = require("../../../../config.json");
+const { facultyRole } = require("../../../../config.json");
 const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Fetching status...");
+  if (!(await requireFaculty(interaction, models))) return;
   const guild = client.guild;
   const channel = guild.channels.cache.get(interaction.channelId);
 
@@ -28,7 +27,7 @@ const execute = async (interaction, client, models) => {
   const members = await findAllCourseMembers(course.id, models.CourseMember);
   const count = members.length;
 
-  let instructors = await listCourseInstructors(guild, courseRole, courseAdminRole);
+  let instructors = await listCourseInstructors(courseRole, models);
   if (instructors === "") {
     instructors = `No instructors for ${courseRole}`;
   }

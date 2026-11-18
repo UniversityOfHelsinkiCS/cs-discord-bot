@@ -1,5 +1,8 @@
 const { sendErrorReport, sendErrorEphemeral } = require("../services/message");
 const { logError, logInteractionError } = require("../services/logger");
+const { isGuideButton, handleGuideButton } = require("../services/guideButton");
+
+const UNKNOWN_INTERACTION_CODE = 10062;
 
 const handleAutocomplete = async (interaction, client, models) => {
   const command = client.slashCommands.get(interaction.commandName);
@@ -11,21 +14,33 @@ const handleAutocomplete = async (interaction, client, models) => {
   }
 };
 
-const execute = async (interaction, client, models) => {
-  if (interaction.isAutocomplete()) return await handleAutocomplete(interaction, client, models);
-  if (!interaction.isChatInputCommand()) return;
+const runCommand = async (interaction, client, models) => {
   const command = client.slashCommands.get(interaction.commandName);
   if (!command) return;
+  await command.execute(interaction, client, models);
+};
+
+const getHandler = (interaction) => {
+  if (isGuideButton(interaction)) return handleGuideButton;
+  if (interaction.isChatInputCommand()) return runCommand;
+  return null;
+};
+
+const execute = async (interaction, client, models) => {
+  if (interaction.isAutocomplete()) return await handleAutocomplete(interaction, client, models);
+  const handler = getHandler(interaction);
+  if (!handler) return;
   try {
-    await command.execute(interaction, client, models);
+    await handler(interaction, client, models);
   } catch (error) {
     console.error(error);
     logInteractionError(error, client, interaction);
-    await sendErrorReport(interaction, client, error.toString());
+    await sendErrorReport(interaction, client, error.toString()).catch(logError);
+    if (error.code === UNKNOWN_INTERACTION_CODE) return;
     await sendErrorEphemeral(
       interaction,
       "There was an error while executing this command - Error report sent to administrators!"
-    );
+    ).catch(logError);
   }
 };
 

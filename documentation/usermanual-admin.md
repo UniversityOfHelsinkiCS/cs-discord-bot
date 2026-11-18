@@ -28,7 +28,7 @@ You can join to the Helsinki University Discord server in two different ways. Jo
 
 The Discord server has a bot that can help you with many things. Interaction with bot is achieved with Discord's slash commands.
 
-Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to manually type the commands; the bot rarely understands copy-pasted commands!**
+Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to type the commands and pick them from the list; the bot does not read commands pasted as plain messages.**
 
 **Admin commands are only visible in the `/` command picker to members with the `admin` or `cs-admin` role. Their replies are ephemeral (only visible to you), and success or failure is reported directly in the reply.**
 
@@ -118,14 +118,18 @@ Being able to see a command is separate from being allowed to run it. When a com
 Command | Explanation | Arguments
 --------|-------------|----------:
 [/add_admin_rights](./commands/admin/add_admin_rights.md) | Add admin rights to a user. | :heavy_check_mark:
+[/add_scam_fingerprint](./commands/admin/add_scam_fingerprint.md) | Add a scam's images as known scam fingerprints. | :heavy_check_mark:
 [/delete_command](./commands/admin/delete_command.md) | Delete the given slash command. | :heavy_check_mark:
 [/delete_course](./commands/admin/delete_course.md) | Delete the given course channel. | :heavy_check_mark:
 [/fix_course_roles](./commands/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:
 [/list_admins](./commands/admin/list_admins.md) | List all users with the admin flag in the database. | :x:
 [/list_courses](./commands/admin/list_courses.md) | List all courses and channels in them | :x:
+[/list_scam_fingerprints](./commands/admin/list_scam_fingerprints.md) | List the known scams. | :x:
+[/prune_users](./commands/admin/prune_users.md) | Delete user records with no courses and no admin or faculty rights. | :x:
 [/reload_commands](./commands/admin/reload_commands.md) | Reload all slash commands, returning deleted commands and registering new commands. | :x:
 [/remove_admin_rights](./commands/admin/remove_admin_rights.md) | Remove admin rights from a user. | :heavy_check_mark:
 [/remove_faculty_rights](./commands/admin/remove_faculty_rights.md) | Remove faculty rights from a user. | :heavy_check_mark:
+[/remove_scam_fingerprint](./commands/admin/remove_scam_fingerprint.md) | Remove a known scam. | :heavy_check_mark:
 [/restore_server_from_database](./commands/admin/restore_server_from_database.md) | Restores course/channels/roles from the database. | :x:
 [/server_status](./commands/admin/server_status.md) | Checks if Discord server categories/channels/roles match database | :x:
 [/sort_courses](./commands/admin/sort_courses.md) | Sort courses alphabetically. | :x:

@@ -30,7 +30,7 @@ describe("slash delete_course", () => {
   test("Only admins can use delete_course", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(removeCourseFromDb).toHaveBeenCalledTimes(0);
   });
 

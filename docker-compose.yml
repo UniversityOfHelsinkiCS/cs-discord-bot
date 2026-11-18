@@ -23,6 +23,8 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      SCAM_IMAGE_DEBUG: ${SCAM_IMAGE_DEBUG:-false}
+      SENTRY_DISABLED: ${SENTRY_DISABLED:-true}
     networks:
       - csdiscord
     ports:

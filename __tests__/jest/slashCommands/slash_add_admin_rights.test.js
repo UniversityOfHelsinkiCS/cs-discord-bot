@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/admin/add_admin_rights");
-const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { createUserToDatabase } = require("../../../src/db/services/userService");
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
@@ -13,7 +13,7 @@ const { defaultAdminInteraction } = require("../../mocks/mockInteraction");
 const models = require("../../mocks/mockModels");
 
 const targetUserId = "10";
-defaultAdminInteraction.options = { getUser: jest.fn(() => ({ id: targetUserId })) };
+defaultAdminInteraction.options = { getUser: jest.fn(() => ({ id: targetUserId, username: "JonDoe" })) };
 
 const userModelInstanceMock = {
   id: 1,
@@ -26,7 +26,7 @@ const userModelInstanceMock = {
 
 requireAdmin.mockImplementation(() => true);
 confirmChoice.mockImplementation(() => true);
-findUserByDiscordId.mockImplementation(() => userModelInstanceMock);
+createUserToDatabase.mockImplementation(() => userModelInstanceMock);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -37,21 +37,22 @@ describe("slash add_admin_rights", () => {
   test("Only admins can use the command", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
-    expect(findUserByDiscordId).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
+    expect(createUserToDatabase).toHaveBeenCalledTimes(0);
     expect(userModelInstanceMock.save).toHaveBeenCalledTimes(0);
   });
 
-  test("Does nothing if user doesn't exist", async () => {
-    findUserByDiscordId.mockImplementationOnce(() => null);
+  test("Does nothing if the target is a bot", async () => {
+    defaultAdminInteraction.options.getUser.mockImplementationOnce(() => ({ id: targetUserId, bot: true }));
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
+    expect(createUserToDatabase).toHaveBeenCalledTimes(0);
     expect(confirmChoice).toHaveBeenCalledTimes(0);
-    expect(userModelInstanceMock.save).toHaveBeenCalledTimes(0);
-    expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
-    expect(editErrorEphemeral).toHaveBeenCalledWith(
-      defaultAdminInteraction,
-      `No user found with the id ${targetUserId}.`
-    );
+    expect(editErrorEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, "Bots can't be given admin rights.");
+  });
+
+  test("Creates the user record if the user has none yet", async () => {
+    await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
+    expect(createUserToDatabase).toHaveBeenCalledWith(targetUserId, "JonDoe", models.User);
   });
 
   test("Does nothing if command is declined", async () => {

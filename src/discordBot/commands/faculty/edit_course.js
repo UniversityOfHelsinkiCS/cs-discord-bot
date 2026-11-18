@@ -72,9 +72,8 @@ const changeCourseNick = async (interaction, client, models, courseName, newValu
 };
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Editing...");
+  if (!(await requireFaculty(interaction, models))) return;
   const guild = client.guild;
   const interactionChannel = guild.channels.cache.get(interaction.channelId);
   if (!(await isCourseCategory(interactionChannel.parent, models.Course))) {
@@ -86,6 +85,10 @@ const execute = async (interaction, client, models) => {
 
   if (containsEmojis(newValue)) {
     return await editErrorEphemeral(interaction, "Emojis are not allowed!");
+  }
+
+  if (choice !== "name" && newValue.includes("%")) {
+    return await editErrorEphemeral(interaction, "Course code and nick name can't contain %.");
   }
 
   const confirm = await confirmChoice(interaction, "Change course " + choice + " to: " + newValue);

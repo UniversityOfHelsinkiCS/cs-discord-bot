@@ -12,9 +12,8 @@ const { confirmChoice } = require("../../services/confirm");
 const { facultyRole } = require("../../../../config.json");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireFaculty(interaction, models))) return;
-
   await sendEphemeral(interaction, "Unlocking course...");
+  if (!(await requireFaculty(interaction, models))) return;
   const courseName = interaction.options.getString("course").trim();
   const guild = client.guild;
 

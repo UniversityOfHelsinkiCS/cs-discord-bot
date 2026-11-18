@@ -12,6 +12,7 @@ const { createCourseMemberToDatabase, findCourseMember } = require("../../../db/
 const { findUserByDiscordId } = require("../../../db/services/userService");
 
 const execute = async (interaction, client, models) => {
+  await sendEphemeral(interaction, "Creating course...");
   if (!(await requireFaculty(interaction, models))) return;
 
   const courseCode = interaction.options.getString("coursecode").replace(/\s/g, "");
@@ -34,13 +35,16 @@ const execute = async (interaction, client, models) => {
     return await sendErrorEphemeral(interaction, "Emojis are not allowed!");
   }
 
+  if (courseCode.includes("%") || courseName.includes("%")) {
+    return await sendErrorEphemeral(interaction, "Course code and nick name can't contain %.");
+  }
+
   const courseNameConcat = courseCode + " - " + courseFullName + " - " + courseName;
   if (courseNameConcat.length >= 99) {
     return await sendErrorEphemeral(interaction, "Course code, name and nickname are too long!");
   }
 
   if (await findCourseFromDb(courseName, models.Course)) return await sendErrorEphemeral(interaction, errorMessage);
-  await sendEphemeral(interaction, "Creating course...");
 
   await createCourseToDatabase(courseCode, courseFullName, courseName, models.Course);
   await editEphemeral(interaction, `Created course ${courseName}. Adding you as an instructor to the course.`);

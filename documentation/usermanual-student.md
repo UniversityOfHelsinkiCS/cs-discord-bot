@@ -25,7 +25,7 @@ Go to your _Course page_ (MOOC, Moodle, etc.). From there you can find a link to
 
 ![Moodle link](./images/moodlelink.png)
 
-By clicking the link, you will be forwarded to the Discord server and automatically added to the course channel. The application should open to the _#guide_ text channel. Here you can see all the courses you can join as well as some basic instructions on how to use the Discord bot.
+By clicking the link, you will be forwarded to the Discord server and automatically added to the course channel. The application should open to the _#guide_ text channel. Here you can see all the courses you can join as well as some basic instructions on how to use the Discord bot. Click a course's blue **Join** button to join it, or its red **Leave** button to leave. The bot replies with a message only you can see.
 
 ![Welcome](./images/welcome.png)
 
@@ -33,7 +33,7 @@ By clicking the link, you will be forwarded to the Discord server and automatica
 
 The Discord server has a bot that can help you with many things. Interaction with bot is achieved with Discord's slash commands.
 
-Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to manually type the commands; the bot rarely understands copy-pasted commands!**
+Commands can be used by typing `/<command_name>` into the message area at the bottom of the application. You can see all the available commands as a list that opens after typing `/`. **Note that you have to type the commands and pick them from the list; the bot does not read commands pasted as plain messages.**
 
 ![commands](./images/commands.png)
 

@@ -8,7 +8,9 @@
   },
   "scripts": {
     "start": "cross-env NODE_ENV=production node src/index.js",
-    "dev": "cross-env NODE_ENV=development nodemon src/index.js",
+    "dev": "docker compose up --build",
+    "dev:debug": "cross-env SCAM_IMAGE_DEBUG=true docker compose up --build",
+    "dev:local": "cross-env NODE_ENV=development nodemon src/index.js",
     "jest": "cross-env NODE_ENV=test jest --coverage --verbose --runInBand --detectOpenHandles",
     "test": "cross-env NODE_ENV=test jest --coverage --runInBand",
     "lint": "oxlint",
@@ -63,6 +65,7 @@
     "pg": "8.23.0",
     "pg-hstore": "2.3.4",
     "sequelize": "6.37.8",
+    "sharp": "0.35.5",
     "umzug": "3.8.3",
     "winston": "3.19.0"
   },

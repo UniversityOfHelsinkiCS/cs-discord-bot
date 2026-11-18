@@ -1,4 +1,5 @@
 const { execute, autocomplete, data } = require("../../../src/discordBot/commands/student/help");
+const { courseAdminRole } = require("../../../config.json");
 
 const {
   adminData,
@@ -35,6 +36,16 @@ jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/service");
 jest.mock("../../../src/discordBot/services/autocomplete");
 const { respondWithChoices } = require("../../../src/discordBot/services/autocomplete");
+jest.mock("../../../src/db/services/userService");
+const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const models = require("../../mocks/mockModels");
+
+const dbUsers = {
+  1: { admin: false, faculty: true },
+  2: { admin: false, faculty: false },
+  3: { admin: true, faculty: false }
+};
+findUserByDiscordId.mockImplementation((id) => dbUsers[id]);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -43,7 +54,7 @@ afterEach(() => {
 describe("slash help command", () => {
   test("admin can see all commands", async () => {
     const client = defaultAdminInteraction.client;
-    await execute(defaultAdminInteraction, client);
+    await execute(defaultAdminInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
@@ -55,7 +66,7 @@ describe("slash help command", () => {
   test("slash help with invalid arg should give error", async () => {
     const client = defaultStudentInteraction.client;
     const response = "that's not a valid command!";
-    await execute(defaultStudentInteraction, client);
+    await execute(defaultStudentInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, initialResponse);
     expect(editErrorEphemeral).toHaveBeenCalledTimes(1);
@@ -64,7 +75,7 @@ describe("slash help command", () => {
 
   test("slash help with teacher role should see all non-admin commands", async () => {
     const client = defaultTeacherInteraction.client;
-    await execute(defaultTeacherInteraction, client);
+    await execute(defaultTeacherInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
@@ -75,7 +86,7 @@ describe("slash help command", () => {
 
   test("slash help with student role cannot see teacher commands", async () => {
     const client = studentInteractionWithoutOptions.client;
-    await execute(studentInteractionWithoutOptions, client);
+    await execute(studentInteractionWithoutOptions, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(studentInteractionWithoutOptions, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
@@ -84,17 +95,66 @@ describe("slash help command", () => {
 
   test("the default list does not include /auth or any staff command", async () => {
     const client = studentInteractionWithoutOptions.client;
-    await execute(studentInteractionWithoutOptions, client);
+    await execute(studentInteractionWithoutOptions, client, models);
     const listing = editEphemeral.mock.calls[0][1];
     expect(listing).toContain("**/join**");
     expect(listing).not.toContain("**/auth**");
     expect(listing).not.toContain("**/create_course**");
     expect(listing).not.toContain("**/add_admin_rights**");
+    expect(listing).not.toContain("**/instructor_disconnect**");
+  });
+
+  test("a course instructor sees the instructor commands", async () => {
+    const client = studentInteractionWithoutOptions.client;
+    const interaction = {
+      member: {
+        displayName: "instructor",
+        user: { id: 2 },
+        roles: { cache: [{ name: `wepa ${courseAdminRole}` }] }
+      },
+      options: { getString: () => null }
+    };
+    await execute(interaction, client, models);
+    const messages = [...editEphemeral.mock.calls, ...sendFollowUpEphemeral.mock.calls].map((call) => call[1]);
+    expect(messages.join(" ")).toContain("**/instructor_disconnect**");
+    expect(messages.join(" ")).not.toContain("**/create_course**");
+  });
+
+  test("admin commands follow the database admin flag, not the Discord role", async () => {
+    const client = defaultAdminInteraction.client;
+    findUserByDiscordId.mockImplementationOnce(() => ({ admin: false, faculty: false }));
+    await execute(defaultAdminInteraction, client, models);
+    const listing = editEphemeral.mock.calls[0][1];
+    expect(listing).not.toContain("Category: **admin**");
+    expect(sendFollowUpEphemeral).not.toHaveBeenCalled();
+  });
+
+  test("a user with the database admin flag sees admin commands without the admin role", async () => {
+    const client = studentInteractionWithoutOptions.client;
+    findUserByDiscordId.mockImplementationOnce(() => ({ admin: true, faculty: false }));
+    await execute(studentInteractionWithoutOptions, client, models);
+    const listing = editEphemeral.mock.calls[0][1];
+    expect(listing).toContain("Category: **admin**");
+  });
+
+  test("splits a long command list into messages under the Discord limit", async () => {
+    const { Collection } = require("discord.js");
+    const commands = new Collection();
+    for (let i = 0; i < 40; i++) {
+      const name = `admin_command_${i}`;
+      commands.set(name, { data: { name }, usage: `/${name}`, description: "x".repeat(80), roles: ["admin"] });
+    }
+    const interaction = { member: { displayName: "admin", user: { id: 3 } }, options: { getString: () => null } };
+    await execute(interaction, { slashCommands: commands }, models);
+    const messages = [...editEphemeral.mock.calls, ...sendFollowUpEphemeral.mock.calls].map((call) => call[1]);
+    expect(messages.length).toBeGreaterThan(1);
+    messages.forEach((message) => expect(message.length).toBeLessThanOrEqual(2000));
+    expect(messages.join(" ")).toContain("**/admin_command_39**");
   });
 
   test("slash help with valid arg should give correct command info", async () => {
     const client = defaultStudentInteraction.client;
-    await execute(defaultStudentInteraction, client);
+    await execute(defaultStudentInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
@@ -104,7 +164,7 @@ describe("slash help command", () => {
 
 describe("slash help autocomplete", () => {
   const offeredNames = async (interaction) => {
-    await autocomplete(interaction, interaction.client);
+    await autocomplete(interaction, interaction.client, models);
     return respondWithChoices.mock.calls[0][1].map((choice) => choice.value);
   };
   const namesOf = (client, predicate) => client.slashCommands.filter(predicate).map((command) => command.data.name);

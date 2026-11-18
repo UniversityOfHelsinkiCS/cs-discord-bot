@@ -1,5 +1,5 @@
 const { execute } = require("../../../src/discordBot/commands/student/workshops");
-const { sendEphemeral, editErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
+const { sendEphemeral, editErrorEphemeral, replyInChunks } = require("../../../src/discordBot/services/message");
 const { getWorkshopInfo, getCourseNameFromCategory } = require("../../../src/discordBot/services/service");
 const { findCourseFromDb } = require("../../../src/db/services/courseService");
 const models = require("../../mocks/mockModels");
@@ -54,7 +54,7 @@ describe("slash workshops command", () => {
     await execute(defaultStudentInteraction, client, models);
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, initialResponse);
-    expect(editEphemeral).toHaveBeenCalledTimes(1);
-    expect(editEphemeral).toHaveBeenCalledWith(defaultStudentInteraction, response);
+    expect(replyInChunks).toHaveBeenCalledTimes(1);
+    expect(replyInChunks).toHaveBeenCalledWith(defaultStudentInteraction, response);
   });
 });

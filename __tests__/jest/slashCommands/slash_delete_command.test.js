@@ -34,7 +34,7 @@ describe("slash delete_command command", () => {
   test("non-admin cannot delete command", async () => {
     requireAdmin.mockImplementationOnce(() => false);
     await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
-    expect(sendEphemeral).toHaveBeenCalledTimes(0);
+    expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(deletecommand).toHaveBeenCalledTimes(0);
   });
 });

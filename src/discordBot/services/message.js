@@ -1,5 +1,7 @@
 const { ChannelType, MessageFlags } = require("discord.js");
-const { logError } = require("./logger");
+const { describeInteraction } = require("./logger");
+
+const MESSAGE_LIMIT = 2000;
 
 const validateChannel = (channel) => {
   if (channel.parent) return false;
@@ -15,18 +17,10 @@ const sendPullDateMessage = async (client) => {
 
 const sendErrorReport = async (interaction, client, error) => {
   const commandsChannel = client.guild.channels.cache.find((c) => validateChannel(c));
-  const member = client.guild.members.cache.get(interaction.member.user.id);
-  const channel = client.guild.channels.cache.get(interaction.channelId);
-  const msg = `**ERROR DETECTED!**\nMember: ${member.displayName}\nCommand: ${interaction.commandName}\nChannel: ${channel.name}`;
+  const { action, channelName } = describeInteraction(client, interaction);
+  const msg = `**ERROR DETECTED!**\nMember: ${interaction.member?.displayName}\nCommand: ${action}\nChannel: ${channelName}`;
   await commandsChannel.send({ content: msg });
-  await commandsChannel.send({ content: error });
-};
-
-const sendErrorReportNoInteraction = async (telegramId, member, channel, client, error) => {
-  const commandsChannel = client.guild.channels.cache.find((c) => validateChannel(c));
-  const msg = `**ERROR DETECTED!**\nMember: ${member}\nChannel: ${channel}`;
-  await commandsChannel.send({ content: msg });
-  await commandsChannel.send({ content: error });
+  await commandsChannel.send({ content: error.slice(0, MESSAGE_LIMIT) });
 };
 
 const sendErrorEphemeral = async (interaction, msg) => {
@@ -56,27 +50,6 @@ const editErrorEphemeral = async (interaction, msg) => {
   await interaction.editReply({ content: `Error: ${msg}` });
 };
 
-const sendReplyMessage = async (message, channel, replyText) => {
-  const interactionId = message.id;
-  const reply = await message.reply({ content: `${replyText}` });
-  setTimeout(async () => {
-    try {
-      const fetchedReply = await channel.messages.fetch(reply.id);
-      fetchedReply.delete();
-    } catch (e) {
-      logError(e);
-      // console.log(error);
-    }
-    try {
-      const fetchedInteraction = await channel.messages.fetch(interactionId);
-      fetchedInteraction.delete();
-    } catch (e) {
-      logError(e);
-      // console.log(error);
-    }
-  }, 86400000);
-};
-
 const sendReportToCommandsChannel = async (client, content, files = []) => {
   const commandsChannel = client.guild.channels.cache.find((c) => validateChannel(c));
   await commandsChannel.send({ content, files });
@@ -86,9 +59,28 @@ const sendFollowUpEphemeral = async (interaction, msg) => {
   await interaction.followUp({ content: `${msg}`, flags: MessageFlags.Ephemeral });
 };
 
-const replyInChunks = async (interaction, text, chunkSize = 1000) => {
-  const chunks = [];
-  for (let i = 0; i < text.length; i += chunkSize) chunks.push(text.substring(i, i + chunkSize));
+const splitLongLine = (line, chunkSize) => {
+  const pieces = [];
+  for (let i = 0; i < line.length; i += chunkSize) pieces.push(line.substring(i, i + chunkSize));
+  return pieces.length ? pieces : [line];
+};
+
+const splitIntoChunks = (text, chunkSize = MESSAGE_LIMIT) =>
+  text
+    .split("\n")
+    .flatMap((line) => splitLongLine(line, chunkSize))
+    .reduce((chunks, line) => {
+      const last = chunks[chunks.length - 1];
+      if (last !== undefined && last.length + 1 + line.length <= chunkSize) {
+        chunks[chunks.length - 1] = `${last}\n${line}`;
+      } else {
+        chunks.push(line);
+      }
+      return chunks;
+    }, []);
+
+const replyInChunks = async (interaction, text, chunkSize = MESSAGE_LIMIT) => {
+  const chunks = text ? splitIntoChunks(text, chunkSize) : [];
   await editEphemeral(interaction, chunks[0] ?? "Done.");
   for (const chunk of chunks.slice(1)) await sendFollowUpEphemeral(interaction, chunk);
 };
@@ -98,13 +90,12 @@ module.exports = {
   sendErrorReport,
   sendReportToCommandsChannel,
   sendErrorEphemeral,
-  sendErrorReportNoInteraction,
   sendEphemeral,
   editEphemeral,
   editEphemeralWithComponents,
   editEphemeralClearComponents,
   editErrorEphemeral,
-  sendReplyMessage,
   sendFollowUpEphemeral,
-  replyInChunks
+  replyInChunks,
+  splitIntoChunks
 };

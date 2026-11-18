@@ -5,7 +5,7 @@ const {
   findAllCourseMembersByUser,
   removeCourseMemberFromDb
 } = require("../../../src/db/services/courseMemberService");
-const { findUserByDiscordId } = require("../../../src/db/services/userService");
+const { findUserByDiscordId, removeUserIfUnused } = require("../../../src/db/services/userService");
 const models = require("../../mocks/mockModels");
 
 jest.mock("../../../src/discordBot/services/message");
@@ -64,6 +64,7 @@ describe("slash leave command", () => {
     expect(sendEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
     expect(removeCourseMemberFromDb).toHaveBeenCalledTimes(1);
+    expect(removeUserIfUnused).toHaveBeenCalledWith(expect.anything(), models.User, models.CourseMember);
     expect(editEphemeral).toHaveBeenCalledWith(defaultTeacherInteraction, response);
   });
 

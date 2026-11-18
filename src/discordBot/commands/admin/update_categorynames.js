@@ -4,16 +4,15 @@ const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral } = require("../../services/message");
 
 const execute = async (interaction, client, models) => {
-  if (!(await requireAdmin(interaction, models))) return;
-
   await sendEphemeral(interaction, "Updating category names...");
+  if (!(await requireAdmin(interaction, models))) return;
 
   const channels = client.guild.channels.cache.filter(
     (c) => c.type === ChannelType.GuildCategory && c.name.includes("🔒")
   );
-  channels.forEach(async (channel) => {
+  for (const channel of channels.values()) {
     await channel.setName(`👻 ${getCourseNameFromCategory(channel)}`);
-  });
+  }
 
   return await editEphemeral(interaction, "Updated category names.");
 };
