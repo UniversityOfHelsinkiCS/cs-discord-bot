@@ -119,6 +119,7 @@ Command | Explanation | Arguments
 --------|-------------|----------:
 [/add_admin_rights](./commands/admin/add_admin_rights.md) | Add admin rights to a user. | :heavy_check_mark:
 [/add_scam_fingerprint](./commands/admin/add_scam_fingerprint.md) | Add a scam's images as known scam fingerprints. | :heavy_check_mark:
+[Apps → Add scam fingerprint](./commands/admin/add_scam_fingerprint_from_message.md) | Add the images of a message as known scam fingerprints. | :heavy_check_mark:
 [/delete_command](./commands/admin/delete_command.md) | Delete the given slash command. | :heavy_check_mark:
 [/delete_course](./commands/admin/delete_course.md) | Delete the given course channel. | :heavy_check_mark:
 [/fix_course_roles](./commands/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:

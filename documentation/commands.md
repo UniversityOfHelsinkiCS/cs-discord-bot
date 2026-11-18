@@ -28,6 +28,7 @@ Command | Description | Example
 --- |--- | ---
 `/add_admin_rights` | Add admin rights to given user. | `/add_admin_rights user:@someone`
 `/add_scam_fingerprint` | Add a scam's images as known scam fingerprints. | `/add_scam_fingerprint scam_name:gift-card image1:[image] image2:[image]`
+Apps → `Add scam fingerprint` | Add the images of a message as known scam fingerprints. | Right-click a message → Apps → Add scam fingerprint, then enter the scam name
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`

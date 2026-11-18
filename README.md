@@ -66,6 +66,7 @@ visible only to the person who ran them.
   recovery and migrations.
 - `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
 - `/add_scam_fingerprint`, `/list_scam_fingerprints`, `/remove_scam_fingerprint` — manage the known scam images.
+  The message menu command Apps → **Add scam fingerprint** adds the images of an existing message.
 
 ### Membership sync
 
@@ -97,7 +98,9 @@ visible only to the person who ran them.
   report is held for a minute and dropped if the honeypot kicks the account in
   that time.
 - **Known scam images:** admins run `/add_scam_fingerprint` with a scam name and up
-  to ten images. The images of one command are stored under that scam name: each
+  to ten images, or right-click a message carrying the images (such as the bot's own
+  scam report) and choose Apps → **Add scam fingerprint**, which asks for the scam
+  name. The images of one command are stored under that scam name: each
   image is hashed, together with centre crops of it, and only the hashes are
   kept, in the `scam_image` table. `/list_scam_fingerprints` shows the known scams
   and `/remove_scam_fingerprint` removes one. Changes apply right away.
