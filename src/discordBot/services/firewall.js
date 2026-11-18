@@ -70,16 +70,18 @@ A message sent from your account in our server (Department of Computer Science, 
 
 Because you have a staff role you were not kicked.
 
-If scam messages are still sent from your account after the password reset, contact the server admins, and have your computer checked for malware. For a university computer, contact the University IT Helpdesk.
+If scam messages are still sent from your account after the password reset, contact the server admins, and have every device you use Discord on checked for malware. For university devices, contact the University IT Helpdesk.
 `;
 
-const buildRecoveryMessage = (action) => `Hey!
+const buildRecoveryMessage = (finding) => `Hey!
 
-We are sorry to inform you that we detected **suspicious activity on your account**. Your account was caught ${action} in our server (Department of Computer Science, University of Helsinki). This almost certainly means your Discord account has been compromised, and there's a chance your computer is infected with malware as well. The most common way Discord credentials get stolen is through an unofficial login portal or an info-stealer virus. If there is a virus then your computer has likely been compromised for many months and your Discord isn't the only compromised account.
+A message sent from your account in our server (Department of Computer Science, University of Helsinki) ${finding}. Your Discord account has most likely been compromised.
 
-**We recommend** that you reset your Discord password. Use an offline malware scan tool like Microsoft Defender Offline Scan, Malwarebytes or ClamAV. If you find a info-stealer virus, you should reset your passwords on all platforms you use on that device.
+**Please reset your Discord password now.** Changing the password signs your account out everywhere else.
 
-You were kicked from the server. You are free to rejoin the server after resetting your password.
+You were kicked from the server. You are free to rejoin after resetting your password.
+
+If scam messages are still sent from your account after the password reset, have every device you use Discord on checked for malware.
 `;
 
 const addToStore = (store, userId, content) => {
@@ -137,17 +139,17 @@ const checkImageMessageFingerprints = (images) => {
   });
 };
 
-const banAndUnban = async (message, reason, action) => {
-  await message.author.send(buildRecoveryMessage(action)).catch(logError);
+const banAndUnban = async (message, reason, finding) => {
+  await message.author.send(buildRecoveryMessage(finding)).catch(logError);
   const banned = await message.guild.members
     .ban(message.author.id, { deleteMessageSeconds: 86400, reason })
     .catch(logError);
   if (banned) await message.guild.members.unban(message.author.id).catch(logError);
 };
 
-const banUnbanAndReport = async (message, client, reason, action) => {
+const banUnbanAndReport = async (message, client, reason, finding) => {
   cancelPossibleScamReport(message.author.id);
-  await banAndUnban(message, reason, action);
+  await banAndUnban(message, reason, finding);
   const content = `**HONEYPOT TRIGGERED**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
   await sendReportToCommandsChannel(client, content);
 };
@@ -256,7 +258,7 @@ const checkHoneypot = async (message, client) => {
       message,
       client,
       "Honeypot triggered: message sent in both honeypot and chat channel",
-      "posting a message in a honeypot channel"
+      "was also posted in a channel meant to catch spam bots"
     );
   }
 };
@@ -316,7 +318,7 @@ const checkAttachments = async (message, client, models) => {
   if (isStaff(message.member)) return await removeStaffScamMessage(message, images, client, notes);
   await sendScamReport(message, images, "removed", client, notes);
   await message.delete();
-  await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
+  await banAndUnban(message, "Compromized account, scam message detected", "matched a known scam");
 };
 
 const firewall = async (message, client, models) => {

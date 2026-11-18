@@ -268,6 +268,9 @@ describe("honeypot detection", () => {
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
     expect(chat.guild.members.unban).toHaveBeenCalledTimes(1);
     expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining("HONEYPOT TRIGGERED"));
+    const [dm] = chat.author.send.mock.calls[0];
+    expect(dm).toContain("was also posted in a channel meant to catch spam bots");
+    expect(dm).toContain("You were kicked");
   });
 
   test("unban is skipped when ban fails", async () => {
@@ -687,6 +690,11 @@ describe("known scam image matching", () => {
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).toContain("SCAM MESSAGE DETECTED AND REMOVED");
     expect(content).toContain("Known scam image matches: 3/3 (story)");
+    const [dm] = msg.author.send.mock.calls[0];
+    expect(dm).toContain("matched a known scam");
+    expect(dm).toContain("reset your Discord password");
+    expect(dm).toContain("every device you use Discord on");
+    expect(dm).toContain("You were kicked");
   });
 
   test("holds a possible scam report when only some images match", async () => {
