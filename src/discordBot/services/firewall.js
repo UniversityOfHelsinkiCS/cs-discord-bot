@@ -19,6 +19,7 @@ const COOLDOWN_MS = 2 * 60 * 1000;
 
 const pendingScamReports = new Map();
 const POSSIBLE_SCAM_REPORT_DELAY_MS = 60 * 1000;
+const ADMIN_ROLE_MENTION = "<@&758046962829361262>";
 
 // This will be moved to the database in the future
 const SCAM_FINGERPRINT_SETS = [
@@ -61,13 +62,18 @@ You have sent multiple messages in our honeypot channel. This channel is a trap 
 You were kicked from the server. You are free to rejoin.
 `;
 
-const buildRecoveryMessage = (action) => `Hey!
+const KICKED_NOTICE =
+  "You were kicked from the server. You are free to rejoin the server after resetting your password.";
+const STAFF_NOTICE =
+  "Because you have a staff role you were not kicked, but the message was removed and the admins were notified. Please reset your password as soon as possible.";
+
+const buildRecoveryMessage = (action, notice = KICKED_NOTICE) => `Hey!
 
 We are sorry to inform you that we detected **suspicious activity on your account**. Your account was caught ${action} in our server (Department of Computer Science, University of Helsinki). This almost certainly means your Discord account has been compromised, and there's a chance your computer is infected with malware as well. The most common way Discord credentials get stolen is through an unofficial login portal or an info-stealer virus. If there is a virus then your computer has likely been compromised for many months and your Discord isn't the only compromised account.
 
 **We recommend** that you reset your Discord password. Use an offline malware scan tool like Microsoft Defender Offline Scan, Malwarebytes or ClamAV. If you find a info-stealer virus, you should reset your passwords on all platforms you use on that device.
 
-You were kicked from the server. You are free to rejoin the server after resetting your password.
+${notice}
 `;
 
 const addToStore = (store, userId, content) => {
@@ -161,15 +167,19 @@ const sendReportWithAttachments = async (client, content, attachments) => {
 const describeHashMatch = ({ matchedCount, total, scamNames }) =>
   matchedCount === 0 ? [] : [`Known scam image matches: ${matchedCount}/${total} (${scamNames.join(", ")})`];
 
-const sendScamReport = async (message, images, isConfirmedScam, client, notes = []) => {
+const SCAM_REPORT_HEADERS = {
+  removed: "**SCAM MESSAGE DETECTED AND REMOVED**",
+  staffRemoved: `${ADMIN_ROLE_MENTION}\n**SCAM MESSAGE FROM A STAFF ACCOUNT REMOVED**`,
+  possible: `${ADMIN_ROLE_MENTION}\n**POSSIBLE SCAM IMAGES DETECTED!**`
+};
+
+const sendScamReport = async (message, images, kind, client, notes = []) => {
   const now = Date.now();
   const last = recentlyReported.get(message.author.id);
   if (last && now - last < COOLDOWN_MS) return;
   recentlyReported.set(message.author.id, now);
-  const header = isConfirmedScam
-    ? "**SCAM MESSAGE DETECTED AND REMOVED**"
-    : "<@&758046962829361262>\n**POSSIBLE SCAM IMAGES DETECTED!**";
-  const messageLink = isConfirmedScam ? "" : `\nMessage: ${message.url}`;
+  const header = SCAM_REPORT_HEADERS[kind];
+  const messageLink = kind === "possible" ? `\nMessage: ${message.url}` : "";
   const noteLines = notes.map((note) => `\n${note}`).join("");
   const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\n${describeAttachments(images)}${noteLines}${messageLink}`;
   await sendReportWithAttachments(client, content, images);
@@ -250,7 +260,7 @@ const schedulePossibleScamReport = (message, images, client, notes) => {
   if (pendingScamReports.has(userId)) return;
   const timer = setTimeout(() => {
     pendingScamReports.delete(userId);
-    sendScamReport(message, images, false, client, notes).catch(logError);
+    sendScamReport(message, images, "possible", client, notes).catch(logError);
   }, POSSIBLE_SCAM_REPORT_DELAY_MS);
   pendingScamReports.set(userId, timer);
 };
@@ -276,6 +286,15 @@ const loadKnownScamImages = async (models) => {
   }
 };
 
+const removeStaffScamMessage = async (message, images, client, notes) => {
+  await sendScamReport(message, images, "staffRemoved", client, [
+    ...notes,
+    "Matches a known scam, but the member has a staff role, so they were not kicked. Their account may be compromised."
+  ]);
+  await message.delete().catch(logError);
+  await message.author.send(buildRecoveryMessage("sending a scam message", STAFF_NOTICE)).catch(logError);
+};
+
 const checkAttachments = async (message, client, models) => {
   const images = message.attachments.filter((att) => att.contentType?.startsWith("image/")).map((att) => att);
   if (images.length < 2) return;
@@ -283,18 +302,13 @@ const checkAttachments = async (message, client, models) => {
   const dimensionMatch = images.length === 4 && checkImageMessageFingerprints(images);
   const isConfirmedScam = dimensionMatch || hashMatch.allMatch;
   const notes = describeHashMatch(hashMatch);
-  if (isConfirmedScam && isStaff(message.member)) {
-    return schedulePossibleScamReport(message, images, client, [
-      ...notes,
-      "Matches a known scam, but the member has a staff role, so nothing was removed."
-    ]);
-  }
   if (!isConfirmedScam) {
     if (images.length === 4 || hashMatch.partialMatch) schedulePossibleScamReport(message, images, client, notes);
     return;
   }
   cancelPossibleScamReport(message.author.id);
-  await sendScamReport(message, images, true, client, notes);
+  if (isStaff(message.member)) return await removeStaffScamMessage(message, images, client, notes);
+  await sendScamReport(message, images, "removed", client, notes);
   await message.delete();
   await banAndUnban(message, "Compromized account, scam message detected", "sending a scam message");
 };

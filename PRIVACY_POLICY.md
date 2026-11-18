@@ -1,6 +1,6 @@
 # Privacy Policy — CS Discord Bot
 
-*Last updated: 16 November 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
+*Last updated: 19 November 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/PRIVACY_POLICY.md*
 
 This Privacy Policy describes what data the CS Discord Bot ("the Bot") collects, why, and how it is handled. The Bot is a private bot developed and operated for one specific Discord server, that of the Department of Computer Science, University of Helsinki ("the Server"). It is not offered to, or run in, any other server. Source code: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot
 
@@ -65,7 +65,7 @@ Logging in sets a session cookie, and your session is stored server-side in our 
 
 To protect members from compromised-account scams and spam bots, the Bot can remove a member **automatically, without prior human review**. Removal is carried out as a ban immediately followed by an unban - in effect a kick that also deletes up to about 24 hours of that account's recent messages from the Server. This happens when:
 
-- every image in a message carrying two or more images matches a known compromised-account scam image (by perceptual hash), or a message carrying exactly four images matches a known scam fingerprint by the images' dimensions. Members with a staff role (administrator, faculty or instructor) are not removed this way; staff are notified instead;
+- every image in a message carrying two or more images matches a known compromised-account scam image (by perceptual hash), or a message carrying exactly four images matches a known scam fingerprint by the images' dimensions. Members with a staff role (administrator, faculty or instructor) are not removed this way; their message is deleted, they are sent a message recommending a password reset, and administrators are notified instead;
 - the same message is posted in both the honeypot channel and the general chat channel within about an hour; or
 - an account posts in the honeypot channel more than once within about an hour.
 

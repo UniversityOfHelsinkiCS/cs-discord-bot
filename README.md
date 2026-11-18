@@ -91,7 +91,8 @@ visible only to the person who ran them.
   checked against known image-dimension fingerprints. When every image matches,
   the message is deleted, the account is kicked, and the user is DM'd recovery
   instructions. Members with the `admin`, `cs-admin`, faculty or instructor role
-  are never kicked for this; staff get a report instead. When only some images
+  are never kicked for this; their message is still removed, they are DM'd a
+  password-reset recommendation, and a report pings the admins. When only some images
   match, or four images match nothing, staff get a possible-scam report. That
   report is held for a minute and dropped if the honeypot kicks the account in
   that time.

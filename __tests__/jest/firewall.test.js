@@ -715,16 +715,25 @@ describe("known scam image matching", () => {
   });
 
   test.each([["faculty"], ["admin"], ["tira instructor"]])(
-    "only reports a known scam from a member with the %s role",
+    "removes a known scam from a member with the %s role, pings the admins and warns the member without kicking",
     async (roleName) => {
       const msg = makeMessage({ roleNames: [roleName] });
       await firewall(msg, client);
-      expect(msg.delete).not.toHaveBeenCalled();
+      expect(msg.delete).toHaveBeenCalledTimes(1);
       expect(msg.guild.members.ban).not.toHaveBeenCalled();
-      await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+      expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
       const [, content] = sendReportToCommandsChannel.mock.calls[0];
-      expect(content).toContain("POSSIBLE SCAM IMAGES DETECTED");
+      expect(content).toContain("<@&758046962829361262>");
+      expect(content).toContain("SCAM MESSAGE FROM A STAFF ACCOUNT REMOVED");
       expect(content).toContain("the member has a staff role");
+      expect(content).not.toContain(msg.url);
+      expect(msg.author.send).toHaveBeenCalledTimes(1);
+      const [dm] = msg.author.send.mock.calls[0];
+      expect(dm).toContain("reset your Discord password");
+      expect(dm).toContain("you were not kicked");
+      expect(dm).not.toContain("You were kicked");
+      await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+      expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
     }
   );
 });

@@ -6,5 +6,5 @@
 - All images given in one command are saved under the given scam name. The name must not already be in use.
 - Only perceptual hashes of the images are stored, never the images themselves. Each image is also hashed with its edges cropped, so lightly cropped copies are still recognised.
 - Images that are already known, have too little detail to recognise (such as a plain background), or cannot be downloaded are skipped, and the reply lists them.
-- The bot uses new fingerprints right away. A message whose images all match known scam images is removed and its sender kicked; a message where only some images match is reported to staff. Members with a staff role are never kicked for this.
+- The bot uses new fingerprints right away. A message whose images all match known scam images is removed and its sender kicked; a message where only some images match is reported to staff. Members with a staff role are never kicked for this: their message is removed, they are sent a message recommending a password reset, and the admins are pinged.
 - See the known scams with [/list_scam_fingerprints](./list_scam_fingerprints.md) and remove one with [/remove_scam_fingerprint](./remove_scam_fingerprint.md).
