@@ -2,7 +2,7 @@ const { getKnownScamImages, scamNameExists, addScamFingerprints } = require("../
 const { hashReferenceImage } = require("./perceptualHash");
 const { downloadPreview } = require("./scamImageMatcher");
 const { logError } = require("./logger");
-const { editEphemeral, editErrorEphemeral } = require("./message");
+const { editEphemeral, editErrorEphemeral, sendReportToCommandsChannel } = require("./message");
 
 const isImage = (attachment) => attachment.contentType?.startsWith("image/");
 
@@ -24,7 +24,17 @@ const describeSkipped = (results) =>
     .map((result) => `\n• ${result.attachment.name}: ${result.skipped}`)
     .join("");
 
-const saveScamImages = async (interaction, rawScamName, attachments, models) => {
+const describeImageCount = (count) => (count === 1 ? "1 image" : `${count} images`);
+
+const reportScamChange = async (client, interaction, lines) => {
+  try {
+    await sendReportToCommandsChannel(client, [...lines, `By: <@${interaction.user.id}>`].join("\n"));
+  } catch (error) {
+    logError(error);
+  }
+};
+
+const saveScamImages = async ({ interaction, client, models, rawScamName, attachments, sourceUrl }) => {
   const scamName = rawScamName.trim();
   if (!scamName) return await editErrorEphemeral(interaction, "Give the scam a name.");
   if (await scamNameExists(scamName, models.ScamImage)) {
@@ -44,8 +54,14 @@ const saveScamImages = async (interaction, rawScamName, attachments, models) => 
     models.ScamImage
   );
   const skippedNote = added.length < results.length ? `\nSkipped:${describeSkipped(results)}` : "";
-  const imageCount = added.length === 1 ? "1 image" : `${added.length} images`;
+  const imageCount = describeImageCount(added.length);
   await editEphemeral(interaction, `Added ${imageCount} to the scam "${scamName}".${skippedNote}`);
+  await reportScamChange(client, interaction, [
+    "**SCAM FINGERPRINT ADDED**",
+    `Scam: ${scamName}`,
+    `Images: ${imageCount} (${added.map((result) => result.attachment.name).join(", ")})`,
+    ...(sourceUrl ? [`From: ${sourceUrl}`] : [])
+  ]);
 };
 
-module.exports = { isImage, saveScamImages };
+module.exports = { describeImageCount, isImage, reportScamChange, saveScamImages };

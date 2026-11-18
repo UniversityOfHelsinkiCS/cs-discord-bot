@@ -17,7 +17,13 @@ const execute = async (interaction, client, models) => {
     return await editErrorEphemeral(interaction, `These files are not images: ${names}`);
   }
 
-  await saveScamImages(interaction, interaction.options.getString("scam_name"), attachments, models);
+  await saveScamImages({
+    interaction,
+    client,
+    models,
+    rawScamName: interaction.options.getString("scam_name"),
+    attachments
+  });
 };
 
 const buildCommand = () => {

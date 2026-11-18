@@ -7,7 +7,12 @@ const {
 const { hashReferenceImage } = require("../../../src/discordBot/services/perceptualHash");
 const { downloadPreview } = require("../../../src/discordBot/services/scamImageMatcher");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
-const { sendEphemeral, sendErrorEphemeral, editEphemeral } = require("../../../src/discordBot/services/message");
+const {
+  sendEphemeral,
+  sendErrorEphemeral,
+  editEphemeral,
+  sendReportToCommandsChannel
+} = require("../../../src/discordBot/services/message");
 
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/permissions");
@@ -29,7 +34,10 @@ const makeSubmitted = (scamName) => ({
 const makeInteraction = (attachments, submitted) => ({
   id: "interaction-1",
   user: { id: "admin-1" },
-  targetMessage: { attachments: new Map(attachments.map((file) => [file.name, file])) },
+  targetMessage: {
+    url: "https://discord.com/channels/1/2/3",
+    attachments: new Map(attachments.map((file) => [file.name, file]))
+  },
   showModal: jest.fn().mockResolvedValue(),
   awaitModalSubmit: submitted
     ? jest.fn().mockResolvedValue(submitted)
@@ -77,7 +85,8 @@ describe("Add scam fingerprint message command", () => {
       [attachment("1.png"), attachment("notes.txt", "text/plain"), attachment("2.jpg", "image/jpeg")],
       submitted
     );
-    await execute(interaction, {}, models);
+    const client = { id: "client" };
+    await execute(interaction, client, models);
     const modal = interaction.showModal.mock.calls[0][0].toJSON();
     expect(modal.custom_id).toBe("add_scam_fingerprint:interaction-1");
     expect(modal.title).toBe("Add 2 images as a known scam");
@@ -91,6 +100,10 @@ describe("Add scam fingerprint message command", () => {
       models.ScamImage
     );
     expect(editEphemeral).toHaveBeenCalledWith(submitted, 'Added 2 images to the scam "story".');
+    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(
+      client,
+      "**SCAM FINGERPRINT ADDED**\nScam: story\nImages: 2 images (1.png, 2.jpg)\nFrom: https://discord.com/channels/1/2/3\nBy: <@admin-1>"
+    );
   });
 
   test("only accepts the form from the admin who opened it", async () => {

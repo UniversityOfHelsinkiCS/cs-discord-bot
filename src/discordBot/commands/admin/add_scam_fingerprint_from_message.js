@@ -52,7 +52,14 @@ const execute = async (interaction, client, models) => {
 
   await sendEphemeral(submitted, "Adding scam fingerprints...");
   if (!(await requireAdmin(submitted, models))) return;
-  await saveScamImages(submitted, submitted.fields.getTextInputValue(SCAM_NAME_INPUT_ID), images, models);
+  await saveScamImages({
+    interaction: submitted,
+    client,
+    models,
+    rawScamName: submitted.fields.getTextInputValue(SCAM_NAME_INPUT_ID),
+    attachments: images,
+    sourceUrl: interaction.targetMessage.url
+  });
 };
 
 module.exports = {
