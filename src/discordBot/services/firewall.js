@@ -64,9 +64,9 @@ You were kicked from the server. You are free to rejoin.
 
 const STAFF_SCAM_MESSAGE = `Hey!
 
-A message sent from your account in our server (Department of Computer Science, University of Helsinki) matched a known scam. It was removed and the admins were notified. This usually means someone else has access to your Discord account.
+A message sent from your account in our server (Department of Computer Science, University of Helsinki) matched a known scam. It was removed and the admins were notified. Your Discord account has most likely been compromised.
 
-**Please reset your Discord password now.** Changing the password signs your account out everywhere else. Turning on two-factor authentication makes it harder to take over again.
+**Please reset your Discord password now.** Changing the password signs your account out everywhere else.
 
 Because you have a staff role you were not kicked.
 
