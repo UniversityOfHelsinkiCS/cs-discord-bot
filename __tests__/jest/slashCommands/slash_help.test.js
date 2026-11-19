@@ -58,9 +58,9 @@ describe("slash help command", () => {
     expect(sendEphemeral).toHaveBeenCalledTimes(1);
     expect(sendEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, initialResponse);
     expect(editEphemeral).toHaveBeenCalledTimes(1);
-    expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, adminData.join("\n"));
-    expect(sendFollowUpEphemeral).toHaveBeenCalledTimes(1);
-    expect(sendFollowUpEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, adminData2.join("\n"));
+    const messages = [...editEphemeral.mock.calls, ...sendFollowUpEphemeral.mock.calls].map((call) => call[1]);
+    expect(messages.every((message) => message.length <= 2000)).toBe(true);
+    expect(messages.join("\n")).toBe(`${adminData.join("\n")}\n${adminData2.join("\n")}`);
   });
 
   test("slash help with invalid arg should give error", async () => {
@@ -133,7 +133,9 @@ describe("slash help command", () => {
     const client = studentInteractionWithoutOptions.client;
     findUserByDiscordId.mockImplementationOnce(() => ({ admin: true, faculty: false }));
     await execute(studentInteractionWithoutOptions, client, models);
-    const listing = editEphemeral.mock.calls[0][1];
+    const listing = [...editEphemeral.mock.calls, ...sendFollowUpEphemeral.mock.calls]
+      .map((call) => call[1])
+      .join("\n");
     expect(listing).toContain("Category: **admin**");
   });
 

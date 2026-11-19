@@ -3,7 +3,11 @@ const { listScams, removeScam } = require("../../../src/db/services/scamImageSer
 const { confirmChoice } = require("../../../src/discordBot/services/confirm");
 const { respondWithChoices } = require("../../../src/discordBot/services/autocomplete");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
-const { editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
+const {
+  editEphemeral,
+  editErrorEphemeral,
+  sendReportToCommandsChannel
+} = require("../../../src/discordBot/services/message");
 
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/permissions");
@@ -12,7 +16,8 @@ jest.mock("../../../src/discordBot/services/autocomplete");
 jest.mock("../../../src/db/services/scamImageService");
 
 const models = { ScamImage: {} };
-const makeInteraction = (scamName) => ({ options: { getString: jest.fn(() => scamName) } });
+const client = { id: "client" };
+const makeInteraction = (scamName) => ({ user: { id: "admin-1" }, options: { getString: jest.fn(() => scamName) } });
 
 beforeEach(() => {
   requireAdmin.mockResolvedValue(true);
@@ -36,16 +41,28 @@ describe("slash remove_scam_fingerprint", () => {
 
   test("removes the scam after confirmation", async () => {
     const interaction = makeInteraction(" gift ");
-    await execute(interaction, {}, models);
+    await execute(interaction, client, models);
     expect(confirmChoice).toHaveBeenCalledWith(interaction, 'Remove the scam "gift" and its 2 images?');
     expect(removeScam).toHaveBeenCalledWith("gift", models.ScamImage);
+    expect(editEphemeral).toHaveBeenCalledWith(interaction, 'Removed the scam "gift" (2 images).');
+    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(
+      client,
+      "**SCAM FINGERPRINT REMOVED**\nScam: gift\nImages: 2 images (1.png, 2.png)\nBy: <@admin-1>"
+    );
+  });
+
+  test("still answers when the commands channel report fails", async () => {
+    sendReportToCommandsChannel.mockRejectedValueOnce(new Error("commands channel missing"));
+    const interaction = makeInteraction("gift");
+    await expect(execute(interaction, client, models)).resolves.toBeUndefined();
     expect(editEphemeral).toHaveBeenCalledWith(interaction, 'Removed the scam "gift" (2 images).');
   });
 
   test("keeps the scam when declined", async () => {
     confirmChoice.mockResolvedValueOnce(false);
-    await execute(makeInteraction("nitro"), {}, models);
+    await execute(makeInteraction("nitro"), client, models);
     expect(removeScam).not.toHaveBeenCalled();
+    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
   });
 
   test("explains an unknown scam name without asking to confirm", async () => {

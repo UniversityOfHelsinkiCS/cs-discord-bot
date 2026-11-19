@@ -7,7 +7,11 @@ const {
 const { hashReferenceImage } = require("../../../src/discordBot/services/perceptualHash");
 const { downloadPreview } = require("../../../src/discordBot/services/scamImageMatcher");
 const { requireAdmin } = require("../../../src/discordBot/services/permissions");
-const { editEphemeral, editErrorEphemeral } = require("../../../src/discordBot/services/message");
+const {
+  editEphemeral,
+  editErrorEphemeral,
+  sendReportToCommandsChannel
+} = require("../../../src/discordBot/services/message");
 
 jest.mock("../../../src/discordBot/services/message");
 jest.mock("../../../src/discordBot/services/permissions");
@@ -21,6 +25,7 @@ const models = { ScamImage: {} };
 const image = (name, contentType = "image/png") => ({ name, contentType, url: `https://cdn.example.com/${name}` });
 
 const makeInteraction = (scamName, attachments) => ({
+  user: { id: "admin-1" },
   options: {
     getString: jest.fn(() => scamName),
     getAttachment: jest.fn((name) => attachments[Number(name.replace("image", "")) - 1] ?? null)
@@ -57,7 +62,8 @@ describe("slash add_scam_fingerprint", () => {
 
   test("adds every image of the command under one scam name", async () => {
     const interaction = makeInteraction(" story ", [image("1.png"), image("2.png"), image("3.png")]);
-    await execute(interaction, {}, models);
+    const client = { id: "client" };
+    await execute(interaction, client, models);
     expect(addScamFingerprints).toHaveBeenCalledWith(
       "story",
       [
@@ -68,6 +74,10 @@ describe("slash add_scam_fingerprint", () => {
       models.ScamImage
     );
     expect(editEphemeral).toHaveBeenCalledWith(interaction, 'Added 3 images to the scam "story".');
+    expect(sendReportToCommandsChannel).toHaveBeenCalledWith(
+      client,
+      "**SCAM FINGERPRINT ADDED**\nScam: story\nImages: 3 images (1.png, 2.png, 3.png)\nBy: <@admin-1>"
+    );
   });
 
   test("refuses a scam name that is already used", async () => {
@@ -75,6 +85,7 @@ describe("slash add_scam_fingerprint", () => {
     const interaction = makeInteraction("story", [image("1.png")]);
     await execute(interaction, {}, models);
     expect(addScamFingerprints).not.toHaveBeenCalled();
+    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
     expect(editErrorEphemeral).toHaveBeenCalledWith(
       interaction,
       'A scam called "story" already exists. Pick another name.'

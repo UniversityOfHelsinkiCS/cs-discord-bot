@@ -24,6 +24,8 @@ const firstAwaitInExecute = (source) => {
 describe("command reply order", () => {
   test.each(commandFiles)("%s replies before doing any other work", (file) => {
     const source = fs.readFileSync(path.join(commandsDir, file), "utf8");
-    expect(firstAwaitInExecute(source)).toMatch(/await (sendEphemeral|interaction\.deferReply)\(/);
+    expect(firstAwaitInExecute(source)).toMatch(
+      /await (sendEphemeral|interaction\.deferReply|interaction\.showModal)\(/
+    );
   });
 });

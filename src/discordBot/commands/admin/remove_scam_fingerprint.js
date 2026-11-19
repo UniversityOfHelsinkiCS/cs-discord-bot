@@ -4,6 +4,7 @@ const { confirmChoice } = require("../../services/confirm");
 const { respondWithChoices } = require("../../services/autocomplete");
 const { requireAdmin } = require("../../services/permissions");
 const { sendEphemeral, editEphemeral, editErrorEphemeral } = require("../../services/message");
+const { describeImageCount, reportScamChange } = require("../../services/scamFingerprints");
 
 const execute = async (interaction, client, models) => {
   await sendEphemeral(interaction, "Removing scam fingerprints...");
@@ -13,12 +14,17 @@ const execute = async (interaction, client, models) => {
   const scam = (await listScams(models.ScamImage)).find((known) => known.scamName === scamName);
   if (!scam) return await editErrorEphemeral(interaction, `No scam called "${scamName}".`);
 
-  const imageCount = scam.images.length === 1 ? "1 image" : `${scam.images.length} images`;
+  const imageCount = describeImageCount(scam.images.length);
   const confirmed = await confirmChoice(interaction, `Remove the scam "${scamName}" and its ${imageCount}?`);
   if (!confirmed) return;
 
   await removeScam(scamName, models.ScamImage);
   await editEphemeral(interaction, `Removed the scam "${scamName}" (${imageCount}).`);
+  await reportScamChange(client, interaction, [
+    "**SCAM FINGERPRINT REMOVED**",
+    `Scam: ${scamName}`,
+    `Images: ${imageCount} (${scam.images.join(", ")})`
+  ]);
 };
 
 const autocomplete = async (interaction, client, models) => {

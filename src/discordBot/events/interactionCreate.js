@@ -22,7 +22,7 @@ const runCommand = async (interaction, client, models) => {
 
 const getHandler = (interaction) => {
   if (isGuideButton(interaction)) return handleGuideButton;
-  if (interaction.isChatInputCommand()) return runCommand;
+  if (interaction.isChatInputCommand() || interaction.isMessageContextMenuCommand()) return runCommand;
   return null;
 };
 
