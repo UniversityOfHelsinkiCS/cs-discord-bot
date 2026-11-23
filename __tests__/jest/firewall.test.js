@@ -40,6 +40,7 @@ const SUSPICIOUS_IMAGES = [
   { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
 ];
 const REPORT_DELAY_MS = 60 * 1000;
+const UNBAN_DELAY_MS = 60 * 1000;
 
 const makeAttachments = (allAttachments) => ({
   filter: jest.fn((fn) => {
@@ -188,6 +189,8 @@ describe("firewall", () => {
     expect(msg.delete).toHaveBeenCalledTimes(1);
     expect(msg.author.send).toHaveBeenCalledTimes(1);
     expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(msg.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(msg.guild.members.unban).toHaveBeenCalledTimes(1);
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
@@ -247,6 +250,14 @@ describe("firewall", () => {
 describe("honeypot detection", () => {
   const TEXT = "free nitro click here";
 
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   test("message in honeypot only - no kick", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     await firewall(msg, client);
@@ -266,6 +277,8 @@ describe("honeypot detection", () => {
     await firewall(hp, client);
     await firewall(chat, client);
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(chat.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(chat.guild.members.unban).toHaveBeenCalledTimes(1);
     expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining("HONEYPOT TRIGGERED"));
     const [dm] = chat.author.send.mock.calls[0];
@@ -281,6 +294,7 @@ describe("honeypot detection", () => {
     await firewall(hp, client);
     await firewall(chat, client);
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(chat.guild.members.unban).not.toHaveBeenCalled();
   });
 
@@ -291,6 +305,8 @@ describe("honeypot detection", () => {
     await firewall(chat, client);
     await firewall(hp, client);
     expect(hp.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(hp.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(hp.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -342,6 +358,8 @@ describe("honeypot detection", () => {
     await firewall(hp, client);
     await firewall(chat, client);
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(chat.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(chat.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -390,6 +408,8 @@ describe("honeypot detection", () => {
     await firewall(msg1, client);
     await firewall(msg2, client);
     expect(msg2.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(msg2.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(msg2.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -575,6 +595,8 @@ describe("honeypot poster expiry", () => {
     await firewall(second, client);
 
     expect(second.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(second.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(second.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 

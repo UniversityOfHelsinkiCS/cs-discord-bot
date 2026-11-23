@@ -20,6 +20,7 @@ const COOLDOWN_MS = 2 * 60 * 1000;
 const pendingScamReports = new Map();
 const POSSIBLE_SCAM_REPORT_DELAY_MS = 60 * 1000;
 const ADMIN_ROLE_MENTION = "<@&758046962829361262>";
+const UNBAN_DELAY_MS = 60 * 1000;
 
 // This will be moved to the database in the future
 const SCAM_FINGERPRINT_SETS = [
@@ -139,12 +140,15 @@ const checkImageMessageFingerprints = (images) => {
   });
 };
 
+const banThenUnbanLater = async (guild, userId, reason) => {
+  const banned = await guild.members.ban(userId, { deleteMessageSeconds: 86400, reason }).catch(logError);
+  if (!banned) return;
+  setTimeout(() => guild.members.unban(userId).catch(logError), UNBAN_DELAY_MS);
+};
+
 const banAndUnban = async (message, reason, finding) => {
   await message.author.send(buildRecoveryMessage(finding)).catch(logError);
-  const banned = await message.guild.members
-    .ban(message.author.id, { deleteMessageSeconds: 86400, reason })
-    .catch(logError);
-  if (banned) await message.guild.members.unban(message.author.id).catch(logError);
+  await banThenUnbanLater(message.guild, message.author.id, reason);
 };
 
 const banUnbanAndReport = async (message, client, reason, finding) => {
@@ -232,10 +236,7 @@ const checkHoneypot = async (message, client) => {
     if (postedInHoneypotWithinTtl(userId)) {
       cancelPossibleScamReport(userId);
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
-      const banned = await message.guild.members
-        .ban(userId, { deleteMessageSeconds: 86400, reason: "Sent multiple messages in honeypot channel" })
-        .catch(logError);
-      if (banned) await message.guild.members.unban(userId).catch(logError);
+      await banThenUnbanLater(message.guild, userId, "Sent multiple messages in honeypot channel");
       const report = `**HONEYPOT REPEAT MESSAGE KICK**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
       await sendReportToCommandsChannel(client, report);
       return;
