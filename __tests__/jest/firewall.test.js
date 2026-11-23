@@ -40,6 +40,9 @@ const SCAM_IMAGES = [
   { contentType: "image/png", name: "img4.png", size: 500, width: 828, height: 1012, url: "http://example.com/4" }
 ];
 
+const matchAgainstScamImages = async (images) =>
+  hashMatch(images.filter((image) => SCAM_IMAGES.includes(image)).length, images.length);
+
 const SUSPICIOUS_IMAGES = [
   { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
   { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
@@ -118,6 +121,10 @@ const makeMessage = ({
 const client = {};
 const models = { PendingUnban: {} };
 
+beforeEach(() => {
+  matchScamImages.mockImplementation(matchAgainstScamImages);
+});
+
 afterEach(() => {
   jest.clearAllMocks();
   resetHoneypotState();
@@ -146,26 +153,12 @@ describe("firewall", () => {
     expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
   });
 
-  test("does nothing for messages with fewer than 4 images", async () => {
-    const msg = makeMessage({ attachments: SCAM_IMAGES.slice(0, 3) });
+  test("does not treat known scam image dimensions alone as a scam", async () => {
+    matchScamImages.mockResolvedValueOnce(hashMatch(0, 4));
+    const msg = makeMessage();
     await firewall(msg, client, models);
     expect(msg.delete).not.toHaveBeenCalled();
-    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
-  });
-
-  test("does nothing for messages with more than 4 images", async () => {
-    const extra = {
-      contentType: "image/jpeg",
-      name: "extra.jpg",
-      size: 100,
-      width: 100,
-      height: 100,
-      url: "http://example.com/5"
-    };
-    const msg = makeMessage({ attachments: [...SCAM_IMAGES, extra] });
-    await firewall(msg, client, models);
-    expect(msg.delete).not.toHaveBeenCalled();
-    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
+    expect(msg.guild.members.ban).not.toHaveBeenCalled();
   });
 
   test("does nothing when 4 attachments are not images", async () => {

@@ -89,8 +89,7 @@ visible only to the person who ran them.
   the database so they survive a restart).
 - **Compromised-account image scams:** messages carrying two or more images are
   compared with known scam images by perceptual hash (a small preview of each
-  image is downloaded and hashed in memory), and four-image messages are also
-  checked against known image-dimension fingerprints. When every image matches,
+  image is downloaded and hashed in memory). When every image matches,
   the message is deleted, the account is kicked, and the user is DM'd recovery
   instructions. Members with the `admin`, `cs-admin`, faculty or instructor role
   are never kicked for this; their message is still removed, they are DM'd a
