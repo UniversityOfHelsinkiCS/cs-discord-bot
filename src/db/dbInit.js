@@ -10,6 +10,7 @@ const Channel = require("./models/Channel")(sequelize, Sequelize.DataTypes);
 const User = require("./models/User")(sequelize, Sequelize.DataTypes);
 const CourseMember = require("./models/CourseMember")(sequelize, Sequelize.DataTypes);
 const ScamImage = require("./models/ScamImage")(sequelize, Sequelize.DataTypes);
+const PendingUnban = require("./models/PendingUnban")(sequelize, Sequelize.DataTypes);
 
 Channel.belongsTo(Course, {
   foreignKeyConstraint: true,
@@ -32,5 +33,6 @@ module.exports = {
   User,
   CourseMember,
   ScamImage,
+  PendingUnban,
   sequelize
 };

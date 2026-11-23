@@ -1,6 +1,6 @@
 # Terms of Service — CS Discord Bot
 
-*Last updated: 2 September 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/TERMS_OF_SERVICE.md*
+*Last updated: 23 November 2026. Full change history: https://github.com/UniversityOfHelsinkiCS/cs-discord-bot/commits/main/TERMS_OF_SERVICE.md*
 
 These Terms of Service ("Terms") govern your use of the CS Discord Bot ("the Bot"), a private bot operated for a specific Discord community ("the Server"). The Bot is developed and run by the University of Helsinki's software development team (Toska) together with a contracted Discord administrator/developer, on behalf of the Department of Computer Science ("the Operator"). By using the Bot's commands or its companion website, you agree to these Terms.
 
@@ -72,7 +72,7 @@ You may request access to, correction of, or deletion of your data by contacting
 
 Server administrators and moderators may restrict, suspend, or remove your access to the Bot or the Server at their discretion, including for violations of these Terms, the Server's own rules, or Discord's Terms of Service.
 
-The Bot also takes automated moderation actions. It may flag or delete suspected spam and scam messages, and in defined anti-scam and anti-spam cases it may remove a member automatically and without prior human review — as a ban immediately followed by an unban, which acts as a kick and also removes up to about 24 hours of that account's recent messages. These removals are reversible: you are not permanently banned and may rejoin. Automated actions are not a substitute for human moderation and may occasionally be in error; if you believe an action was incorrect, contact an administrator, who can review it. See the Privacy Policy for details of this automated processing.
+The Bot also takes automated moderation actions. It may flag or delete suspected spam and scam messages, and in defined anti-scam and anti-spam cases it may remove a member automatically and without prior human review — as a ban that is lifted automatically about a minute later, which acts as a kick and also removes up to about 24 hours of that account's recent messages. These removals are reversible: you are not permanently banned and may rejoin once the ban is lifted. Automated actions are not a substitute for human moderation and may occasionally be in error; if you believe an action was incorrect, contact an administrator, who can review it. See the Privacy Policy for details of this automated processing.
 
 ---
 

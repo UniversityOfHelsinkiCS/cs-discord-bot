@@ -3,7 +3,7 @@ const { findOrCreateRoleWithName } = require("./service");
 const { facultyRole, githubRepo } = require("../../../config.json");
 const { updateGuide, startGuideRefresh } = require("../../discordBot/services/guide");
 const { setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME } = require("../../discordBot/services/honeypot");
-const { startFirewallPruning } = require("../../discordBot/services/firewall");
+const { startFirewallPruning, resumePendingUnbans } = require("../../discordBot/services/firewall");
 const { initHooks } = require("../../db/hookInit");
 const { sendPullDateMessage } = require("./message");
 
@@ -89,6 +89,7 @@ const initializeApplicationContext = async (client, models) => {
   setInitialGuideMessage(client.guild, "guide", models);
   setInitialHoneypotMessage(client.guild);
   startFirewallPruning();
+  await resumePendingUnbans(client.guild, models);
   startGuideRefresh(client.guild, models);
 
   if (process.env.NODE_ENV === "production") {

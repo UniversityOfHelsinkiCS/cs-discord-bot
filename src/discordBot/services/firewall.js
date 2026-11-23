@@ -1,7 +1,9 @@
 const { sendReportToCommandsChannel } = require("./message");
 const { logError } = require("./logger");
 const { matchScamImages } = require("./scamImageMatcher");
+const { RESTJSONErrorCodes } = require("discord.js");
 const { getKnownScamImages } = require("../../db/services/scamImageService");
+const { addPendingUnban, removePendingUnban, listPendingUnbans } = require("../../db/services/pendingUnbanService");
 const { facultyRole, courseAdminRole } = require("../../../config.json");
 
 const { HONEYPOT_CHANNEL_NAME, cleanHoneypotChannel } = require("./honeypot");
@@ -140,20 +142,52 @@ const checkImageMessageFingerprints = (images) => {
   });
 };
 
-const banThenUnbanLater = async (guild, userId, reason) => {
+const isAlreadyUnbanned = (error) => error?.code === RESTJSONErrorCodes.UnknownBan;
+
+const unbanNow = async (guild, userId) => {
+  try {
+    await guild.members.unban(userId);
+    return true;
+  } catch (error) {
+    if (isAlreadyUnbanned(error)) return true;
+    logError(error);
+    return false;
+  }
+};
+
+const completeUnban = async (guild, userId, pendingUnban, models) => {
+  const unbanned = await unbanNow(guild, userId);
+  if (unbanned && pendingUnban) await removePendingUnban(pendingUnban.id, models.PendingUnban).catch(logError);
+};
+
+const scheduleUnban = (guild, userId, unbanAt, pendingUnban, models) => {
+  const delay = Math.max(0, unbanAt.getTime() - Date.now());
+  setTimeout(() => completeUnban(guild, userId, pendingUnban, models), delay);
+};
+
+const banThenUnbanLater = async (guild, userId, reason, models) => {
   const banned = await guild.members.ban(userId, { deleteMessageSeconds: 86400, reason }).catch(logError);
   if (!banned) return;
-  setTimeout(() => guild.members.unban(userId).catch(logError), UNBAN_DELAY_MS);
+  const unbanAt = new Date(Date.now() + UNBAN_DELAY_MS);
+  const pendingUnban = await addPendingUnban(userId, unbanAt, models.PendingUnban).catch(logError);
+  scheduleUnban(guild, userId, unbanAt, pendingUnban, models);
 };
 
-const banAndUnban = async (message, reason, finding) => {
+const resumePendingUnbans = async (guild, models) => {
+  const pendingUnbans = await listPendingUnbans(models.PendingUnban).catch(logError);
+  for (const pendingUnban of pendingUnbans ?? []) {
+    scheduleUnban(guild, pendingUnban.discordId, new Date(pendingUnban.unbanAt), pendingUnban, models);
+  }
+};
+
+const banAndUnban = async (message, reason, finding, models) => {
   await message.author.send(buildRecoveryMessage(finding)).catch(logError);
-  await banThenUnbanLater(message.guild, message.author.id, reason);
+  await banThenUnbanLater(message.guild, message.author.id, reason, models);
 };
 
-const banUnbanAndReport = async (message, client, reason, finding) => {
+const banUnbanAndReport = async (message, client, models, reason, finding) => {
   cancelPossibleScamReport(message.author.id);
-  await banAndUnban(message, reason, finding);
+  await banAndUnban(message, reason, finding, models);
   const content = `**HONEYPOT TRIGGERED**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
   await sendReportToCommandsChannel(client, content);
 };
@@ -222,7 +256,7 @@ const sendHoneypotReport = async (message, client) => {
   await sendReportWithAttachments(client, `${content}\n${describeAttachments(attachments)}`, attachments);
 };
 
-const checkHoneypot = async (message, client) => {
+const checkHoneypot = async (message, client, models) => {
   const channelName = message.channel.name;
   const isHoneypot = channelName === HONEYPOT_CHANNEL_NAME;
   const isMonitored = channelName === MONITORED_CHANNEL_NAME;
@@ -236,7 +270,7 @@ const checkHoneypot = async (message, client) => {
     if (postedInHoneypotWithinTtl(userId)) {
       cancelPossibleScamReport(userId);
       await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
-      await banThenUnbanLater(message.guild, userId, "Sent multiple messages in honeypot channel");
+      await banThenUnbanLater(message.guild, userId, "Sent multiple messages in honeypot channel", models);
       const report = `**HONEYPOT REPEAT MESSAGE KICK**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
       await sendReportToCommandsChannel(client, report);
       return;
@@ -258,6 +292,7 @@ const checkHoneypot = async (message, client) => {
     await banUnbanAndReport(
       message,
       client,
+      models,
       "Honeypot triggered: message sent in both honeypot and chat channel",
       "was also posted in a channel meant to catch spam bots"
     );
@@ -319,14 +354,14 @@ const checkAttachments = async (message, client, models) => {
   if (isStaff(message.member)) return await removeStaffScamMessage(message, images, client, notes);
   await sendScamReport(message, images, "removed", client, notes);
   await message.delete();
-  await banAndUnban(message, "Compromized account, scam message detected", "matched a known scam");
+  await banAndUnban(message, "Compromized account, scam message detected", "matched a known scam", models);
 };
 
 const firewall = async (message, client, models) => {
   if (message.author.bot) return;
   if (!message.member) return;
   await checkAttachments(message, client, models);
-  await checkHoneypot(message, client);
+  await checkHoneypot(message, client, models);
 };
 
 const resetHoneypotState = () => {
@@ -338,4 +373,4 @@ const resetHoneypotState = () => {
   pendingScamReports.clear();
 };
 
-module.exports = { firewall, resetHoneypotState, startFirewallPruning };
+module.exports = { firewall, resetHoneypotState, startFirewallPruning, resumePendingUnbans };

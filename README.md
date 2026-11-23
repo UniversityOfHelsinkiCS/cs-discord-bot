@@ -84,8 +84,9 @@ visible only to the person who ran them.
 
 - **Honeypot channel:** anyone posting in the "do not post here" channel
   is reported to staff, and posting the same content in both the honeypot and the
-  public chat channel triggers an automatic kick (ban immediately followed by an
-  unban, which also purges ~24 h of that account's recent messages).
+  public chat channel triggers an automatic kick (a ban lifted a minute later, which
+  also purges ~24 h of that account's recent messages; pending unbans are stored in
+  the database so they survive a restart).
 - **Compromised-account image scams:** messages carrying two or more images are
   compared with known scam images by perceptual hash (a small preview of each
   image is downloaded and hashed in memory), and four-image messages are also
@@ -107,8 +108,10 @@ visible only to the person who ran them.
 
 ## Data storage
 
-- PostgreSQL tables only for `User`, `Course`, `Channel`, `CourseMember`, and
-  `ScamImage` (perceptual hashes of known scam images, with no user data).
+- PostgreSQL tables only for `User`, `Course`, `Channel`, `CourseMember`,
+  `ScamImage` (perceptual hashes of known scam images, with no user data), and
+  `PendingUnban` (encrypted Discord ID and due time of an automatic kick's unban,
+  deleted once the unban succeeds).
 - **No message content is persisted.** Chat text is used transiently for command
   parsing, spam detection (in memory, 1-hour TTL), and staff reports.
 
