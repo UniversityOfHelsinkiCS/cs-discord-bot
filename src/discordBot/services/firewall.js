@@ -1,9 +1,8 @@
 const { sendReportToCommandsChannel } = require("./message");
 const { logError } = require("./logger");
 const { matchScamImages } = require("./scamImageMatcher");
-const { RESTJSONErrorCodes } = require("discord.js");
 const { getKnownScamImages } = require("../../db/services/scamImageService");
-const { addPendingUnban, removePendingUnban, listPendingUnbans } = require("../../db/services/pendingUnbanService");
+const { KICK_RESULT, kickWithDm, withKickResult, resetKickState } = require("./kick");
 const { facultyRole, courseAdminRole } = require("../../../config.json");
 
 const { HONEYPOT_CHANNEL_NAME, cleanHoneypotChannel } = require("./honeypot");
@@ -18,12 +17,10 @@ const honeypotPosters = new Map();
 
 const cooldowns = new Map();
 const COOLDOWN_MS = 2 * 60 * 1000;
-const usersBeingKicked = new Set();
 
 const pendingScamReports = new Map();
 const POSSIBLE_SCAM_REPORT_DELAY_MS = 60 * 1000;
 const ADMIN_ROLE_MENTION = "<@&758046962829361262>";
-const UNBAN_DELAY_MS = 60 * 1000;
 
 const buildHoneypotRepeatMessage = () => `Hey!
 
@@ -97,19 +94,6 @@ const startFirewallPruning = () =>
     pruneTimestampStore(cooldowns);
   }, PRUNE_INTERVAL_MS);
 
-const isAlreadyUnbanned = (error) => error?.code === RESTJSONErrorCodes.UnknownBan;
-
-const unbanNow = async (guild, userId) => {
-  try {
-    await guild.members.unban(userId);
-    return true;
-  } catch (error) {
-    if (isAlreadyUnbanned(error)) return true;
-    logError(error);
-    return false;
-  }
-};
-
 const claimCooldown = (key) => {
   const last = cooldowns.get(key);
   if (last && Date.now() - last < COOLDOWN_MS) return false;
@@ -117,52 +101,11 @@ const claimCooldown = (key) => {
   return true;
 };
 
-const completeUnban = async (guild, userId, pendingUnban, models) => {
-  const unbanned = await unbanNow(guild, userId);
-  usersBeingKicked.delete(userId);
-  if (unbanned && pendingUnban) await removePendingUnban(pendingUnban.id, models.PendingUnban).catch(logError);
-};
-
-const scheduleUnban = (guild, userId, unbanAt, pendingUnban, models) => {
-  const delay = Math.max(0, unbanAt.getTime() - Date.now());
-  setTimeout(() => completeUnban(guild, userId, pendingUnban, models), delay);
-};
-
-const KICK_RESULT = { kicked: "kicked", failed: "failed", alreadyKicking: "alreadyKicking" };
-
-const kickWithDm = async (message, reason, dm, models) => {
-  const userId = message.author.id;
-  if (usersBeingKicked.has(userId)) return KICK_RESULT.alreadyKicking;
-  usersBeingKicked.add(userId);
-  await message.author.send(dm).catch(logError);
-  const banned = await message.guild.members.ban(userId, { deleteMessageSeconds: 86400, reason }).catch(logError);
-  if (!banned) {
-    usersBeingKicked.delete(userId);
-    return KICK_RESULT.failed;
-  }
-  const unbanAt = new Date(Date.now() + UNBAN_DELAY_MS);
-  const pendingUnban = await addPendingUnban(userId, unbanAt, models.PendingUnban).catch(logError);
-  scheduleUnban(message.guild, userId, unbanAt, pendingUnban, models);
-  return KICK_RESULT.kicked;
-};
-
-const KICK_FAILED_NOTE = "**Kick failed:** the ban did not go through, so the member is still on the server.";
-
-const withKickResult = (content, kickResult) =>
-  kickResult === KICK_RESULT.failed ? `${content}\n${KICK_FAILED_NOTE}` : content;
-
 const describeMember = (message) => `Member: <@${message.author.id}> (${message.author.tag})`;
-
-const resumePendingUnbans = async (guild, models) => {
-  const pendingUnbans = await listPendingUnbans(models.PendingUnban).catch(logError);
-  for (const pendingUnban of pendingUnbans ?? []) {
-    scheduleUnban(guild, pendingUnban.discordId, new Date(pendingUnban.unbanAt), pendingUnban, models);
-  }
-};
 
 const kickAndReport = async (message, client, models, { reason, dm, header }) => {
   cancelPossibleScamReport(message.author.id);
-  const kickResult = await kickWithDm(message, reason, dm, models);
+  const kickResult = await kickWithDm(message.guild, message.author, { reason, dm }, models);
   if (kickResult === KICK_RESULT.alreadyKicking) return;
   const content = `${header}\n${describeMember(message)}\nChannel: <#${message.channel.id}>`;
   await sendReportToCommandsChannel(client, withKickResult(content, kickResult));
@@ -313,9 +256,9 @@ const removeScamMessageAndKick = async (message, images, client, models, notes) 
   await sendScamReport(message, images, "removed", client, notes).catch(logError);
   await message.delete().catch(logError);
   const kickResult = await kickWithDm(
-    message,
-    "Compromised account, scam message detected",
-    buildRecoveryMessage("matched a known scam"),
+    message.guild,
+    message.author,
+    { reason: "Compromised account, scam message detected", dm: buildRecoveryMessage("matched a known scam") },
     models
   );
   if (kickResult !== KICK_RESULT.failed) return;
@@ -349,9 +292,9 @@ const resetHoneypotState = () => {
   chatMessages.clear();
   honeypotPosters.clear();
   cooldowns.clear();
-  usersBeingKicked.clear();
+  resetKickState();
   for (const timer of pendingScamReports.values()) clearTimeout(timer);
   pendingScamReports.clear();
 };
 
-module.exports = { firewall, resetHoneypotState, startFirewallPruning, resumePendingUnbans };
+module.exports = { firewall, resetHoneypotState, startFirewallPruning, buildRecoveryMessage };

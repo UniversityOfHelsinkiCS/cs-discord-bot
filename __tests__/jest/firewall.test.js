@@ -1,5 +1,6 @@
 const { RESTJSONErrorCodes } = require("discord.js");
-const { firewall, resetHoneypotState, resumePendingUnbans } = require("../../src/discordBot/services/firewall");
+const { firewall, resetHoneypotState } = require("../../src/discordBot/services/firewall");
+const { resumePendingUnbans } = require("../../src/discordBot/services/kick");
 const { HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 const { sendReportToCommandsChannel } = require("../../src/discordBot/services/message");
 

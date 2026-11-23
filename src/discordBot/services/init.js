@@ -3,7 +3,8 @@ const { findOrCreateRoleWithName } = require("./service");
 const { facultyRole, githubRepo } = require("../../../config.json");
 const { updateGuide, startGuideRefresh } = require("../../discordBot/services/guide");
 const { setInitialHoneypotMessage, HONEYPOT_CHANNEL_NAME } = require("../../discordBot/services/honeypot");
-const { startFirewallPruning, resumePendingUnbans } = require("../../discordBot/services/firewall");
+const { startFirewallPruning } = require("../../discordBot/services/firewall");
+const { resumePendingUnbans } = require("../../discordBot/services/kick");
 const { initHooks } = require("../../db/hookInit");
 const { sendPullDateMessage } = require("./message");
 

@@ -1,7 +1,7 @@
-const addPendingUnban = (discordId, unbanAt, PendingUnban) => PendingUnban.create({ discordId, unbanAt });
+const addPendingUnban = async (discordId, unbanAt, PendingUnban) => await PendingUnban.create({ discordId, unbanAt });
 
-const removePendingUnban = (id, PendingUnban) => PendingUnban.destroy({ where: { id } });
+const removePendingUnban = async (id, PendingUnban) => await PendingUnban.destroy({ where: { id } });
 
-const listPendingUnbans = (PendingUnban) => PendingUnban.findAll();
+const listPendingUnbans = async (PendingUnban) => await PendingUnban.findAll();
 
 module.exports = { addPendingUnban, removePendingUnban, listPendingUnbans };
