@@ -5,7 +5,6 @@ const {
   saveFacultyRoleToDb,
   findUserByDbId,
   getAdminUsers,
-  pruneUsersNotInGuild,
   findUnusedUserIds,
   removeUsersByDbIds,
   removeUserIfUnused
@@ -139,28 +138,6 @@ describe("userService", () => {
     expect(admins).toEqual([{ name: "JonDoe", discordId: "10", admin: true, faculty: false }]);
   });
 
-  test("prune removes users no longer in the guild", async () => {
-    userModelMock.findAll.mockResolvedValueOnce([{ discordId: 10 }, { discordId: 20 }, { discordId: 30 }]);
-    userModelMock.findOne
-      .mockResolvedValueOnce({ id: 2, discordId: 20 })
-      .mockResolvedValueOnce({ id: 3, discordId: 30 });
-    const guild = { members: { cache: new Map([[10, {}]]) } };
-
-    await pruneUsersNotInGuild(guild, userModelMock);
-
-    expect(userModelMock.destroy).toHaveBeenCalledTimes(2);
-    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: 2 } });
-    expect(userModelMock.destroy).toHaveBeenCalledWith({ where: { id: 3 } });
-  });
-
-  test("prune removes nobody if everyone is still in the guild", async () => {
-    userModelMock.findAll.mockResolvedValueOnce([{ discordId: 10 }]);
-    const guild = { members: { cache: new Map([[10, {}]]) } };
-
-    await pruneUsersNotInGuild(guild, userModelMock);
-
-    expect(userModelMock.destroy).toHaveBeenCalledTimes(0);
-  });
   test("unused users are those with no courses and no admin or faculty flag", async () => {
     const courseMemberModelMock = { findAll: jest.fn().mockResolvedValueOnce([{ userId: 1 }]) };
     userModelMock.findAll.mockResolvedValueOnce([

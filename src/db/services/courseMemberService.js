@@ -32,6 +32,15 @@ const findCourseInstructors = async (courseId, CourseMember) => {
   });
 };
 
+const findInstructedCourseIds = async (userId, CourseMember) => {
+  const memberships = await CourseMember.findAll({
+    attributes: ["courseId"],
+    where: { userId, instructor: true },
+    raw: true
+  });
+  return memberships.map((membership) => membership.courseId);
+};
+
 const findAllCourseMembersByUser = async (userId, CourseMember) => {
   return await CourseMember.findAll({
     where: {
@@ -75,5 +84,6 @@ module.exports = {
   findCourseMemberCount,
   findCourseInstructors,
   findAllCourseMembersByUser,
+  findInstructedCourseIds,
   getAllMembers
 };

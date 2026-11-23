@@ -64,12 +64,6 @@ const getAllUsers = async (User) => findDecryptedUsers(User);
 
 const getAdminUsers = async (User) => findDecryptedUsers(User, { admin: true });
 
-const pruneUsersNotInGuild = async (guild, User) => {
-  const users = await getAllUsers(User);
-  const staleUsers = users.filter((u) => !guild.members.cache.has(u.discordId));
-  await Promise.all(staleUsers.map((u) => removeUserFromDb(u.discordId, User)));
-};
-
 const findUnusedUserIds = async (User, CourseMember) => {
   const memberships = await CourseMember.findAll({ attributes: ["userId"], raw: true });
   const userIdsWithCourses = new Set(memberships.map((m) => m.userId));
@@ -97,6 +91,5 @@ module.exports = {
   removeUsersByDbIds,
   removeUserIfUnused,
   getAllUsers,
-  getAdminUsers,
-  pruneUsersNotInGuild
+  getAdminUsers
 };

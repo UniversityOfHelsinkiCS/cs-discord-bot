@@ -4,7 +4,8 @@ const {
   createCourseMemberToDatabase,
   removeCourseMemberFromDb,
   findCourseMemberCount,
-  findAllCourseMembersByUser
+  findAllCourseMembersByUser,
+  findInstructedCourseIds
 } = require("../../../src/db/services/courseMemberService");
 
 const courseMemberModelInstanceMock = {
@@ -58,6 +59,17 @@ describe("courseMemberService", () => {
     expect(courseMemberModelMock.findAll).toHaveBeenCalledWith({
       where: { userId: 1 }
     });
+  });
+
+  test("lists the ids of the courses a user instructs", async () => {
+    courseMemberModelMock.findAll.mockResolvedValueOnce([{ courseId: 3 }, { courseId: 7 }]);
+    const courseIds = await findInstructedCourseIds(1, courseMemberModelMock);
+    expect(courseMemberModelMock.findAll).toHaveBeenCalledWith({
+      attributes: ["courseId"],
+      where: { userId: 1, instructor: true },
+      raw: true
+    });
+    expect(courseIds).toEqual([3, 7]);
   });
 
   test("create new course member", async () => {
