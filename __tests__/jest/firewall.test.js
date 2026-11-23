@@ -123,6 +123,7 @@ const models = { PendingUnban: {} };
 
 beforeEach(() => {
   matchScamImages.mockImplementation(matchAgainstScamImages);
+  sendReportToCommandsChannel.mockResolvedValue();
 });
 
 afterEach(() => {
@@ -899,5 +900,122 @@ describe("persisted unbans", () => {
     await jest.advanceTimersByTimeAsync(30 * 1000);
     expect(guild.members.unban).toHaveBeenCalledWith("upcoming");
     expect(removePendingUnban).toHaveBeenCalledWith(2, models.PendingUnban);
+  });
+});
+
+describe("scam handling robustness", () => {
+  const TEXT = "free nitro click here";
+  const reportsContaining = (text) =>
+    sendReportToCommandsChannel.mock.calls.filter(([, content]) => content.includes(text));
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("a removed-scam report is sent even right after a possible-scam report", async () => {
+    const authorId = "possible-then-confirmed";
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    await firewall(makeMessage({ authorId }), client, models);
+    expect(reportsContaining("POSSIBLE SCAM IMAGES DETECTED")).toHaveLength(1);
+    expect(reportsContaining("SCAM MESSAGE DETECTED AND REMOVED")).toHaveLength(1);
+  });
+
+  test("the member is still kicked when the scam message is already gone", async () => {
+    const msg = makeMessage();
+    msg.delete.mockRejectedValue(new Error("Unknown Message"));
+    await firewall(msg, client, models);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test("the message is still removed and the member kicked when reporting fails", async () => {
+    const msg = makeMessage();
+    sendReportToCommandsChannel.mockRejectedValue(new Error("Missing Access"));
+    await firewall(msg, client, models);
+    expect(msg.delete).toHaveBeenCalledTimes(1);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test("a burst of scam messages gives one DM and one ban", async () => {
+    const authorId = "scam-burst";
+    const burst = [makeMessage({ authorId }), makeMessage({ authorId }), makeMessage({ authorId })];
+    await Promise.all(burst.map((msg) => firewall(msg, client, models)));
+    const dmCount = burst.reduce((sum, msg) => sum + msg.author.send.mock.calls.length, 0);
+    const banCount = burst.reduce((sum, msg) => sum + msg.guild.members.ban.mock.calls.length, 0);
+    expect(dmCount).toBe(1);
+    expect(banCount).toBe(1);
+    expect(burst.every((msg) => msg.delete.mock.calls.length === 1)).toBe(true);
+    expect(reportsContaining("SCAM MESSAGE DETECTED AND REMOVED")).toHaveLength(1);
+  });
+
+  test("a burst of scam messages from a staff account gives one DM", async () => {
+    const authorId = "staff-burst";
+    const burst = [
+      makeMessage({ authorId, roleNames: ["faculty"] }),
+      makeMessage({ authorId, roleNames: ["faculty"] })
+    ];
+    await Promise.all(burst.map((msg) => firewall(msg, client, models)));
+    const dmCount = burst.reduce((sum, msg) => sum + msg.author.send.mock.calls.length, 0);
+    expect(dmCount).toBe(1);
+  });
+
+  test("a member can be kicked again once the previous unban is done", async () => {
+    const authorId = "kicked-twice";
+    await firewall(makeMessage({ authorId }), client, models);
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
+    const second = makeMessage({ authorId });
+    await firewall(second, client, models);
+    expect(second.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed scam kick is reported", async () => {
+    const msg = makeMessage();
+    msg.guild.members.ban.mockRejectedValue(new Error("Missing Permissions"));
+    await firewall(msg, client, models);
+    const [report] = reportsContaining("SCAM SENDER NOT KICKED");
+    expect(report[1]).toContain("Kick failed");
+    expect(report[1]).toContain(`<@${msg.author.id}>`);
+  });
+
+  test("a failed honeypot kick is noted in its report", async () => {
+    const authorId = "honeypot-ban-fails";
+    await firewall(
+      makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] }),
+      client,
+      models
+    );
+    const chat = makeMessage({ authorId, channelName: "chat", content: TEXT, attachments: [] });
+    chat.guild.members.ban.mockRejectedValue(new Error("Missing Permissions"));
+    await firewall(chat, client, models);
+    const [report] = reportsContaining("HONEYPOT TRIGGERED");
+    expect(report[1]).toContain("Kick failed");
+  });
+
+  test("a successful kick report has no failure note", async () => {
+    const authorId = "honeypot-ban-works";
+    const post = (content) =>
+      firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client, models);
+    await post("first");
+    await post("second");
+    const [report] = reportsContaining("HONEYPOT REPEAT MESSAGE KICK");
+    expect(report[1]).not.toContain("Kick failed");
+  });
+
+  test("kick DMs say the member can rejoin in about a minute", async () => {
+    const msg = makeMessage();
+    await firewall(msg, client, models);
+    const [dm] = msg.author.send.mock.calls[0];
+    expect(dm).toContain("rejoin in about a minute");
+  });
+
+  test("the ban reason is spelled correctly", async () => {
+    const msg = makeMessage();
+    await firewall(msg, client, models);
+    const [, options] = msg.guild.members.ban.mock.calls[0];
+    expect(options.reason).toBe("Compromised account, scam message detected");
   });
 });

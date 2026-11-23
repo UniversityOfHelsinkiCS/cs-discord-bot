@@ -16,8 +16,9 @@ const honeypotMessages = new Map();
 const chatMessages = new Map();
 const honeypotPosters = new Map();
 
-const recentlyReported = new Map();
+const cooldowns = new Map();
 const COOLDOWN_MS = 2 * 60 * 1000;
+const usersBeingKicked = new Set();
 
 const pendingScamReports = new Map();
 const POSSIBLE_SCAM_REPORT_DELAY_MS = 60 * 1000;
@@ -28,7 +29,7 @@ const buildHoneypotRepeatMessage = () => `Hey!
 
 You have sent multiple messages in our honeypot channel. This channel is a trap designed to catch spam bots - do not post there.
 
-You were kicked from the server. You are free to rejoin.
+You were kicked from the server. You are free to rejoin in about a minute.
 `;
 
 const STAFF_SCAM_MESSAGE = `Hey!
@@ -48,7 +49,7 @@ A message sent from your account in our server (Department of Computer Science, 
 
 **Please reset your Discord password now.** Changing the password signs your account out everywhere else.
 
-You were kicked from the server. You are free to rejoin after resetting your password.
+You were kicked from the server. You are free to rejoin in about a minute, after resetting your password.
 
 If scam messages are still sent from your account after the password reset, have every device you use Discord on checked for malware.
 `;
@@ -93,7 +94,7 @@ const startFirewallPruning = () =>
     pruneStore(honeypotMessages);
     pruneStore(chatMessages);
     pruneTimestampStore(honeypotPosters);
-    pruneTimestampStore(recentlyReported);
+    pruneTimestampStore(cooldowns);
   }, PRUNE_INTERVAL_MS);
 
 const isAlreadyUnbanned = (error) => error?.code === RESTJSONErrorCodes.UnknownBan;
@@ -109,8 +110,16 @@ const unbanNow = async (guild, userId) => {
   }
 };
 
+const claimCooldown = (key) => {
+  const last = cooldowns.get(key);
+  if (last && Date.now() - last < COOLDOWN_MS) return false;
+  cooldowns.set(key, Date.now());
+  return true;
+};
+
 const completeUnban = async (guild, userId, pendingUnban, models) => {
   const unbanned = await unbanNow(guild, userId);
+  usersBeingKicked.delete(userId);
   if (unbanned && pendingUnban) await removePendingUnban(pendingUnban.id, models.PendingUnban).catch(logError);
 };
 
@@ -119,13 +128,30 @@ const scheduleUnban = (guild, userId, unbanAt, pendingUnban, models) => {
   setTimeout(() => completeUnban(guild, userId, pendingUnban, models), delay);
 };
 
-const banThenUnbanLater = async (guild, userId, reason, models) => {
-  const banned = await guild.members.ban(userId, { deleteMessageSeconds: 86400, reason }).catch(logError);
-  if (!banned) return;
+const KICK_RESULT = { kicked: "kicked", failed: "failed", alreadyKicking: "alreadyKicking" };
+
+const kickWithDm = async (message, reason, dm, models) => {
+  const userId = message.author.id;
+  if (usersBeingKicked.has(userId)) return KICK_RESULT.alreadyKicking;
+  usersBeingKicked.add(userId);
+  await message.author.send(dm).catch(logError);
+  const banned = await message.guild.members.ban(userId, { deleteMessageSeconds: 86400, reason }).catch(logError);
+  if (!banned) {
+    usersBeingKicked.delete(userId);
+    return KICK_RESULT.failed;
+  }
   const unbanAt = new Date(Date.now() + UNBAN_DELAY_MS);
   const pendingUnban = await addPendingUnban(userId, unbanAt, models.PendingUnban).catch(logError);
-  scheduleUnban(guild, userId, unbanAt, pendingUnban, models);
+  scheduleUnban(message.guild, userId, unbanAt, pendingUnban, models);
+  return KICK_RESULT.kicked;
 };
+
+const KICK_FAILED_NOTE = "**Kick failed:** the ban did not go through, so the member is still on the server.";
+
+const withKickResult = (content, kickResult) =>
+  kickResult === KICK_RESULT.failed ? `${content}\n${KICK_FAILED_NOTE}` : content;
+
+const describeMember = (message) => `Member: <@${message.author.id}> (${message.author.tag})`;
 
 const resumePendingUnbans = async (guild, models) => {
   const pendingUnbans = await listPendingUnbans(models.PendingUnban).catch(logError);
@@ -134,16 +160,12 @@ const resumePendingUnbans = async (guild, models) => {
   }
 };
 
-const banAndUnban = async (message, reason, finding, models) => {
-  await message.author.send(buildRecoveryMessage(finding)).catch(logError);
-  await banThenUnbanLater(message.guild, message.author.id, reason, models);
-};
-
-const banUnbanAndReport = async (message, client, models, reason, finding) => {
+const kickAndReport = async (message, client, models, { reason, dm, header }) => {
   cancelPossibleScamReport(message.author.id);
-  await banAndUnban(message, reason, finding, models);
-  const content = `**HONEYPOT TRIGGERED**\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
-  await sendReportToCommandsChannel(client, content);
+  const kickResult = await kickWithDm(message, reason, dm, models);
+  if (kickResult === KICK_RESULT.alreadyKicking) return;
+  const content = `${header}\n${describeMember(message)}\nChannel: <#${message.channel.id}>`;
+  await sendReportToCommandsChannel(client, withKickResult(content, kickResult));
 };
 
 const formatAttachmentDetail = (att) => {
@@ -174,14 +196,11 @@ const SCAM_REPORT_HEADERS = {
 };
 
 const sendScamReport = async (message, images, kind, client, notes = []) => {
-  const now = Date.now();
-  const last = recentlyReported.get(message.author.id);
-  if (last && now - last < COOLDOWN_MS) return;
-  recentlyReported.set(message.author.id, now);
+  if (!claimCooldown(`report:${kind}:${message.author.id}`)) return;
   const header = SCAM_REPORT_HEADERS[kind];
   const messageLink = kind === "possible" ? `\nMessage: ${message.url}` : "";
   const noteLines = notes.map((note) => `\n${note}`).join("");
-  const content = `${header}\nMember: <@${message.author.id}> (${message.author.tag})\nChannel: <#${message.channel.id}>\n${describeAttachments(images)}${noteLines}${messageLink}`;
+  const content = `${header}\n${describeMember(message)}\nChannel: <#${message.channel.id}>\n${describeAttachments(images)}${noteLines}${messageLink}`;
   await sendReportWithAttachments(client, content, images);
 };
 
@@ -222,12 +241,11 @@ const checkHoneypot = async (message, client, models) => {
     await cleanHoneypotChannel(message.channel);
     const userId = message.author.id;
     if (postedInHoneypotWithinTtl(userId)) {
-      cancelPossibleScamReport(userId);
-      await message.author.send(buildHoneypotRepeatMessage()).catch(logError);
-      await banThenUnbanLater(message.guild, userId, "Sent multiple messages in honeypot channel", models);
-      const report = `**HONEYPOT REPEAT MESSAGE KICK**\nMember: <@${userId}> (${message.author.tag})\nChannel: <#${message.channel.id}>`;
-      await sendReportToCommandsChannel(client, report);
-      return;
+      return await kickAndReport(message, client, models, {
+        reason: "Sent multiple messages in honeypot channel",
+        dm: buildHoneypotRepeatMessage(),
+        header: "**HONEYPOT REPEAT MESSAGE KICK**"
+      });
     }
     honeypotPosters.set(userId, Date.now());
   }
@@ -243,13 +261,11 @@ const checkHoneypot = async (message, client, models) => {
   }
 
   if (keys.some((key) => hasInStore(crossStore, userId, key))) {
-    await banUnbanAndReport(
-      message,
-      client,
-      models,
-      "Honeypot triggered: message sent in both honeypot and chat channel",
-      "was also posted in a channel meant to catch spam bots"
-    );
+    await kickAndReport(message, client, models, {
+      reason: "Honeypot triggered: message sent in both honeypot and chat channel",
+      dm: buildRecoveryMessage("was also posted in a channel meant to catch spam bots"),
+      header: "**HONEYPOT TRIGGERED**"
+    });
   }
 };
 
@@ -288,9 +304,23 @@ const removeStaffScamMessage = async (message, images, client, notes) => {
   await sendScamReport(message, images, "staffRemoved", client, [
     ...notes,
     "Matches a known scam, but the member has a staff role, so they were not kicked. Their account may be compromised."
-  ]);
+  ]).catch(logError);
   await message.delete().catch(logError);
-  await message.author.send(STAFF_SCAM_MESSAGE).catch(logError);
+  if (claimCooldown(`staff-dm:${message.author.id}`)) await message.author.send(STAFF_SCAM_MESSAGE).catch(logError);
+};
+
+const removeScamMessageAndKick = async (message, images, client, models, notes) => {
+  await sendScamReport(message, images, "removed", client, notes).catch(logError);
+  await message.delete().catch(logError);
+  const kickResult = await kickWithDm(
+    message,
+    "Compromised account, scam message detected",
+    buildRecoveryMessage("matched a known scam"),
+    models
+  );
+  if (kickResult !== KICK_RESULT.failed) return;
+  const content = withKickResult(`**SCAM SENDER NOT KICKED**\n${describeMember(message)}`, kickResult);
+  await sendReportToCommandsChannel(client, content).catch(logError);
 };
 
 const checkAttachments = async (message, client, models) => {
@@ -304,9 +334,7 @@ const checkAttachments = async (message, client, models) => {
   }
   cancelPossibleScamReport(message.author.id);
   if (isStaff(message.member)) return await removeStaffScamMessage(message, images, client, notes);
-  await sendScamReport(message, images, "removed", client, notes);
-  await message.delete();
-  await banAndUnban(message, "Compromized account, scam message detected", "matched a known scam", models);
+  await removeScamMessageAndKick(message, images, client, models, notes);
 };
 
 const firewall = async (message, client, models) => {
@@ -320,7 +348,8 @@ const resetHoneypotState = () => {
   honeypotMessages.clear();
   chatMessages.clear();
   honeypotPosters.clear();
-  recentlyReported.clear();
+  cooldowns.clear();
+  usersBeingKicked.clear();
   for (const timer of pendingScamReports.values()) clearTimeout(timer);
   pendingScamReports.clear();
 };
