@@ -67,6 +67,8 @@ visible only to the person who ran them.
 - `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
 - `/add_scam_fingerprint`, `/list_scam_fingerprints`, `/remove_scam_fingerprint` — manage the known scam images.
   The message menu command Apps → **Add scam fingerprint** adds the images of an existing message.
+- Apps → **Kick user** — kicks a message's author (ban lifted a minute later) with a chosen reason
+  sent to them by DM, and can add the message's images to scam fingerprints first.
 
 ### Membership sync
 
