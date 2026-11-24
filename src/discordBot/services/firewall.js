@@ -229,7 +229,7 @@ const cancelPossibleScamReport = (userId) => {
 
 const isStaff = (member) =>
   Boolean(
-    member.roles?.cache?.some(
+    member?.roles?.cache?.some(
       (role) => STAFF_ROLE_NAMES.includes(role.name) || role.name.endsWith(` ${courseAdminRole}`)
     )
   );
