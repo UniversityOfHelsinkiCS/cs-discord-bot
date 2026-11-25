@@ -11,6 +11,15 @@ const usersBeingKicked = new Set();
 
 const isAlreadyUnbanned = (error) => error?.code === RESTJSONErrorCodes.UnknownBan;
 
+const UNREACHABLE_BY_DM_CODES = [
+  RESTJSONErrorCodes.CannotSendMessagesToThisUser,
+  RESTJSONErrorCodes.CannotSendMessagesToThisUserDueToHavingNoMutualGuilds
+];
+
+const logUnlessUnreachableByDm = (error) => {
+  if (!UNREACHABLE_BY_DM_CODES.includes(error?.code)) logError(error);
+};
+
 const unbanNow = async (guild, userId) => {
   try {
     await guild.members.unban(userId);
@@ -43,7 +52,7 @@ const resumePendingUnbans = async (guild, models) => {
 const kickWithDm = async (guild, user, { reason, dm }, models) => {
   if (usersBeingKicked.has(user.id)) return KICK_RESULT.alreadyKicking;
   usersBeingKicked.add(user.id);
-  await user.send(dm).catch(logError);
+  await user.send(dm).catch(logUnlessUnreachableByDm);
   const banned = await guild.members
     .ban(user.id, { deleteMessageSeconds: DELETE_MESSAGES_SECONDS, reason })
     .catch(logError);

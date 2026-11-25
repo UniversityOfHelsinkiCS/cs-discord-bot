@@ -3,6 +3,7 @@ const { firewall, resetHoneypotState } = require("../../src/discordBot/services/
 const { resumePendingUnbans } = require("../../src/discordBot/services/kick");
 const { HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 const { sendReportToCommandsChannel } = require("../../src/discordBot/services/message");
+const { logError } = require("../../src/discordBot/services/logger");
 
 const { matchScamImages } = require("../../src/discordBot/services/scamImageMatcher");
 const { addPendingUnban, removePendingUnban, listPendingUnbans } = require("../../src/db/services/pendingUnbanService");
@@ -939,6 +940,25 @@ describe("scam handling robustness", () => {
     await firewall(msg, client, models);
     expect(msg.delete).toHaveBeenCalledTimes(1);
     expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    RESTJSONErrorCodes.CannotSendMessagesToThisUser,
+    RESTJSONErrorCodes.CannotSendMessagesToThisUserDueToHavingNoMutualGuilds
+  ])("a member unreachable by DM (code %i) is kicked without logging an error", async (code) => {
+    const msg = makeMessage();
+    msg.author.send.mockRejectedValue(Object.assign(new Error("Cannot send"), { code }));
+    await firewall(msg, client, models);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  test("other DM failures are still logged", async () => {
+    const msg = makeMessage();
+    const error = new Error("Service Unavailable");
+    msg.author.send.mockRejectedValue(error);
+    await firewall(msg, client, models);
+    expect(logError).toHaveBeenCalledWith(error);
   });
 
   test("a burst of scam messages gives one DM and one ban", async () => {
