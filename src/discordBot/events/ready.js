@@ -1,6 +1,6 @@
 const { initializeApplicationContext } = require("../services/init");
 const { setUpCommands } = require("../services/command");
-const { pruneUsersNotInGuild } = require("../../db/services/userService");
+const { removeDepartedMembers } = require("../services/memberDeparture");
 const { logError } = require("../services/logger");
 
 const fetchAllMembers = async (guild, attempts = 3) => {
@@ -22,7 +22,7 @@ const execute = async (client, models) => {
 
   const members = await fetchAllMembers(client.guild);
   if (members) {
-    await pruneUsersNotInGuild(client.guild, models.User);
+    await removeDepartedMembers(client.guild, models);
   }
   console.log(`${client.user.tag} initialized!`);
 };

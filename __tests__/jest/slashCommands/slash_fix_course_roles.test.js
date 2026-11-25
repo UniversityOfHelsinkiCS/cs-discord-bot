@@ -96,6 +96,20 @@ describe("slash fix_course_roles command", () => {
     expect(replyInChunks).toHaveBeenCalledTimes(1);
   });
 
+  test("demotes a stale instructor entry before removing it", async () => {
+    const member = buildMember([]);
+    const order = [];
+    const courseMember = { userId: 10, courseId: 1, instructor: true };
+    courseMember.save = jest.fn(async () => order.push(`save instructor=${courseMember.instructor}`));
+    findAllCourseMembers.mockImplementation(() => [courseMember]);
+    findUserByDbId.mockImplementation(() => ({ discordId: "discord-1" }));
+    removeCourseMemberFromDb.mockImplementationOnce(async () => order.push("remove"));
+
+    await execute(interaction, buildClient(member), models);
+
+    expect(order).toEqual(["save instructor=false", "remove"]);
+  });
+
   test("leaves a consistent member untouched", async () => {
     const member = buildMember([courseRole.id]);
     findCourseMember.mockImplementation(() => ({ instructor: false, save: jest.fn() }));

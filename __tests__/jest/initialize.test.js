@@ -10,6 +10,7 @@ jest.mock("../../src/discordBot/services/service");
 jest.mock("../../src/discordBot/services/guide");
 jest.mock("../../src/discordBot/services/honeypot");
 jest.mock("../../src/discordBot/services/firewall");
+jest.mock("../../src/discordBot/services/kick");
 jest.mock("../../src/db/hookInit");
 
 initHooks.mockImplementation(() => true);

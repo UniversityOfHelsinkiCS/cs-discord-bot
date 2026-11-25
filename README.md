@@ -67,6 +67,8 @@ visible only to the person who ran them.
 - `/list_courses`, `/server_status` (compares the server with the database) and `/delete_course`.
 - `/add_scam_fingerprint`, `/list_scam_fingerprints`, `/remove_scam_fingerprint` — manage the known scam images.
   The message menu command Apps → **Add scam fingerprint** adds the images of an existing message.
+- Apps → **Kick user** — kicks a message's author (ban lifted a minute later) with a chosen reason
+  sent to them by DM, and can add the message's images to scam fingerprints first.
 
 ### Membership sync
 
@@ -84,12 +86,12 @@ visible only to the person who ran them.
 
 - **Honeypot channel:** anyone posting in the "do not post here" channel
   is reported to staff, and posting the same content in both the honeypot and the
-  public chat channel triggers an automatic kick (ban immediately followed by an
-  unban, which also purges ~24 h of that account's recent messages).
+  public chat channel triggers an automatic kick (a ban lifted a minute later, which
+  also purges ~24 h of that account's recent messages; pending unbans are stored in
+  the database so they survive a restart).
 - **Compromised-account image scams:** messages carrying two or more images are
   compared with known scam images by perceptual hash (a small preview of each
-  image is downloaded and hashed in memory), and four-image messages are also
-  checked against known image-dimension fingerprints. When every image matches,
+  image is downloaded and hashed in memory). When every image matches,
   the message is deleted, the account is kicked, and the user is DM'd recovery
   instructions. Members with the `admin`, `cs-admin`, faculty or instructor role
   are never kicked for this; their message is still removed, they are DM'd a
@@ -107,8 +109,10 @@ visible only to the person who ran them.
 
 ## Data storage
 
-- PostgreSQL tables only for `User`, `Course`, `Channel`, `CourseMember`, and
-  `ScamImage` (perceptual hashes of known scam images, with no user data).
+- PostgreSQL tables only for `User`, `Course`, `Channel`, `CourseMember`,
+  `ScamImage` (perceptual hashes of known scam images, with no user data), and
+  `PendingUnban` (encrypted Discord ID and due time of an automatic kick's unban,
+  deleted once the unban succeeds).
 - **No message content is persisted.** Chat text is used transiently for command
   parsing, spam detection (in memory, 1-hour TTL), and staff reports.
 

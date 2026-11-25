@@ -36,16 +36,21 @@ const reportScamChange = async (client, interaction, lines) => {
 
 const saveScamImages = async ({ interaction, client, models, rawScamName, attachments, sourceUrl }) => {
   const scamName = rawScamName.trim();
-  if (!scamName) return await editErrorEphemeral(interaction, "Give the scam a name.");
+  if (!scamName) {
+    await editErrorEphemeral(interaction, "Give the scam a name.");
+    return false;
+  }
   if (await scamNameExists(scamName, models.ScamImage)) {
-    return await editErrorEphemeral(interaction, `A scam called "${scamName}" already exists. Pick another name.`);
+    await editErrorEphemeral(interaction, `A scam called "${scamName}" already exists. Pick another name.`);
+    return false;
   }
 
   const knownHashes = new Set((await getKnownScamImages(models.ScamImage)).flatMap((image) => image.hashes));
   const results = await Promise.all(attachments.map((attachment) => hashScamImage(attachment, knownHashes)));
   const added = results.filter((result) => result.hashes);
   if (added.length === 0) {
-    return await editErrorEphemeral(interaction, `No images were added.${describeSkipped(results)}`);
+    await editErrorEphemeral(interaction, `No images were added.${describeSkipped(results)}`);
+    return false;
   }
 
   await addScamFingerprints(
@@ -62,6 +67,7 @@ const saveScamImages = async ({ interaction, client, models, rawScamName, attach
     `Images: ${imageCount} (${added.map((result) => result.attachment.name).join(", ")})`,
     ...(sourceUrl ? [`From: ${sourceUrl}`] : [])
   ]);
+  return true;
 };
 
 module.exports = { describeImageCount, isImage, reportScamChange, saveScamImages };

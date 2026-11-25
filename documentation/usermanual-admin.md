@@ -123,6 +123,7 @@ Command | Explanation | Arguments
 [/delete_command](./commands/admin/delete_command.md) | Delete the given slash command. | :heavy_check_mark:
 [/delete_course](./commands/admin/delete_course.md) | Delete the given course channel. | :heavy_check_mark:
 [/fix_course_roles](./commands/admin/fix_course_roles.md) | Add missing course roles and sync course memberships from Discord to the database. | :x:
+[Apps → Kick user](./commands/admin/kick_user_from_message.md) | Kick the author of a message, with a reason sent to them. | :heavy_check_mark:
 [/list_admins](./commands/admin/list_admins.md) | List all users with the admin flag in the database. | :x:
 [/list_courses](./commands/admin/list_courses.md) | List all courses and channels in them | :x:
 [/list_scam_fingerprints](./commands/admin/list_scam_fingerprints.md) | List the known scams. | :x:

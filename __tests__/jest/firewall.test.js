@@ -1,8 +1,12 @@
+const { RESTJSONErrorCodes } = require("discord.js");
 const { firewall, resetHoneypotState } = require("../../src/discordBot/services/firewall");
+const { resumePendingUnbans } = require("../../src/discordBot/services/kick");
 const { HONEYPOT_CHANNEL_NAME } = require("../../src/discordBot/services/honeypot");
 const { sendReportToCommandsChannel } = require("../../src/discordBot/services/message");
+const { logError } = require("../../src/discordBot/services/logger");
 
 const { matchScamImages } = require("../../src/discordBot/services/scamImageMatcher");
+const { addPendingUnban, removePendingUnban, listPendingUnbans } = require("../../src/db/services/pendingUnbanService");
 
 jest.mock("../../src/discordBot/services/message");
 jest.mock("../../src/discordBot/services/logger", () => ({ logError: jest.fn() }));
@@ -17,6 +21,11 @@ jest.mock("../../src/discordBot/services/scamImageMatcher", () => ({
 }));
 
 jest.mock("../../src/db/services/scamImageService", () => ({ getKnownScamImages: jest.fn(async () => []) }));
+jest.mock("../../src/db/services/pendingUnbanService", () => ({
+  addPendingUnban: jest.fn(async (discordId, unbanAt) => ({ id: `pending-${discordId}`, discordId, unbanAt })),
+  removePendingUnban: jest.fn(async () => 1),
+  listPendingUnbans: jest.fn(async () => [])
+}));
 
 const hashMatch = (matchedCount, total) => ({
   total,
@@ -33,6 +42,9 @@ const SCAM_IMAGES = [
   { contentType: "image/png", name: "img4.png", size: 500, width: 828, height: 1012, url: "http://example.com/4" }
 ];
 
+const matchAgainstScamImages = async (images) =>
+  hashMatch(images.filter((image) => SCAM_IMAGES.includes(image)).length, images.length);
+
 const SUSPICIOUS_IMAGES = [
   { contentType: "image/jpeg", name: "a.jpg", size: 100, width: 100, height: 200, url: "http://example.com/a" },
   { contentType: "image/jpeg", name: "b.jpg", size: 100, width: 300, height: 400, url: "http://example.com/b" },
@@ -40,6 +52,7 @@ const SUSPICIOUS_IMAGES = [
   { contentType: "image/jpeg", name: "d.jpg", size: 100, width: 700, height: 800, url: "http://example.com/d" }
 ];
 const REPORT_DELAY_MS = 60 * 1000;
+const UNBAN_DELAY_MS = 60 * 1000;
 
 const makeAttachments = (allAttachments) => ({
   filter: jest.fn((fn) => {
@@ -108,6 +121,12 @@ const makeMessage = ({
 };
 
 const client = {};
+const models = { PendingUnban: {} };
+
+beforeEach(() => {
+  matchScamImages.mockImplementation(matchAgainstScamImages);
+  sendReportToCommandsChannel.mockResolvedValue();
+});
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -125,38 +144,24 @@ describe("firewall", () => {
 
   test("ignores bot messages", async () => {
     const msg = makeMessage({ isBot: true });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.attachments.filter).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
   });
 
   test("ignores messages without a guild member", async () => {
     const msg = makeMessage({ hasMember: false });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.attachments.filter).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
   });
 
-  test("does nothing for messages with fewer than 4 images", async () => {
-    const msg = makeMessage({ attachments: SCAM_IMAGES.slice(0, 3) });
-    await firewall(msg, client);
+  test("does not treat known scam image dimensions alone as a scam", async () => {
+    matchScamImages.mockResolvedValueOnce(hashMatch(0, 4));
+    const msg = makeMessage();
+    await firewall(msg, client, models);
     expect(msg.delete).not.toHaveBeenCalled();
-    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
-  });
-
-  test("does nothing for messages with more than 4 images", async () => {
-    const extra = {
-      contentType: "image/jpeg",
-      name: "extra.jpg",
-      size: 100,
-      width: 100,
-      height: 100,
-      url: "http://example.com/5"
-    };
-    const msg = makeMessage({ attachments: [...SCAM_IMAGES, extra] });
-    await firewall(msg, client);
-    expect(msg.delete).not.toHaveBeenCalled();
-    expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
+    expect(msg.guild.members.ban).not.toHaveBeenCalled();
   });
 
   test("does nothing when 4 attachments are not images", async () => {
@@ -167,14 +172,14 @@ describe("firewall", () => {
       { contentType: "text/plain", name: "d.txt", size: 100 }
     ];
     const msg = makeMessage({ attachments: nonImages });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
   });
 
   test("reports 4 images that do not match a known scam fingerprint", async () => {
     const msg = makeMessage({ attachments: SUSPICIOUS_IMAGES });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(msg.delete).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
@@ -184,10 +189,12 @@ describe("firewall", () => {
 
   test("deletes message, DMs user, bans+unbans member, and reports when scam fingerprint matches", async () => {
     const msg = makeMessage();
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).toHaveBeenCalledTimes(1);
     expect(msg.author.send).toHaveBeenCalledTimes(1);
     expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(msg.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(msg.guild.members.unban).toHaveBeenCalledTimes(1);
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
@@ -196,7 +203,7 @@ describe("firewall", () => {
 
   test("report includes member mention, channel link, and image count", async () => {
     const msg = makeMessage();
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).toContain(`<@${msg.author.id}>`);
     expect(content).toContain("<#channel-123>");
@@ -205,7 +212,7 @@ describe("firewall", () => {
 
   test("possible scam report includes message link", async () => {
     const msg = makeMessage({ attachments: SUSPICIOUS_IMAGES });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).toContain(msg.url);
@@ -213,14 +220,14 @@ describe("firewall", () => {
 
   test("confirmed scam report does not include message link", async () => {
     const msg = makeMessage();
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).not.toContain(msg.url);
   });
 
   test("report passes image URLs as files", async () => {
     const msg = makeMessage();
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, , files] = sendReportToCommandsChannel.mock.calls[0];
     expect(files).toHaveLength(4);
     expect(files).toContain("http://example.com/1");
@@ -230,16 +237,16 @@ describe("firewall", () => {
     const authorId = "cooldown-test-user";
     const msg1 = makeMessage({ authorId });
     const msg2 = makeMessage({ authorId });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
   });
 
   test("different users are each reported independently", async () => {
     const msg1 = makeMessage({ authorId: "user-a" });
     const msg2 = makeMessage({ authorId: "user-b" });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(2);
   });
 });
@@ -247,15 +254,23 @@ describe("firewall", () => {
 describe("honeypot detection", () => {
   const TEXT = "free nitro click here";
 
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   test("message in honeypot only - no kick", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.guild.members.ban).not.toHaveBeenCalled();
   });
 
   test("message in chat only - no kick", async () => {
     const msg = makeMessage({ channelName: "chat", content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.guild.members.ban).not.toHaveBeenCalled();
   });
 
@@ -263,9 +278,11 @@ describe("honeypot detection", () => {
     const authorId = "bot-user-1";
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     const chat = makeMessage({ authorId, channelName: "chat", content: TEXT, attachments: [] });
-    await firewall(hp, client);
-    await firewall(chat, client);
+    await firewall(hp, client, models);
+    await firewall(chat, client, models);
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(chat.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(chat.guild.members.unban).toHaveBeenCalledTimes(1);
     expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining("HONEYPOT TRIGGERED"));
     const [dm] = chat.author.send.mock.calls[0];
@@ -278,9 +295,10 @@ describe("honeypot detection", () => {
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     const chat = makeMessage({ authorId, channelName: "chat", content: TEXT, attachments: [] });
     chat.guild.members.ban = jest.fn().mockRejectedValue(new Error("Missing Permissions"));
-    await firewall(hp, client);
-    await firewall(chat, client);
+    await firewall(hp, client, models);
+    await firewall(chat, client, models);
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(chat.guild.members.unban).not.toHaveBeenCalled();
   });
 
@@ -288,9 +306,11 @@ describe("honeypot detection", () => {
     const authorId = "bot-user-2";
     const chat = makeMessage({ authorId, channelName: "chat", content: TEXT, attachments: [] });
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    await firewall(chat, client);
-    await firewall(hp, client);
+    await firewall(chat, client, models);
+    await firewall(hp, client, models);
     expect(hp.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(hp.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(hp.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -298,28 +318,28 @@ describe("honeypot detection", () => {
     const authorId = "bot-user-3";
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "trap message", attachments: [] });
     const chat = makeMessage({ authorId, channelName: "chat", content: "different message", attachments: [] });
-    await firewall(hp, client);
-    await firewall(chat, client);
+    await firewall(hp, client, models);
+    await firewall(chat, client, models);
     expect(chat.guild.members.ban).not.toHaveBeenCalled();
   });
 
   test("honeypot message is always deleted", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).toHaveBeenCalledTimes(1);
   });
 
   test("chat message is not deleted", async () => {
     const msg = makeMessage({ channelName: "chat", content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).not.toHaveBeenCalled();
   });
 
   test("different users with same content are not cross-matched", async () => {
     const hp = makeMessage({ authorId: "user-x", channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     const chat = makeMessage({ authorId: "user-y", channelName: "chat", content: TEXT, attachments: [] });
-    await firewall(hp, client);
-    await firewall(chat, client);
+    await firewall(hp, client, models);
+    await firewall(chat, client, models);
     expect(chat.guild.members.ban).not.toHaveBeenCalled();
   });
 
@@ -328,7 +348,7 @@ describe("honeypot detection", () => {
       { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
     ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).toHaveBeenCalledTimes(1);
   });
 
@@ -339,9 +359,11 @@ describe("honeypot detection", () => {
     ];
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     const chat = makeMessage({ authorId, channelName: "chat", content: "", attachments: att });
-    await firewall(hp, client);
-    await firewall(chat, client);
+    await firewall(hp, client, models);
+    await firewall(chat, client, models);
     expect(chat.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(chat.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(chat.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -352,8 +374,8 @@ describe("honeypot detection", () => {
     ];
     const chat = makeMessage({ authorId, channelName: "chat", content: "", attachments: att });
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
-    await firewall(chat, client);
-    await firewall(hp, client);
+    await firewall(chat, client, models);
+    await firewall(hp, client, models);
     expect(hp.guild.members.ban).toHaveBeenCalledTimes(1);
   });
 
@@ -367,14 +389,14 @@ describe("honeypot detection", () => {
     ];
     const hp = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att1 });
     const chat = makeMessage({ authorId, channelName: "chat", content: "", attachments: att2 });
-    await firewall(hp, client);
-    await firewall(chat, client);
+    await firewall(hp, client, models);
+    await firewall(chat, client, models);
     expect(chat.guild.members.ban).not.toHaveBeenCalled();
   });
 
   test("first honeypot message from a user does not trigger a ban", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.guild.members.ban).not.toHaveBeenCalled();
   });
 
@@ -387,9 +409,11 @@ describe("honeypot detection", () => {
       content: "different content",
       attachments: []
     });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     expect(msg2.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(msg2.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(msg2.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -397,8 +421,8 @@ describe("honeypot detection", () => {
     const authorId = "repeat-poster-2";
     const msg1 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "other", attachments: [] });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     expect(msg2.author.send).toHaveBeenCalledTimes(1);
     const dmContent = msg2.author.send.mock.calls[0][0];
     expect(dmContent).toContain("honeypot");
@@ -408,8 +432,8 @@ describe("honeypot detection", () => {
     const authorId = "repeat-poster-3";
     const msg1 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
     const msg2 = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "other", attachments: [] });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     expect(sendReportToCommandsChannel).toHaveBeenCalledWith(
       client,
       expect.stringContaining("HONEYPOT REPEAT MESSAGE KICK")
@@ -418,7 +442,7 @@ describe("honeypot detection", () => {
 
   test("honeypot message report includes the message content", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(sendReportToCommandsChannel).toHaveBeenCalledWith(client, expect.stringContaining(TEXT));
   });
 
@@ -427,7 +451,7 @@ describe("honeypot detection", () => {
       { name: "spam.png", size: 5000, contentType: "image/png", width: 100, height: 100, url: "http://example.com/s" }
     ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).toContain("Message: *(no text content)*");
   });
@@ -438,7 +462,7 @@ describe("honeypot detection", () => {
       { name: "notes.txt", size: 20, contentType: "text/plain", width: null, height: null, url: "http://example.com/t" }
     ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, content, files] = sendReportToCommandsChannel.mock.calls[0];
     expect(files).toEqual(["http://example.com/s", "http://example.com/t"]);
     expect(content).toContain("Count: 2\n• spam.png | image/png | 5000B | 100x100\n• notes.txt | text/plain | 20B");
@@ -453,7 +477,7 @@ describe("honeypot detection", () => {
       order.push("clean");
       return makeCollection([]);
     });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(order).toEqual(["report", "clean"]);
   });
 
@@ -463,7 +487,7 @@ describe("honeypot detection", () => {
     ];
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: "", attachments: att });
     sendReportToCommandsChannel.mockRejectedValueOnce(new Error("Request entity too large"));
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, fallbackContent, fallbackFiles] = sendReportToCommandsChannel.mock.calls[1];
     expect(fallbackContent).toContain("http://example.com/b");
     expect(fallbackFiles).toBeUndefined();
@@ -471,7 +495,7 @@ describe("honeypot detection", () => {
 
   test("honeypot message report has no attachment list when there are none", async () => {
     const msg = makeMessage({ channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
     expect(content).not.toContain("Count:");
   });
@@ -485,8 +509,8 @@ describe("honeypot detection", () => {
       content: "other content",
       attachments: []
     });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     const triggeredCall = sendReportToCommandsChannel.mock.calls.find(([, content]) =>
       content.includes("HONEYPOT REPEAT MESSAGE KICK")
     );
@@ -506,8 +530,8 @@ describe("honeypot detection", () => {
       content: TEXT,
       attachments: []
     });
-    await firewall(msg1, client);
-    await firewall(msg2, client);
+    await firewall(msg1, client, models);
+    await firewall(msg2, client, models);
     expect(msg1.guild.members.ban).not.toHaveBeenCalled();
     expect(msg2.guild.members.ban).not.toHaveBeenCalled();
   });
@@ -521,7 +545,7 @@ describe("honeypot detection", () => {
       attachments: [],
       extraChannelMessages: [stale1, stale2]
     });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.channel.bulkDelete).toHaveBeenCalledTimes(1);
   });
 
@@ -533,7 +557,7 @@ describe("honeypot detection", () => {
       attachments: [],
       extraChannelMessages: [pinnedMsg]
     });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(pinnedMsg.delete).not.toHaveBeenCalled();
   });
 
@@ -546,7 +570,7 @@ describe("honeypot detection", () => {
       attachments: [],
       extraChannelMessages: [oldMsg]
     });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(oldMsg.delete).toHaveBeenCalledTimes(1);
     expect(msg.channel.bulkDelete).not.toHaveBeenCalled();
   });
@@ -555,7 +579,7 @@ describe("honeypot detection", () => {
 describe("honeypot poster expiry", () => {
   const TTL_MS = 60 * 60 * 1000;
   const postHoneypot = (authorId, content) =>
-    firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client);
+    firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client, models);
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -572,9 +596,11 @@ describe("honeypot poster expiry", () => {
 
     jest.setSystemTime(Date.now() + TTL_MS - 1000);
     const second = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "second", attachments: [] });
-    await firewall(second, client);
+    await firewall(second, client, models);
 
     expect(second.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(second.guild.members.unban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
     expect(second.guild.members.unban).toHaveBeenCalledTimes(1);
   });
 
@@ -584,7 +610,7 @@ describe("honeypot poster expiry", () => {
 
     jest.setSystemTime(Date.now() + TTL_MS + 1000);
     const second = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "second", attachments: [] });
-    await firewall(second, client);
+    await firewall(second, client, models);
 
     expect(second.guild.members.ban).not.toHaveBeenCalled();
   });
@@ -595,12 +621,12 @@ describe("honeypot poster expiry", () => {
 
     jest.setSystemTime(Date.now() + TTL_MS + 1000);
     const rearm = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "rearm", attachments: [] });
-    await firewall(rearm, client);
+    await firewall(rearm, client, models);
     expect(rearm.guild.members.ban).not.toHaveBeenCalled();
 
     jest.setSystemTime(Date.now() + 60 * 1000);
     const third = makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "third", attachments: [] });
-    await firewall(third, client);
+    await firewall(third, client, models);
     expect(third.guild.members.ban).toHaveBeenCalledTimes(1);
   });
 });
@@ -618,7 +644,7 @@ describe("possible scam report delay", () => {
   });
 
   test("is not sent before a minute has passed", async () => {
-    await firewall(makeMessage({ attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(makeMessage({ attachments: SUSPICIOUS_IMAGES }), client, models);
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS - 1);
     expect(possibleScamReports()).toHaveLength(0);
     await jest.advanceTimersByTimeAsync(1);
@@ -627,10 +653,11 @@ describe("possible scam report delay", () => {
 
   test("is not sent when the same images also land in the honeypot", async () => {
     const authorId = "scam-then-honeypot";
-    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
     await firewall(
       makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, attachments: SUSPICIOUS_IMAGES }),
-      client
+      client,
+      models
     );
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(possibleScamReports()).toHaveLength(0);
@@ -642,8 +669,8 @@ describe("possible scam report delay", () => {
   test("is not sent when the user is kicked for posting twice in the honeypot", async () => {
     const authorId = "scam-then-honeypot-twice";
     const postHoneypot = (content) =>
-      firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client);
-    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+      firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client, models);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
     await postHoneypot("first");
     await postHoneypot("second");
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
@@ -652,10 +679,11 @@ describe("possible scam report delay", () => {
 
   test("is still sent when the user only posts once in the honeypot without being kicked", async () => {
     const authorId = "scam-and-single-honeypot";
-    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
     await firewall(
       makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: "hello", attachments: [] }),
-      client
+      client,
+      models
     );
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(possibleScamReports()).toHaveLength(1);
@@ -663,8 +691,8 @@ describe("possible scam report delay", () => {
 
   test("several suspicious messages from one user give one report", async () => {
     const authorId = "many-suspicious";
-    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
-    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(possibleScamReports()).toHaveLength(1);
   });
@@ -684,7 +712,7 @@ describe("known scam image matching", () => {
   test("removes the message and kicks when every image matches a known scam image", async () => {
     matchScamImages.mockResolvedValueOnce(hashMatch(3, 3));
     const msg = makeMessage({ attachments: THREE_IMAGES });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).toHaveBeenCalledTimes(1);
     expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
     const [, content] = sendReportToCommandsChannel.mock.calls[0];
@@ -700,7 +728,7 @@ describe("known scam image matching", () => {
   test("holds a possible scam report when only some images match", async () => {
     matchScamImages.mockResolvedValueOnce(hashMatch(2, 3));
     const msg = makeMessage({ attachments: THREE_IMAGES });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     expect(msg.delete).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
@@ -711,14 +739,14 @@ describe("known scam image matching", () => {
 
   test("does nothing for images that match nothing", async () => {
     const msg = makeMessage({ attachments: THREE_IMAGES });
-    await firewall(msg, client);
+    await firewall(msg, client, models);
     await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
     expect(msg.delete).not.toHaveBeenCalled();
     expect(sendReportToCommandsChannel).not.toHaveBeenCalled();
   });
 
   test("does not check a single image", async () => {
-    await firewall(makeMessage({ attachments: THREE_IMAGES.slice(0, 1) }), client);
+    await firewall(makeMessage({ attachments: THREE_IMAGES.slice(0, 1) }), client, models);
     expect(matchScamImages).not.toHaveBeenCalled();
   });
 
@@ -726,7 +754,7 @@ describe("known scam image matching", () => {
     "removes a known scam from a member with the %s role, pings the admins and warns the member without kicking",
     async (roleName) => {
       const msg = makeMessage({ roleNames: [roleName] });
-      await firewall(msg, client);
+      await firewall(msg, client, models);
       expect(msg.delete).toHaveBeenCalledTimes(1);
       expect(msg.guild.members.ban).not.toHaveBeenCalled();
       expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
@@ -745,4 +773,270 @@ describe("known scam image matching", () => {
       expect(sendReportToCommandsChannel).toHaveBeenCalledTimes(1);
     }
   );
+});
+
+describe("persisted unbans", () => {
+  const TEXT = "free nitro click here";
+  const kickViaHoneypot = async (authorId) => {
+    await firewall(
+      makeMessage({
+        authorId,
+        channelName: HONEYPOT_CHANNEL_NAME,
+        content: TEXT,
+        attachments: []
+      }),
+      client,
+      models
+    );
+    const chat = makeMessage({
+      authorId,
+      channelName: "chat",
+      content: TEXT,
+      attachments: []
+    });
+    await firewall(chat, client, models);
+    return chat;
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("a ban stores a pending unban due a minute later", async () => {
+    await kickViaHoneypot("persist-1");
+    expect(addPendingUnban).toHaveBeenCalledWith(
+      "persist-1",
+      new Date(Date.now() + UNBAN_DELAY_MS),
+      models.PendingUnban
+    );
+  });
+
+  test("the pending unban is removed once the unban succeeds", async () => {
+    const chat = await kickViaHoneypot("persist-2");
+    expect(removePendingUnban).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
+    expect(chat.guild.members.unban).toHaveBeenCalledWith("persist-2");
+    expect(removePendingUnban).toHaveBeenCalledWith("pending-persist-2", models.PendingUnban);
+  });
+
+  test("the pending unban is kept when the unban fails", async () => {
+    const authorId = "persist-3";
+    await firewall(
+      makeMessage({
+        authorId,
+        channelName: HONEYPOT_CHANNEL_NAME,
+        content: TEXT,
+        attachments: []
+      }),
+      client,
+      models
+    );
+    const chat = makeMessage({
+      authorId,
+      channelName: "chat",
+      content: TEXT,
+      attachments: []
+    });
+    chat.guild.members.unban.mockRejectedValue(new Error("Service Unavailable"));
+    await firewall(chat, client, models);
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
+    expect(removePendingUnban).not.toHaveBeenCalled();
+  });
+
+  test("the pending unban is removed when the member was already unbanned", async () => {
+    const authorId = "persist-4";
+    await firewall(
+      makeMessage({
+        authorId,
+        channelName: HONEYPOT_CHANNEL_NAME,
+        content: TEXT,
+        attachments: []
+      }),
+      client,
+      models
+    );
+    const chat = makeMessage({
+      authorId,
+      channelName: "chat",
+      content: TEXT,
+      attachments: []
+    });
+    chat.guild.members.unban.mockRejectedValue(
+      Object.assign(new Error("Unknown Ban"), {
+        code: RESTJSONErrorCodes.UnknownBan
+      })
+    );
+    await firewall(chat, client, models);
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
+    expect(removePendingUnban).toHaveBeenCalledWith("pending-persist-4", models.PendingUnban);
+  });
+
+  test("the member is still unbanned when storing the pending unban fails", async () => {
+    addPendingUnban.mockRejectedValueOnce(new Error("connection lost"));
+    const chat = await kickViaHoneypot("persist-5");
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
+    expect(chat.guild.members.unban).toHaveBeenCalledWith("persist-5");
+    expect(removePendingUnban).not.toHaveBeenCalled();
+  });
+
+  test("on startup overdue unbans run at once and future ones wait until due", async () => {
+    const guild = { members: { unban: jest.fn().mockResolvedValue() } };
+    listPendingUnbans.mockResolvedValueOnce([
+      { id: 1, discordId: "overdue", unbanAt: new Date(Date.now() - 1000) },
+      {
+        id: 2,
+        discordId: "upcoming",
+        unbanAt: new Date(Date.now() + 30 * 1000)
+      }
+    ]);
+    await resumePendingUnbans(guild, models);
+    await jest.advanceTimersByTimeAsync(0);
+    expect(guild.members.unban).toHaveBeenCalledTimes(1);
+    expect(guild.members.unban).toHaveBeenCalledWith("overdue");
+    expect(removePendingUnban).toHaveBeenCalledWith(1, models.PendingUnban);
+    await jest.advanceTimersByTimeAsync(30 * 1000);
+    expect(guild.members.unban).toHaveBeenCalledWith("upcoming");
+    expect(removePendingUnban).toHaveBeenCalledWith(2, models.PendingUnban);
+  });
+});
+
+describe("scam handling robustness", () => {
+  const TEXT = "free nitro click here";
+  const reportsContaining = (text) =>
+    sendReportToCommandsChannel.mock.calls.filter(([, content]) => content.includes(text));
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("a removed-scam report is sent even right after a possible-scam report", async () => {
+    const authorId = "possible-then-confirmed";
+    await firewall(makeMessage({ authorId, attachments: SUSPICIOUS_IMAGES }), client, models);
+    await jest.advanceTimersByTimeAsync(REPORT_DELAY_MS);
+    await firewall(makeMessage({ authorId }), client, models);
+    expect(reportsContaining("POSSIBLE SCAM IMAGES DETECTED")).toHaveLength(1);
+    expect(reportsContaining("SCAM MESSAGE DETECTED AND REMOVED")).toHaveLength(1);
+  });
+
+  test("the member is still kicked when the scam message is already gone", async () => {
+    const msg = makeMessage();
+    msg.delete.mockRejectedValue(new Error("Unknown Message"));
+    await firewall(msg, client, models);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test("the message is still removed and the member kicked when reporting fails", async () => {
+    const msg = makeMessage();
+    sendReportToCommandsChannel.mockRejectedValue(new Error("Missing Access"));
+    await firewall(msg, client, models);
+    expect(msg.delete).toHaveBeenCalledTimes(1);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    RESTJSONErrorCodes.CannotSendMessagesToThisUser,
+    RESTJSONErrorCodes.CannotSendMessagesToThisUserDueToHavingNoMutualGuilds
+  ])("a member unreachable by DM (code %i) is kicked without logging an error", async (code) => {
+    const msg = makeMessage();
+    msg.author.send.mockRejectedValue(Object.assign(new Error("Cannot send"), { code }));
+    await firewall(msg, client, models);
+    expect(msg.guild.members.ban).toHaveBeenCalledTimes(1);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  test("other DM failures are still logged", async () => {
+    const msg = makeMessage();
+    const error = new Error("Service Unavailable");
+    msg.author.send.mockRejectedValue(error);
+    await firewall(msg, client, models);
+    expect(logError).toHaveBeenCalledWith(error);
+  });
+
+  test("a burst of scam messages gives one DM and one ban", async () => {
+    const authorId = "scam-burst";
+    const burst = [makeMessage({ authorId }), makeMessage({ authorId }), makeMessage({ authorId })];
+    await Promise.all(burst.map((msg) => firewall(msg, client, models)));
+    const dmCount = burst.reduce((sum, msg) => sum + msg.author.send.mock.calls.length, 0);
+    const banCount = burst.reduce((sum, msg) => sum + msg.guild.members.ban.mock.calls.length, 0);
+    expect(dmCount).toBe(1);
+    expect(banCount).toBe(1);
+    expect(burst.every((msg) => msg.delete.mock.calls.length === 1)).toBe(true);
+    expect(reportsContaining("SCAM MESSAGE DETECTED AND REMOVED")).toHaveLength(1);
+  });
+
+  test("a burst of scam messages from a staff account gives one DM", async () => {
+    const authorId = "staff-burst";
+    const burst = [
+      makeMessage({ authorId, roleNames: ["faculty"] }),
+      makeMessage({ authorId, roleNames: ["faculty"] })
+    ];
+    await Promise.all(burst.map((msg) => firewall(msg, client, models)));
+    const dmCount = burst.reduce((sum, msg) => sum + msg.author.send.mock.calls.length, 0);
+    expect(dmCount).toBe(1);
+  });
+
+  test("a member can be kicked again once the previous unban is done", async () => {
+    const authorId = "kicked-twice";
+    await firewall(makeMessage({ authorId }), client, models);
+    await jest.advanceTimersByTimeAsync(UNBAN_DELAY_MS);
+    const second = makeMessage({ authorId });
+    await firewall(second, client, models);
+    expect(second.guild.members.ban).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed scam kick is reported", async () => {
+    const msg = makeMessage();
+    msg.guild.members.ban.mockRejectedValue(new Error("Missing Permissions"));
+    await firewall(msg, client, models);
+    const [report] = reportsContaining("SCAM SENDER NOT KICKED");
+    expect(report[1]).toContain("Kick failed");
+    expect(report[1]).toContain(`<@${msg.author.id}>`);
+  });
+
+  test("a failed honeypot kick is noted in its report", async () => {
+    const authorId = "honeypot-ban-fails";
+    await firewall(
+      makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content: TEXT, attachments: [] }),
+      client,
+      models
+    );
+    const chat = makeMessage({ authorId, channelName: "chat", content: TEXT, attachments: [] });
+    chat.guild.members.ban.mockRejectedValue(new Error("Missing Permissions"));
+    await firewall(chat, client, models);
+    const [report] = reportsContaining("HONEYPOT TRIGGERED");
+    expect(report[1]).toContain("Kick failed");
+  });
+
+  test("a successful kick report has no failure note", async () => {
+    const authorId = "honeypot-ban-works";
+    const post = (content) =>
+      firewall(makeMessage({ authorId, channelName: HONEYPOT_CHANNEL_NAME, content, attachments: [] }), client, models);
+    await post("first");
+    await post("second");
+    const [report] = reportsContaining("HONEYPOT REPEAT MESSAGE KICK");
+    expect(report[1]).not.toContain("Kick failed");
+  });
+
+  test("kick DMs say the member can rejoin in about a minute", async () => {
+    const msg = makeMessage();
+    await firewall(msg, client, models);
+    const [dm] = msg.author.send.mock.calls[0];
+    expect(dm).toContain("rejoin in about a minute");
+  });
+
+  test("the ban reason is spelled correctly", async () => {
+    const msg = makeMessage();
+    await firewall(msg, client, models);
+    const [, options] = msg.guild.members.ban.mock.calls[0];
+    expect(options.reason).toBe("Compromised account, scam message detected");
+  });
 });

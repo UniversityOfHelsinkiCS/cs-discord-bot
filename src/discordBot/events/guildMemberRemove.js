@@ -1,7 +1,7 @@
-const { removeUserFromDb } = require("../../db/services/userService");
+const { removeDepartedMember } = require("../services/memberDeparture");
 
 const execute = async (member, client, models) => {
-  await removeUserFromDb(member.user.id, models.User);
+  await removeDepartedMember(member.guild, member.user.id, models);
 };
 
 module.exports = {

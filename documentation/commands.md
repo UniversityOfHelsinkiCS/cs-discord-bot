@@ -32,6 +32,7 @@ Apps → `Add scam fingerprint` | Add the images of a message as known scam fing
 `/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
 `/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
 `/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
+Apps → `Kick user` | Kick the author of a message, with a reason sent to them. | Right-click a message → Apps → Kick user, then pick the reason
 `/list_admins` | List all users with the admin flag in the database. | `/list_admins`
 `/list_courses` | List all courses and channels. | `/list_courses`
 `/list_scam_fingerprints` | List the known scams. | `/list_scam_fingerprints`
