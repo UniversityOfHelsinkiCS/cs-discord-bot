@@ -1,5 +1,7 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 const { removeCourseFromDb, findCourseFromDb, findCoursesFromDb } = require("../../../db/services/courseService");
+const { findAllCourseMembers } = require("../../../db/services/courseMemberService");
+const { removeUserIfUnused } = require("../../../db/services/userService");
 const { confirmChoice } = require("../../services/confirm");
 const { respondWithCourses } = require("../../services/autocomplete");
 const { requireAdmin } = require("../../services/permissions");
@@ -19,7 +21,11 @@ const execute = async (interaction, client, models) => {
   const course = await findCourseFromDb(courseName, models.Course);
   if (!course) return await editErrorEphemeral(interaction, `Invalid course name: ${courseName}.`);
 
+  const members = await findAllCourseMembers(course.id, models.CourseMember);
   await removeCourseFromDb(courseName, models.Course);
+  for (const { userId } of members) {
+    await removeUserIfUnused(userId, models.User, models.CourseMember);
+  }
 
   return await editEphemeral(interaction, `Deleted course ${courseName}.`);
 };

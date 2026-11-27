@@ -10,6 +10,10 @@ jest.mock("../../../src/discordBot/services/permissions");
 jest.mock("../../../src/discordBot/services/autocomplete");
 const { respondWithCourses } = require("../../../src/discordBot/services/autocomplete");
 jest.mock("../../../src/db/services/courseService");
+jest.mock("../../../src/db/services/courseMemberService");
+jest.mock("../../../src/db/services/userService");
+const { findAllCourseMembers } = require("../../../src/db/services/courseMemberService");
+const { removeUserIfUnused } = require("../../../src/db/services/userService");
 
 const { defaultAdminInteraction } = require("../../mocks/mockInteraction");
 const models = require("../../mocks/mockModels");
@@ -19,7 +23,8 @@ defaultAdminInteraction.options = { getString: jest.fn(() => courseName) };
 
 requireAdmin.mockImplementation(() => true);
 confirmChoice.mockImplementation(() => true);
-findCourseFromDb.mockImplementation((name) => ({ name }));
+findCourseFromDb.mockImplementation((name) => ({ id: 1, name }));
+findAllCourseMembers.mockImplementation(() => []);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -58,6 +63,18 @@ describe("slash delete_course", () => {
     expect(removeCourseFromDb).toHaveBeenCalledTimes(1);
     expect(removeCourseFromDb).toHaveBeenCalledWith(courseName, models.Course);
     expect(editEphemeral).toHaveBeenCalledWith(defaultAdminInteraction, `Deleted course ${courseName}.`);
+  });
+
+  test("removes the records of members left with nothing after the course is deleted", async () => {
+    const order = [];
+    findAllCourseMembers.mockImplementationOnce(() => [{ userId: 3 }, { userId: 4 }]);
+    removeCourseFromDb.mockImplementationOnce(() => order.push("course"));
+    removeUserIfUnused.mockImplementation((userId) => order.push(userId));
+    await execute(defaultAdminInteraction, defaultAdminInteraction.client, models);
+    expect(findAllCourseMembers).toHaveBeenCalledWith(1, models.CourseMember);
+    expect(removeUserIfUnused).toHaveBeenCalledWith(3, models.User, models.CourseMember);
+    expect(removeUserIfUnused).toHaveBeenCalledWith(4, models.User, models.CourseMember);
+    expect(order).toEqual(["course", 3, 4]);
   });
 });
 
