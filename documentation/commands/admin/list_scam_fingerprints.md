@@ -1,6 +1,7 @@
-## /list_scam_fingerprints
+# /list_scam_fingerprints
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :x: Needs arguments.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
-- Lists every known scam added with [/add_scam_fingerprint](./add_scam_fingerprint.md): its name, how many images it has, when it was added and the file names of its images.
+Lists the known scams: name, number of images, when each was added and the file names of its images.
+
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** No

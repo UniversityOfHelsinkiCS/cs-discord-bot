@@ -1,7 +1,13 @@
-## /remove_scam_fingerprint
+# /remove_scam_fingerprint
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :heavy_check_mark: Needs arguments: `scam_name`, picked from the list of known scams.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
-- Removes the scam and the fingerprints of all of its images, after asking for confirmation. The bot stops matching those images right away.
-- A note is posted in the commands channel naming the scam, its images and the admin who removed it.
+Removes a known scam and the fingerprints of all its images. The bot stops matching them right away.
+
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** Yes
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `scam_name` | Yes | The scam to remove. Autocompletes with the known scams. |
+
+A note naming the scam, its images and the admin is posted in the commands channel.

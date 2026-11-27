@@ -1,6 +1,11 @@
-## /remove_faculty_rights
+# /remove_faculty_rights
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :heavy_check_mark: Requires confirmation.
-- :heavy_check_mark: Needs argument: `user` — the user to remove faculty rights from.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
+Removes a user's faculty rights.
+
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** Yes
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `user` | Yes | The user to remove faculty rights from. |

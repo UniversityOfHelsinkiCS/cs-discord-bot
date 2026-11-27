@@ -1,13 +1,15 @@
-## /create_course
+# /create_course
 
-- :heavy_check_mark: Can be used in every channel.
-- :heavy_check_mark: Reply with an ephemeral message - is only visible to the user of the interaction.
-- :heavy_check_mark: Response includes the interaction status.
-- :heavy_check_mark: Needs arguments.
-- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.
+Creates a course: a category with announcement, general and voice channels, a course role and an instructor role. You become an instructor of the course, and it is added to `#guide`.
 
-Argument | Optional | Info
----------|----------|------ 
-Code | :x: | 
-Fullname | :x: |
-nick | :heavy_check_mark: | If no nickname is given, the code is used as the nickname.
+- **Who:** Faculty and admins
+- **Where:** Any channel
+- **Confirmation:** No
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `coursecode` | Yes | The course code, e.g. TKT10001. |
+| `full_name` | Yes | The full course name. Must be unique. |
+| `nick_name` | No | A short name shown in the channel list. Defaults to the course code. Must be unique. |
+
+Names can't contain emojis, and the code and nickname can't contain `%`.

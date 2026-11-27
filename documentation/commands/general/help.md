@@ -1,15 +1,11 @@
-## /help
+# /help
 
-- :heavy_check_mark: Can be used in every channel.
-- :heavy_check_mark: Reply with an ephemeral message - is only visible to the user of the interaction.
-- :heavy_check_mark: The Response includes command/commands information.
-- :heavy_check_mark: All members can use this command.
-- :x: The user sees commands that user cannot use.
-- :x: The user can use commands that are not visible.
-- :o: Argument command_name is optional.
-- :heavy_check_mark: The argument autocompletes with the commands you can use.
+Lists the commands you can use, or shows how to use one command.
 
-Example | Explanation 
---- | ---
-`/help join` | Gives information for the command given as a parameter. 
-`/help` | Gives information for all the commands.
+- **Who:** Everyone
+- **Where:** Any channel
+- **Confirmation:** No
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `command` | No | The command to show. Autocompletes with the commands you can use. |

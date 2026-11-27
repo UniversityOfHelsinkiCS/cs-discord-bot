@@ -1,84 +1,101 @@
-### cs-discord-bot
+# Command reference
 
-### Autocomplete
+All commands are slash commands: type `/` in the message box and pick the command from the list. The bot does not read commands sent as plain messages. Replies are visible only to you.
 
-Some arguments offer a list as you type. The list narrows down as you type any part of the name, and courses are shown as `Full name - nickname - CODE` in alphabetical order by full name. Discord shows at most 25 entries, so type a few letters to find the rest.
+Each command links to its own page with its arguments and details.
 
-Command | The argument offers
---- | ---
-`/join`, `/hide_course` | Public courses
-`/leave` | The courses you have joined
-`/unhide_course` | Private courses
-`/lock_chat` | Courses that are not locked
-`/unlock_chat` | Locked courses
-`/delete_course` | All courses
-`/delete_channel` | Channels added to the course the command is used in
-`/delete_command` | Commands registered in Discord
-`/help` | The commands you can use
+## Commands for everyone
 
-### Admin commands
+| Command | What it does |
+| --- | --- |
+| [/auth](./commands/general/auth.md) | Link to the faculty login page. |
+| [/courses](./commands/general/courses.md) | Lists the public courses. |
+| [/help](./commands/general/help.md) | Lists your commands, or shows how to use one. |
+| [/instructors](./commands/general/instructors.md) | Lists the course's instructors. Used in a course channel. |
+| [/join](./commands/general/join.md) | Joins a course. |
+| [/leave](./commands/general/leave.md) | Leaves a course. |
+| [/workshops](./commands/general/workshops.md) | Shows the course's workshop times. Used in a course channel. |
 
-Admin and faculty commands are restricted by default: Discord shows them only to members with the Administrator permission. **A server admin must allow the right roles once per command**, otherwise nobody else sees them. Open **Server Settings → Integrations → [bot name] → Commands**, select the command and add the roles below. The bot cannot do this itself.
+## Instructor commands
 
-- **Admin commands:** allow the `admin` and `cs-admin` roles.
-- **Faculty commands:** allow the `faculty`, `admin` and `cs-admin` roles.
+| Command | What it does |
+| --- | --- |
+| [/instructor_disconnect](./commands/instructor/instructor_disconnect.md) | Disconnects a user from your course's voice channel. |
 
-This is only needed for newly added commands; `/reload_commands` and restarting the bot do not grant it. Seeing a command is not enough to use it, because the bot also checks the database when the command is run: admin commands need the `admin` flag, faculty commands need the `faculty` or `admin` flag.
-Command | Description | Example
---- |--- | ---
-`/add_admin_rights` | Add admin rights to given user. | `/add_admin_rights user:@someone`
-`/add_scam_fingerprint` | Add a scam's images as known scam fingerprints. | `/add_scam_fingerprint scam_name:gift-card image1:[image] image2:[image]`
-Apps → `Add scam fingerprint` | Add the images of a message as known scam fingerprints. | Right-click a message → Apps → Add scam fingerprint, then enter the scam name
-`/delete_command` | Delete the given slash command. | `/delete_command command_name:help`
-`/delete_course` | Delete the given course channel. | `/delete_course course_name:ohpe`
-`/fix_course_roles` | Add missing course roles and sync course memberships from Discord to the database. | `/fix_course_roles`
-Apps → `Kick user` | Kick the author of a message, with a reason sent to them. | Right-click a message → Apps → Kick user, then pick the reason
-`/list_admins` | List all users with the admin flag in the database. | `/list_admins`
-`/list_courses` | List all courses and channels. | `/list_courses`
-`/list_scam_fingerprints` | List the known scams. | `/list_scam_fingerprints`
-`/prune_users` | Delete user records with no courses and no admin or faculty rights. | `/prune_users`
-`/reload_commands` | Reload all slash commands, returning deleted commands and registering new commands. | `/reload_commands`
-`/remove_admin_rights` | Remove admin rights from given user. | `/remove_admin_rights user:@someone`
-`/remove_faculty_rights` | Remove faculty rights from given user. | `/remove_faculty_rights user:@someone`
-`/remove_scam_fingerprint` | Remove a known scam. | `/remove_scam_fingerprint scam_name:gift-card`
-`/restore_server_from_database` | Recreate the Discord server from the database. | `/restore_server_from_database`
-`/server_status` | Check if the Discord server and database are in sync. | `/server_status`
-`/sort_courses` | Sort courses alphabetically. | `/sort_courses`
-`/update_categorynames` | Update category names to the new format. | `/update_categorynames`
-`/update_database` | Save existing channels to database. | `/update_database`
-`/update_instructors` | Update course instructor roles. | `/update_instructors`
-`/update_invitelinks` | Update course invitation links. | `/update_invitelinks`
+## Faculty commands
 
-### Faculty commands
+| Command | What it does |
+| --- | --- |
+| [/add_instructors](./commands/faculty/add_instructors.md) | Gives users the course's instructor role. |
+| [/create_channel](./commands/faculty/create_channel.md) | Adds a text channel to the course. |
+| [/create_course](./commands/faculty/create_course.md) | Creates a course. |
+| [/delete_channel](./commands/faculty/delete_channel.md) | Deletes an added channel. |
+| [/edit_course](./commands/faculty/edit_course.md) | Changes the course code, full name or nickname. |
+| [/edit_topic](./commands/faculty/edit_topic.md) | Sets the channel topic. |
+| [/hide_channel](./commands/faculty/hide_channel.md) | Hides an added channel from students. |
+| [/hide_course](./commands/faculty/hide_course.md) | Makes a course private. |
+| [/lock_chat](./commands/faculty/lock_chat.md) | Lets only staff post in a course. |
+| [/remove_instructors](./commands/faculty/remove_instructors.md) | Removes the instructor role from users. |
+| [/rename_channel](./commands/faculty/rename_channel.md) | Renames an added channel. |
+| [/status](./commands/faculty/status.md) | Shows the course's details. |
+| [/unhide_channel](./commands/faculty/unhide_channel.md) | Shows a hidden channel to students again. |
+| [/unhide_course](./commands/faculty/unhide_course.md) | Makes a course public. |
+| [/unlock_chat](./commands/faculty/unlock_chat.md) | Lets students post in a course again. |
 
-Faculty commands are hidden until a server admin has allowed the `faculty`, `admin` and `cs-admin` roles for them in Discord's Integrations settings (see the note under Admin commands above). Running a command also requires the `faculty` or `admin` flag in the bot's database, which `/auth` sets.
+## Admin commands
 
-Command | Description | Example
---- |--- | ---
-`/add_instructors` | Give instructor role to (multiple) users. | `/add_instructors @user1 @user2`
-`/create_channel` | Add a text channel for the course. Must be used inside a course. | `/create_channel questions`
-`/create_course ` | Create a given course channel | `/create_course ohpe ohjelmoinnin perusteet`
-`/create_poll ` | Create a poll | `/create_poll Question 10 answer1 | answer 2 | answer 3`
-`/delete_channel` | Delete a text channel from the course. Must be used inside a course. | `/delete_channel questions`
-`/edit_course` | Edit course information, e.g. course code, fullname, or nickname. Must be used inside a course. | `/edit_course nickname ohpe`
-`/edit_topic` | Edit channel topic, replacing an already existing topic. | `/edit_topic perusteet`
-`/hide_channel` | Make the channel hidden from regular users. Must be used inside a course and in a non-default text channel. | `/hide_channel`
-`/hide_course` | Make the given course private, disabling joining with `/join` | `/hide_course ohpe`
-`/lock_chat` | Lock the given course, disabling messaging by regular users | `/lock_chat ohpe`
-`/rename_channel` | Rename a Discord text channel. Must be used inside a course and in a non-default text channel. | `/rename_channel questions`
-`/status` | Get full status of course. Must be used inside a course. | `/status`
-`/unhide_channel` | Make the channel visible to regular users. Must be used inside a course and in a non-default text channel. | `/unhide_channel`
-`/unhide_course` | Make the given course public, enabling joining with `/join`. | `/unhide_course ohpe`
-`/unlock_chat` | Unlock the given course, enabling messaging by regular users. | `/unlock_chat ohpe`
+| Command | What it does |
+| --- | --- |
+| [/add_admin_rights](./commands/admin/add_admin_rights.md) | Gives a user admin rights. |
+| [/add_scam_fingerprint](./commands/admin/add_scam_fingerprint.md) | Adds a scam's images as known scam fingerprints. |
+| [Apps → Add scam fingerprint](./commands/admin/add_scam_fingerprint_from_message.md) | Adds a message's images as known scam fingerprints. |
+| [/delete_command](./commands/admin/delete_command.md) | Unregisters a slash command. |
+| [/delete_course](./commands/admin/delete_course.md) | Deletes a course. |
+| [/fix_course_roles](./commands/admin/fix_course_roles.md) | Reconciles course roles and memberships with the database. |
+| [Apps → Kick user](./commands/admin/kick_user_from_message.md) | Kicks a message's author, with a reason sent to them. |
+| [/list_admins](./commands/admin/list_admins.md) | Lists users with the admin flag. |
+| [/list_courses](./commands/admin/list_courses.md) | Lists the courses and channels in the database. |
+| [/list_scam_fingerprints](./commands/admin/list_scam_fingerprints.md) | Lists the known scams. |
+| [/prune_users](./commands/admin/prune_users.md) | Deletes user records with no courses and no rights. |
+| [/reload_commands](./commands/admin/reload_commands.md) | Registers all slash commands again. |
+| [/remove_admin_rights](./commands/admin/remove_admin_rights.md) | Removes a user's admin rights. |
+| [/remove_faculty_rights](./commands/admin/remove_faculty_rights.md) | Removes a user's faculty rights. |
+| [/remove_scam_fingerprint](./commands/admin/remove_scam_fingerprint.md) | Removes a known scam. |
+| [/restore_server_from_database](./commands/admin/restore_server_from_database.md) | Rebuilds the server's courses from the database. |
+| [/server_status](./commands/admin/server_status.md) | Lists mismatches between the server and the database. |
+| [/sort_courses](./commands/admin/sort_courses.md) | Sorts the course categories alphabetically. |
+| [/update_database](./commands/admin/update_database.md) | Saves the server's courses, users and memberships to the database. |
+| [/update_invitelinks](./commands/admin/update_invitelinks.md) | Refreshes the pinned message in each announcement channel. |
 
-### Commands for everyone
+## Autocomplete
 
-Command | Description | Example
---- |--- | ---
-`/auth` | Gives you a link which you can use to authenticate as a faculty member. | `/auth`
-`/courses` | Prints out all the available courses. | `/courses`
-`/help` |  Lists available commands for your role. | `help`
-`/help "command name"` | Shows information on the given command. | `/help courses`
-`/intructors` | Lists the instructors of the course. Must be used inside a course. | `/instructors`
-`/join` | Join the given course. After writing `/join`, the bot will give you a list of public courses to choose from. | `/join`
-`/leave` | Leave the given course. After writing `/leave`, the bot will give you a list of the courses you have joined to choose from. | `/leave`
+Some arguments offer a list as you type. The list narrows down as you type any part of the name. Courses are shown as `Full name - nickname - CODE`, in alphabetical order by full name. Discord shows at most 25 entries, so type a few letters to find the rest.
+
+| Command | The argument offers |
+| --- | --- |
+| `/help` | The commands you can use |
+| `/join` | Public courses |
+| `/leave` | The courses you are on |
+| `/delete_channel` | Channels added to the course the command is used in |
+| `/hide_course` | Public courses |
+| `/unhide_course` | Private courses |
+| `/lock_chat` | Courses that are not locked |
+| `/unlock_chat` | Locked courses |
+| `/delete_command` | Commands registered in Discord |
+| `/delete_course` | All courses |
+| `/remove_scam_fingerprint` | Known scams |
+
+## Course cooldown
+
+`/edit_course`, `/edit_topic`, `/hide_course`, `/unhide_course`, `/lock_chat` and `/unlock_chat` share a 5-minute cooldown per course. After one of them changes a course, none of them can be used on that course for 5 minutes. `/rename_channel` has its own 5-minute cooldown per channel.
+
+## Command visibility
+
+Admin and faculty commands are registered as restricted, so by default Discord shows them only to members with the Administrator permission. A server admin allows the right roles once for each new command in **Server Settings → Integrations → [bot name] → Commands**:
+
+- **Admin commands:** `admin` and `cs-admin`
+- **Faculty commands:** `faculty`, `admin` and `cs-admin`
+
+The bot can't do this itself, and `/reload_commands` or a restart doesn't do it either.
+
+Seeing a command doesn't mean you can run it. When a command runs, the bot checks the database: admin commands need the `admin` flag, and faculty commands need the `faculty` or `admin` flag.

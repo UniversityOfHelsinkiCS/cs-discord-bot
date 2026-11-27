@@ -1,9 +1,13 @@
-## /unlock_chat
+# /unlock_chat
 
-- :heavy_check_mark: Can be used in every channel.
-- :heavy_check_mark: Reply with an ephemeral message - is only visible to the user of the interaction.
-- :heavy_check_mark: Response includes the interaction status.
-- :heavy_check_mark: Needs argument: course_name.
-- :heavy_check_mark: The argument autocompletes with the locked courses and narrows down as you type.
-- :heavy_check_mark: This command has cooldown (course specific).
-- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.
+Unlocks a locked course so students can post again.
+
+- **Who:** Faculty and admins
+- **Where:** Any channel
+- **Confirmation:** Yes
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `course` | Yes | The course to unlock. Autocompletes with the locked courses. |
+
+Has the [course cooldown](../../commands.md#course-cooldown).

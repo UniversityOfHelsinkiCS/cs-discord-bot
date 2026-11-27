@@ -1,6 +1,6 @@
 # User manual for faculty
 
-This guide is for course lecturers who want a Discord chat for their course. It goes through the steps in order: why to use it, getting onto Discord, getting faculty rights, creating your course, and then running it.
+This guide is for course lecturers who want a Discord chat for their course. It goes through the steps in order: why to use it, joining the server, getting faculty rights, creating your course, and then running it.
 
 ## 1. Why use the CS Discord for your course
 
@@ -12,21 +12,9 @@ The Department of Computer Science has a dedicated Discord server for course sup
 - **Chat controls.** You can lock the course chat, for example during an exam, and disconnect people from voice channels.
 - **Help from instructors and peers.** You can give course assistants the instructor role, so students can see who to ask with `/instructors`. Students also help each other.
 
-## 2. Getting onto Discord
+## 2. Join the server
 
-### About Discord
-
-To learn more about Discord in general, see their [official website](https://discord.com/) and the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord).
-
-We recommend the Discord app ([desktop or mobile](https://discord.com/download)). If you can't or don't want to install it, you can use Discord in your browser instead.
-
-### Create your Discord account
-
-Create an account on the [Discord website](https://discord.com/). If you already have one, [log in](https://discord.com/login) with your email address or phone number.
-
-### Join the server
-
-Join the server with this link: <https://study.cs.helsinki.fi/discord>.
+Join the server with <https://study.cs.helsinki.fi/discord>. We recommend the Discord [desktop or mobile app](https://discord.com/download), but Discord also works in a browser.
 
 ## 3. Get faculty rights with `/auth`
 
@@ -106,11 +94,7 @@ Use `/edit_topic` inside a channel to set the text shown at the top of the chann
 
 ### Edit the course
 
-Use `/edit_course` inside the course to change the course code, full name or nickname. After an edit, you have to wait 5 minutes before you can edit the course again. The same wait applies to locking, hiding and changing channel topics on that course.
-
-### Polls
-
-`/create_poll` creates a poll in the channel you use it in. Give it a **title**, a **duration** in minutes (at most 14), and the **answers** separated by ` | `, for example `Java | Python`. You can also add a **description**. The poll closes by itself after the duration, or when you click its **Close Poll** button, and then shows the results.
+Use `/edit_course` inside the course to change the course code, full name or nickname. After an edit, you have to wait 5 minutes before you can edit the course again. The same wait applies to locking, hiding and changing channel topics on that course, and a channel can be renamed once every 5 minutes.
 
 ### Course status
 
@@ -120,47 +104,7 @@ Use `/edit_course` inside the course to change the course code, full name or nic
 
 `/instructor_disconnect @user` disconnects a user from the voice channel they are in.
 
-## Command reference
+## More
 
-#### Faculty commands
-
-Command | Explanation | Arguments
---------|-------------|----------:
-[/add_instructors](./commands/faculty/add_instructors.md) | Give instructor role to (multiple) users, e.g., /add_instructors @user1 @user2. | Required
-[/create_channel](./commands/faculty/create_channel.md) | Create new text channel inside a course, e.g., /create_channel feedback. | Required
-[/create_course](./commands/faculty/create_course.md) | Create a new course | Required
-[/create_poll](./commands/faculty/create_poll.md) | Create a new poll | Required
-[/delete_channel](./commands/faculty/delete_channel.md) | Remove given text channel inside a course, e.g., /delete_channel feedback. | Required
-[/edit_course](./commands/faculty/edit_course.md) | Edit course information, options; coursecode, full name, nickname | Required
-[/edit_topic](./commands/faculty/edit_topic.md) | Edit topic, must be used in a course channel, e.g., /edit_topic A new topic. | Required
-[/hide_channel](./commands/faculty/hide_channel.md)| Make the channel hidden from regular users, e.g., /hide_channel. | None
-[/hide_course](./commands/faculty/hide_course.md)| Make given course private, e.g., /hide_course wepa. | Required
-[/lock_chat](./commands/faculty/lock_chat.md) | Lock the chat (meaning only instructors, faculty and admins can post messages) of a given course | Required
-[/remove_instructors](./commands/faculty/remove_instructors.md) | Remove instructor role from (multiple) users, e.g., /remove_instructors @user1 @user2. | Required
-[/rename_channel](./commands/faculty/rename_channel.md) | Rename the non-default course text channel the command is used in, e.g., /rename_channel feedback. | Required
-[/status](./commands/faculty/status.md) | Used in course channel returns general info about the course | None
-[/unhide_channel](./commands/faculty/unhide_channel.md)| Make the channel visible to regular users, e.g., /unhide_channel. | None
-[/unhide_course](./commands/faculty/unhide_course.md) | Make given course public, e.g., /unhide_course wepa. | Required
-[/unlock_chat](./commands/faculty/unlock_chat.md) | Unlock the chat of a given course | Required
-
-#### Instructor commands
-
-Command | Explanation | Arguments
---------|-------------|----------:
-[/instructor_disconnect](./commands/instructor/instructor_disconnect.md) | Disconnect another user from a voice chat, e.g., /instructor_disconnect @user1. | Required
-
-#### General commands
-
-Command | Explanation | Arguments
---------|-------------|----------:
-[/auth](./commands/general/auth.md) | Returns the URL from which the faculty role can be obtained. | None
-[/courses](./commands/general/courses.md) | Returns a list of all courses. | None
-[/help](./commands/general/help.md) | Returns a list of commands with info or info about a specific command. | Optional
-[/instructors](./commands/general/instructors.md) | Used in a course channel, returns a list of the course instructors. | None
-[/join](./commands/general/join.md) | Joins you into the course given, e.g., /join ohpe. | Required
-[/leave](./commands/general/leave.md) | Remove you from the course given, e.g., /leave ohpe. | Required
-[/workshops](./commands/general/workshops.md) | Get workshop info for the course. | None
-
-## Material
-
-[Source code for the bot](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)
+- [Command reference](./commands.md#faculty-commands), with a page for each command
+- [Source code](https://github.com/UniversityOfHelsinkiCS/cs-discord-bot)

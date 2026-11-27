@@ -1,14 +1,16 @@
-## /fix_course_roles
+# /fix_course_roles
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :x: Needs arguments.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
+Reconciles course memberships between Discord and the database.
 
-Reconciles course membership between Discord and the database. For every guild member and every course:
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** No
 
-- If the member has the `<course> instructor` role but not the `<course>` role, the `<course>` role is added.
-- If the member has the `<course>` role but no course membership row in the database, one is created.
-- The `instructor` flag on the database row is set to match whether the member has the `<course> instructor` role (so it is also cleared when the instructor role has been removed).
-- If the member has neither the `<course>` nor the `<course> instructor` role but still has a course membership row in the database, that row is removed. Members who have left the server are left untouched (that is handled by user pruning).
+For every member and every course:
 
-The command replies with a list of every fix it made, or `No course role mismatches found.` if there was nothing to do.
+- A member with the `<course> instructor` role but not the `<course>` role gets the `<course>` role.
+- A member with the `<course>` role but no course membership in the database gets one.
+- The membership's `instructor` flag is set to match whether the member has the `<course> instructor` role.
+- A membership whose member has neither role is deleted. Members who have left the server are not touched here; [/prune_users](./prune_users.md) handles them.
+
+The reply lists every fix, or says `No course role mismatches found.`

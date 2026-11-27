@@ -1,5 +1,7 @@
-## /update_invitelinks
+# /update_invitelinks
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :x: Needs arguments.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
+Refreshes the pinned message in every course announcement channel, which holds the course invite link and the instructor list.
+
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** No

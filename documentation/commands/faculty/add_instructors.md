@@ -1,7 +1,13 @@
-## /add_instructors
+# /add_instructors
 
-- :heavy_check_mark: Can be used only in course channels.
-- :heavy_check_mark: Reply with an ephemeral message - is only visible to the user of the interaction.
-- :heavy_check_mark: Needs argument: users to give the intructor role.
-- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.
-- :x: Can give the intructor role to a member who is not on the course.
+Gives users the course's instructor role and adds them to the course.
+
+- **Who:** Faculty and admins
+- **Where:** A course channel
+- **Confirmation:** No
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `list` | Yes | The users to add, as @mentions. |
+
+Users who are not on the server, and bots, are skipped. The instructor list in the announcement channel is updated.

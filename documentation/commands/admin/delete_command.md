@@ -1,6 +1,11 @@
-## /delete_command
+# /delete_command
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :heavy_check_mark: Needs argument: `command_name` — the slash command to be deleted.
-- :heavy_check_mark: The argument autocompletes with the slash commands registered in Discord.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
+Unregisters a slash command from Discord. `/reload_commands` registers it again.
+
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** No
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `command_name` | Yes | The command to delete, without the `/`. Autocompletes with the commands registered in Discord. |

@@ -1,8 +1,13 @@
-## /rename_channel
+# /rename_channel
 
-- :heavy_check_mark: Can be used only in non-default course channels.
-- :heavy_check_mark: Reply with an ephemeral message - is only visible to the user of the interaction.
-- :heavy_check_mark: Response includes the interaction status.
-- :heavy_check_mark: Needs argument: new channel name.
-- :x: Can rename a default channel.
-- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.
+Renames the added channel the command is used in. The course name stays in front.
+
+- **Who:** Faculty and admins
+- **Where:** An added course channel
+- **Confirmation:** Yes
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `name` | Yes | The new name. |
+
+A channel can be renamed once every 5 minutes.

@@ -1,5 +1,9 @@
-## /reload_commands
+# /reload_commands
 
-- :heavy_check_mark: Slash command, replies ephemerally (only visible to the invoker).
-- :x: Needs arguments.
-- :x: Only visible to members with the `admin`/`cs-admin` role, and only usable by users with the admin flag set in the database.
+Registers all slash commands with Discord again. This brings back deleted commands and adds new ones.
+
+- **Who:** Admins
+- **Where:** Any channel
+- **Confirmation:** No
+
+New admin and faculty commands also need their roles allowed in Discord's Integrations settings before anyone but Administrators sees them. See [Command visibility](../../commands.md#command-visibility).

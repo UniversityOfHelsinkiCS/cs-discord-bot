@@ -1,8 +1,14 @@
-## /edit_course
+# /edit_course
 
-- :heavy_check_mark: Can be used only in the course channel.
-- :heavy_check_mark: Reply with an ephemeral message - is only visible to the user of the interaction.
-- :heavy_check_mark: Response includes the interaction status.
-- :heavy_check_mark: Needs argument: what course parameter to edit and the new value.
+Changes the course code, full name or nickname.
 
-- :x: Only visible to members with the `faculty`/`admin`/`cs-admin` role, and only usable by users with the faculty or admin flag set in the database.
+- **Who:** Faculty and admins
+- **Where:** A course channel
+- **Confirmation:** Yes
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `options` | Yes | What to change: `coursecode`, `full name` or `nickname`. |
+| `new_value` | Yes | The new value. |
+
+Has the [course cooldown](../../commands.md#course-cooldown).
