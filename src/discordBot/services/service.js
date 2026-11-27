@@ -151,20 +151,6 @@ const getCourseNameFromCategory = (category) => {
   return trimmedName;
 };
 
-const findAndUpdateInstructorRole = async (name, guild, adminRole, courseNames) => {
-  const instructorRoleName = `${name} ${adminRole}`;
-  const otherCourseRoleNames = courseNames
-    .filter((courseName) => courseName !== name)
-    .flatMap((courseName) => [courseName, `${courseName} ${adminRole}`]);
-  const oldInstructorRole = guild.roles.cache.find(
-    (role) =>
-      role.name.startsWith(`${name} `) && role.name !== instructorRoleName && !otherCourseRoleNames.includes(role.name)
-  );
-  if (oldInstructorRole) {
-    await oldInstructorRole.setName(instructorRoleName);
-  }
-};
-
 const getWorkshopInfo = async (courseCode) => {
   const startDate = new Date();
   const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -372,7 +358,6 @@ module.exports = {
   fetchRegisteredCommands,
   deletecommand,
   getCourseNameFromCategory,
-  findAndUpdateInstructorRole,
   listCourseInstructors,
   updateInviteLinks,
   containsEmojis,

@@ -10,8 +10,7 @@ const {
   findOrCreateChannel,
   getCourseNameFromCategory,
   findChannelWithNameAndType,
-  getWorkshopInfo,
-  findAndUpdateInstructorRole
+  getWorkshopInfo
 } = require("../../src/discordBot/services/service");
 const { createCourseToDatabase, removeCourseFromDb } = require("../../src/db/services/courseService");
 const { data } = require("../mocks/workshopData.json");
@@ -246,30 +245,5 @@ describe("Service", () => {
     axios.get.mockImplementationOnce(() => Promise.reject(new Error("timeout")));
     const result = await getWorkshopInfo("TKT-101");
     expect(result).toBe("Could not fetch workshops right now. Please try again later.");
-  });
-});
-
-describe("findAndUpdateInstructorRole", () => {
-  const buildGuild = (roleNames) => {
-    const roles = roleNames.map((name) => ({ name, setName: jest.fn() }));
-    return { roles: { cache: { find: (fn) => roles.find(fn) } }, allRoles: roles };
-  };
-
-  test("renames the course's old instructor role", async () => {
-    const guild = buildGuild(["tira", "tira admin"]);
-    await findAndUpdateInstructorRole("tira", guild, "instructor", ["tira"]);
-    expect(guild.allRoles[1].setName).toHaveBeenCalledWith("tira instructor");
-  });
-
-  test("leaves the roles of a course whose name starts with the same text alone", async () => {
-    const guild = buildGuild(["tiralabra", "tiralabra instructor", "tira", "tira instructor"]);
-    await findAndUpdateInstructorRole("tira", guild, "instructor", ["tira", "tiralabra"]);
-    guild.allRoles.forEach((role) => expect(role.setName).not.toHaveBeenCalled());
-  });
-
-  test("leaves a course named with a space after the same text alone", async () => {
-    const guild = buildGuild(["tira labra", "tira labra instructor", "tira", "tira instructor"]);
-    await findAndUpdateInstructorRole("tira", guild, "instructor", ["tira", "tira labra"]);
-    guild.allRoles.forEach((role) => expect(role.setName).not.toHaveBeenCalled());
   });
 });
