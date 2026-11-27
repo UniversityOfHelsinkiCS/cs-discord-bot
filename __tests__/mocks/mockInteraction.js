@@ -33,6 +33,7 @@ teacherData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentat
 teacherData2.push("\n");
 teacherData2.push(`Category: **${courseAdminRole}**`);
 teacherData2.push(instructorD.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
+teacherData2.push(`[User manual for instructors](<${githubRepo}/blob/main/documentation/usermanual-instructor.md>)`);
 teacherData2.push("\n");
 teacherData2.push("*Commands can be used only in course channels");
 teacherData2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);
@@ -57,6 +58,7 @@ adminData.push(`[User manual for students](<${githubRepo}/blob/main/documentatio
 adminData.push("\n");
 adminData.push("Category: **admin**");
 adminData.push(adminD.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
+adminData.push(`[User manual for admins](<${githubRepo}/blob/main/documentation/usermanual-admin.md>)`);
 adminData.push("\n");
 adminData2.push(`Category: **${facultyRole}**`);
 adminData2.push(faculty.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
@@ -64,6 +66,7 @@ adminData2.push(`[User manual for faculty](<${githubRepo}/blob/main/documentatio
 adminData2.push("\n");
 adminData2.push(`Category: **${courseAdminRole}**`);
 adminData2.push(instructorD.map((command) => `**${command.usage}** - ${command.description}`).join("\n"));
+adminData2.push(`[User manual for instructors](<${githubRepo}/blob/main/documentation/usermanual-instructor.md>)`);
 adminData2.push("\n");
 adminData2.push("*Commands can be used only in course channels");
 adminData2.push(`\nYou can send \`/help [command name]\` to get info on a specific command!`);

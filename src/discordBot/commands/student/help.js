@@ -49,7 +49,12 @@ const handleAllCommands = async (interaction, member, adminData, facultyData, co
   const staffSections = [];
 
   if (adminData.size) {
-    userSections.push(["Category: **admin**", formatCommands(adminData), "\n"]);
+    userSections.push([
+      "Category: **admin**",
+      formatCommands(adminData),
+      `[User manual for admins](<${githubRepo}/blob/main/documentation/usermanual-admin.md>)`,
+      "\n"
+    ]);
   }
 
   if (facultyData.size) {
@@ -62,7 +67,12 @@ const handleAllCommands = async (interaction, member, adminData, facultyData, co
   }
 
   if (courseAdminData.size) {
-    staffSections.push([`Category: **${courseAdminRole}**`, formatCommands(courseAdminData), "\n"]);
+    staffSections.push([
+      `Category: **${courseAdminRole}**`,
+      formatCommands(courseAdminData),
+      `[User manual for instructors](<${githubRepo}/blob/main/documentation/usermanual-instructor.md>)`,
+      "\n"
+    ]);
   }
 
   const footer = [
