@@ -1,6 +1,20 @@
 # User manual for admins
 
-Admins run the Department of Computer Science Discord server: they manage rights, keep the server in sync with the bot's database, and handle scams. Join the server with <https://study.cs.helsinki.fi/discord>.
+Admins run the Department of Computer Science Discord server: they manage rights, keep the server in sync with the bot's database, and handle scams.
+
+## About Discord
+
+To learn more about Discord in general, see their [official website](https://discord.com/) and the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord).
+
+We recommend the Discord app ([desktop or mobile](https://discord.com/download)). If you can't or don't want to install it, you can use Discord in your browser instead.
+
+## Create your Discord account
+
+Create an account on the [Discord website](https://discord.com/). If you already have one, [log in](https://discord.com/login) with your email address or phone number.
+
+## Join the server
+
+Join the server with <https://study.cs.helsinki.fi/discord>.
 
 ## Admin commands
 

@@ -2,6 +2,16 @@
 
 Instructors are course assistants who help students on the Department of Computer Science Discord server. A course's faculty member gives you the instructor role with `/add_instructors`. Students then see you in `/instructors` and in the pinned message in the course's announcement channel.
 
+## About Discord
+
+To learn more about Discord in general, see their [official website](https://discord.com/) and the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord).
+
+We recommend the Discord app ([desktop or mobile](https://discord.com/download)). If you can't or don't want to install it, you can use Discord in your browser instead.
+
+## Create your Discord account
+
+Create an account on the [Discord website](https://discord.com/). If you already have one, [log in](https://discord.com/login) with your email address or phone number.
+
 ## Join the server
 
 Join with <https://study.cs.helsinki.fi/discord>, or with the course's own link on its Moodle or MOOC page.

@@ -4,6 +4,16 @@ The Department of Computer Science has a Discord server for course support. Each
 
 Please help others, but don't share answers to exercises. Small hints still let others learn by themselves.
 
+## About Discord
+
+To learn more about Discord in general, see their [official website](https://discord.com/) and the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord).
+
+We recommend the Discord app ([desktop or mobile](https://discord.com/download)). If you can't or don't want to install it, you can use Discord in your browser instead.
+
+## Create your Discord account
+
+Create an account on the [Discord website](https://discord.com/). If you already have one, [log in](https://discord.com/login) with your email address or phone number.
+
 ## Join the server and your courses
 
 Your course page in Moodle or MOOC has a link to the course's Discord channels. Clicking it adds you to the server and to that course.
@@ -13,8 +23,6 @@ Your course page in Moodle or MOOC has a link to the course's Discord channels. 
 You can also join the server with <https://study.cs.helsinki.fi/discord>. Discord opens in the `#guide` channel, which lists the courses you can join. Click a course's blue **Join** button to join it, or its red **Leave** button to leave. The bot's reply is visible only to you.
 
 ![Welcome](./images/welcome.png)
-
-We recommend the Discord [desktop or mobile app](https://discord.com/download), but Discord also works in a browser.
 
 ## Use the bot
 

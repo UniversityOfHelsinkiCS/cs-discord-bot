@@ -1,6 +1,6 @@
 # User manual for faculty
 
-This guide is for course lecturers who want a Discord chat for their course. It goes through the steps in order: why to use it, joining the server, getting faculty rights, creating your course, and then running it.
+This guide is for course lecturers who want a Discord chat for their course. It goes through the steps in order: why to use it, getting onto Discord, getting faculty rights, creating your course, and then running it.
 
 ## 1. Why use the CS Discord for your course
 
@@ -12,9 +12,21 @@ The Department of Computer Science has a dedicated Discord server for course sup
 - **Chat controls.** You can lock the course chat, for example during an exam, and disconnect people from voice channels.
 - **Help from instructors and peers.** You can give course assistants the instructor role, so students can see who to ask with `/instructors`. Students also help each other.
 
-## 2. Join the server
+## 2. Getting onto Discord
 
-Join the server with <https://study.cs.helsinki.fi/discord>. We recommend the Discord [desktop or mobile app](https://discord.com/download), but Discord also works in a browser.
+### About Discord
+
+To learn more about Discord in general, see their [official website](https://discord.com/) and the [Beginner's Guide to Discord](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord).
+
+We recommend the Discord app ([desktop or mobile](https://discord.com/download)). If you can't or don't want to install it, you can use Discord in your browser instead.
+
+### Create your Discord account
+
+Create an account on the [Discord website](https://discord.com/). If you already have one, [log in](https://discord.com/login) with your email address or phone number.
+
+### Join the server
+
+Join the server with this link: <https://study.cs.helsinki.fi/discord>.
 
 ## 3. Get faculty rights with `/auth`
 
