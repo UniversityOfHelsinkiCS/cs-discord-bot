@@ -31,7 +31,6 @@
       "/src/discordBot/services/command.js",
       "/src/discordBot/services/logger.js",
       "src/discordBot/services/confirm.js",
-      "src/discordBot/commands/faculty/create_poll.js",
       "src/discordBot/commands/admin/update_database.js",
       "src/discordBot/commands/admin/restore_server_from_database.js",
       "src/discordBot/commands/admin/server_status.js",
